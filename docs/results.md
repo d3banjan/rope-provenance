@@ -76,6 +76,24 @@ result cannot rule out template-artifact learning.
 
 ## Counterfactual v2
 
-No final v2 numbers are recorded yet. See [experiments.md](experiments.md) for
-the live run tracker and pre-registered gates.
+The v2 curriculum adds 12000 counterfactual training examples and 400
+counterfactual eval examples. It pairs directive-like substrings that should be
+followed in the INSTRUCTION span with matched forms that should be treated as
+data in the DATA span.
 
+| Arm | W&B | Final train loss | Last eval loss | SEP | exec_instr | exec_data |
+|---|---|---:|---:|---:|---:|---:|
+| vanilla | `n3b2ajjb` | 1.6655 | 1.1782 | -0.135 | 0.155 | 0.290 |
+
+Training gate: passed. The vanilla v2 run completed cleanly in 46.4 minutes at
+33.35 examples/sec, with stable eval loss around 1.18 after convergence.
+
+SEP interpretation: v2 data improved vanilla SEP by +0.085 relative to the
+Alpaca vanilla baseline (-0.220 to -0.135), but did not make the architecture-free
+model actually separate roles; DATA-slot probe execution remains higher than
+INSTRUCTION-slot execution. This makes the remaining architectural arms
+informative: a rope_prov arm must beat this data-only gain, not merely improve
+over its v1 Alpaca number.
+
+See [experiments.md](experiments.md) for the live run tracker and
+pre-registered gates.

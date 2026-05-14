@@ -1,6 +1,6 @@
 # Experiment Tracker
 
-Last updated: 2026-05-14T19:08:56+02:00.
+Last updated: 2026-05-14T20:03:20+02:00.
 
 This file is the active tracker. Every run gets one row. Do not encode active
 state in README, ad hoc notes, or generated logs.
@@ -32,26 +32,36 @@ transient progress here only if it affects an operational decision.
 
 | Run id | Status | Config | Output dir | W&B | Checkpoints | Notes |
 |---|---|---|---|---|---|---|
-| `cfv2-vanilla-s0` | running | `src/rope_prov/configs/vanilla_counterfactual_v2.yaml` | `runs/vanilla_counterfactual_v2_online-seed0` | `n3b2ajjb` | every 500 steps, keep 3 | Restarted clean after deleting aborted run `65k0k7cy` locally and from W&B. First checkpoint exists at `checkpoint-500`. |
+| `cfv2-vanilla-s0` | completed | `src/rope_prov/configs/vanilla_counterfactual_v2.yaml` | `runs/vanilla_counterfactual_v2_online-seed0` | `n3b2ajjb` | every 500 steps, keep 3 | Completed cleanly. Final artifacts in `final/`; retained checkpoints: `checkpoint-2000`, `checkpoint-2500`, `checkpoint-2901`. |
+| `cfv2-zeroed-s0` | running | `src/rope_prov/configs/vanilla_zeroed_counterfactual_v2.yaml` | `runs/vanilla_zeroed_P8_counterfactual_v2_online-seed0` | `vp7rso3y` | every 500 steps, keep 3 | Started fresh after vanilla gate passed. Dataset counts match vanilla; early role sanity shows both role ids. |
 
-W&B URL: `https://wandb.ai/d3banjan/rope-provenance/runs/n3b2ajjb`
+W&B URLs:
 
-Known early state for `cfv2-vanilla-s0`:
+- `cfv2-vanilla-s0`: `https://wandb.ai/d3banjan/rope-provenance/runs/n3b2ajjb`
+- `cfv2-zeroed-s0`: `https://wandb.ai/d3banjan/rope-provenance/runs/vp7rso3y`
+
+Completed state for `cfv2-vanilla-s0`:
 
 - dataset: train 30957, eval 600, counterfactual train 12000, eval 400.
-- role sanity: both role ids present in early batches.
-- eval loss: step 200 = 2.603, step 400 = 1.841, step 600 = 1.529.
-- early throughput: about 29-36 examples/sec.
+- role sanity: both role ids present in train/eval batches.
+- eval loss: step 200 = 2.603, step 400 = 1.841, step 600 = 1.529,
+  step 1000 = 1.282, step 1600 = 1.198, step 2200 = 1.184,
+  step 2600 = 1.182, step 2800 = 1.178.
+- final train loss: 1.6655.
+- runtime: 46.4 min.
+- throughput: 33.35 examples/sec.
+- SEP: -0.135, with instruction execution 0.155 and data execution 0.290.
 
-These are plumbing and early-learning signals only. They are not final
-research results.
+Gate read: passed. Vanilla v2 has stable utility loss and improves SEP over the
+old Alpaca vanilla baseline by +0.085, so the remaining ablations are
+informative.
 
 ## Counterfactual v2 Matrix
 
 | Run id | Status | Hypothesis | Config | Output dir |
 |---|---|---|---|---|
-| `cfv2-vanilla-s0` | running | data-only baseline | `src/rope_prov/configs/vanilla_counterfactual_v2.yaml` | `runs/vanilla_counterfactual_v2_online-seed0` |
-| `cfv2-zeroed-s0` | planned | capacity/zeroed-dim control | `src/rope_prov/configs/vanilla_zeroed_counterfactual_v2.yaml` | `runs/vanilla_zeroed_P8_counterfactual_v2_online-seed0` |
+| `cfv2-vanilla-s0` | completed | data-only baseline | `src/rope_prov/configs/vanilla_counterfactual_v2.yaml` | `runs/vanilla_counterfactual_v2_online-seed0` |
+| `cfv2-zeroed-s0` | running | capacity/zeroed-dim control | `src/rope_prov/configs/vanilla_zeroed_counterfactual_v2.yaml` | `runs/vanilla_zeroed_P8_counterfactual_v2_online-seed0` |
 | `cfv2-rope-pi8-s0` | planned | fixed small role rotation | `src/rope_prov/configs/rope_prov_pi8_counterfactual_v2.yaml` | `runs/rope_prov_P8_pi8_counterfactual_v2_online-seed0` |
 | `cfv2-rope-learnable-s0` | planned | model chooses role-angle gap | `src/rope_prov/configs/rope_prov_learnable_counterfactual_v2.yaml` | `runs/rope_prov_P8_learnable_counterfactual_v2_online-seed0` |
 | `cfv2-best-rope-s1` | conditional | seed variance calibration | duplicate best rope config with seed 1 | TBD |
@@ -60,6 +70,9 @@ Run vanilla first. If vanilla final eval loss is unstable or above 2.0, revise
 the counterfactual curriculum before spending GPU on the other arms. If vanilla
 does not move SEP relative to the old vanilla baseline, the data did not teach
 role-conditioning to the architecture-free baseline.
+
+The vanilla gate passed on 2026-05-14. Next action: run `cfv2-zeroed-s0`, then
+the fixed-angle and learnable-angle rope_prov arms.
 
 ## Commands
 
