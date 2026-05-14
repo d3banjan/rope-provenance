@@ -11,6 +11,13 @@ seq_len: 1024
 train_size: null            # null = all examples with non-empty input field
 eval_size: 200              # held-out for eval; same indices across variants
 
+# Synthetic matched-pair counterfactuals. Keep defaults at zero so old results
+# remain exactly reproducible; enable via *_counterfactual.yaml configs.
+counterfactual_train_size: 0
+counterfactual_eval_size: 0
+counterfactual_seed: 0
+counterfactual_positive_fraction: 0.5
+
 # --- Optimizer ---
 batch_size: 4
 grad_accum: 8               # effective batch 32 (same math as 8x4, half per-step memory)

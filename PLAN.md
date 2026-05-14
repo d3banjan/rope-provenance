@@ -311,7 +311,7 @@ Do **not** start Lean work until Phase 5 numbers land. If they're flat you refra
 - **T6 — Optimal binary angles**: Among binary role assignments, θ ∈ {0, π/2} maximizes expected cross-role decorrelation. Trivial calculus, worth stating.
 - **T7 — N-role generalization**: For N roles with angles {2πk/N}, the pairwise cross-role attention factor matrix is a circulant cosine matrix. Useful when extending beyond binary.
 
-**T8 — Threat-model non-interference (paper-worthy theorem)**
+**T8 — Hermetic parser non-escalation and causal non-interference**
 
 Define:
 ```lean
@@ -319,9 +319,30 @@ def Hermetic (assign : Token → Role) : Prop := ...
 -- every token has exactly one role; no UNSET; attacker-controlled
 -- content does not influence assignment
 ```
-State: under any hermetic assignment, for any two prompts differing only in DATA-role tokens, the INSTRUCTION-query → INSTRUCTION-key attention pattern is unchanged.
+The original broad T8 claim ("for any two prompts differing only in DATA-role
+tokens, the INSTRUCTION-query → INSTRUCTION-key attention pattern is unchanged")
+is false for a general transformer stack: DATA tokens can change later hidden
+states, and later role-bearing tokens can attend to earlier DATA. Replace it
+with two narrower statements:
 
-This is the Lean version of fuzz test #6. The theorem proves the architectural guarantee; the fuzz test verifies the parser actually achieves hermetic assignment in practice. Pair them in the paper — operational test ↔ theorem.
+- **T8a — Parser non-escalation.** Under the stateful parser, any tag-like
+  substring inside an already-open DATA span is content, not markup. Therefore
+  attacker-controlled DATA text cannot assign itself the INSTRUCTION role. This
+  is the formal counterpart of
+  `tests/test_parser_fuzz.py::test_data_span_contains_literal_instruction_tag`.
+- **T8b — Causal upstream non-interference.** For a causal decoder prompt in
+  which the changed DATA tokens all occur strictly *after* a fixed prefix of
+  INSTRUCTION tokens, the hidden states and INSTRUCTION-to-INSTRUCTION attention
+  logits for that fixed prefix are unchanged at every layer. This follows from
+  the causal mask and does not imply that generated assistant tokens ignore
+  DATA; it only says later untrusted content cannot rewrite earlier trusted
+  prefix states.
+
+For a single fixed attention layer, an even simpler local statement is also
+provable: if Q/K vectors for INSTRUCTION tokens are held fixed, changing DATA
+token contents cannot alter INSTRUCTION-query to INSTRUCTION-key logits. That
+statement is too weak to market as a defense guarantee, but useful as a sanity
+lemma for the architecture.
 
 **Integration with the Python repo**
 

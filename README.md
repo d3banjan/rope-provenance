@@ -1,10 +1,10 @@
 # RoPE-Provenance
 
-First architectural attempt at the **out-of-band role channel** called for
-by Hines et al. (2024) and mechanistically motivated by Ye et al. (2026)'s
-*role confusion* analysis. We test whether a sub-block of RoPE rotations
-can encode token role (instruction vs data) by phase rather than learned
-content. Mechanism feasibility study on SmolLM2-135M.
+First **per-layer rotational** attempt at the out-of-band role channel
+called for by Hines et al. (2024) and mechanistically motivated by Ye et
+al. (2026)'s *role confusion* analysis. We test whether a sub-block of
+RoPE rotations can encode token role (instruction vs data) by phase
+rather than learned content. Mechanism feasibility study on SmolLM2-135M.
 
 ## Motivation
 
@@ -28,7 +28,7 @@ diagnostic frame Ye established.
 
 ## Design-space placement
 
-Our work fills the missing cell of a 2×2:
+Our work targets the missing cell of a 2×2:
 
 |              | Input-layer            | Per-layer                |
 |--------------|------------------------|--------------------------|
@@ -39,7 +39,7 @@ AIR (NVIDIA, arxiv:2505.18907) is the per-layer **additive** analog and
 reports 1.6×–9.2× ASR reduction. Our negative result with the
 **rotational** analog at the same per-layer placement, plus the
 architectural diagnosis of *why* rotation fails where addition succeeds,
-completes the design space.
+fills out this design-space comparison.
 
 ## Method
 
@@ -75,16 +75,18 @@ SmolLM2-135M, Alpaca-cleaned, 3 epochs, seed=0, prov_dim=8.
 | π/2            | 0.000 | 1.000     | +1.537      | 1.54  |
 
 Reference: vanilla eval_loss = 1.629. Slopes tight in 1.25–1.54.
-Quotable predictor for the utility cost of any per-layer post-projection
-rotational intervention at similar scale.
+Empirical predictor for the utility cost of this per-layer
+post-projection rotational intervention family at similar scale.
 
 ### 2. T2b is empirically loose at this scale
 
 Zeroing the lowest-frequency 8 of 64 head_dim coords (cos=1, sin=0)
-costs 0.0005 in eval loss. The bottom of the RoPE frequency ladder is
-dimensionally underused at 135M / 1024-seq scale. Complements Chiang &
-Yogatama's theoretical result on the *high*-frequency end (different
-ends of the spectrum, both underused, different mechanisms).
+costs 0.0005 in eval loss at 1024-token training/eval length. This means
+the tested short-context setup barely depends on positional rotation in
+those pairs; it does not prove those coordinates are globally unused.
+This complements Chiang & Yogatama's theoretical result on the
+*high*-frequency end, but the long-context scaling still needs to be
+measured.
 
 ### 3. Post-projection rotation cannot be compensated
 
@@ -92,9 +94,10 @@ Per-layer rotation `R(θ)` applied after learned `W_Q, W_K` projections
 cannot be absorbed by the projections (their training happens upstream).
 ASIDE-style rotation on input embeddings *is* absorbed; AIR's additive
 per-layer signal interacts with projections by superposition rather than
-composition. The rotational/per-layer cell of the design space fails
-specifically due to this ordering. The 30-layer stack compounds the
-disruption.
+composition. The rotational/per-layer cell tested here fails specifically
+due to this ordering. The 30-layer stack compounds the disruption. This is
+a diagnosis of the tested placement, not a proof that all rotational
+provenance channels must fail.
 
 ### 4. SmolLM2-135M is below the SEP discrimination floor
 

@@ -1,0 +1,14 @@
+# Variant: role-aware RoPE, role-angle gap = pi/8, trained with matched
+# counterfactual instruction/data examples.
+extends: base.yaml
+
+attention_variant: rope_prov
+provenance_dims: 8
+role_angles: [0.0, 0.39269908]
+
+counterfactual_train_size: 12000
+counterfactual_eval_size: 400
+counterfactual_positive_fraction: 0.5
+
+wandb_group: smollm2-135m-counterfactual-v1
+wandb_run_name: rope_prov_P8_pi8_counterfactual

@@ -43,8 +43,13 @@ from transformers import (
     TrainingArguments,
     set_seed,
 )
+from transformers.trainer_utils import get_last_checkpoint
 
-from .data import RoleTaggingCollator, filter_alpaca_examples
+from .data import (
+    RoleTaggingCollator,
+    build_counterfactual_examples,
+    filter_alpaca_examples,
+)
 from .model import (
     patch_model_with_role_aware_attention,
     patch_model_with_zeroed_prov_pairs,
@@ -253,6 +258,15 @@ def main():
     )
     ap.add_argument("--max-steps", type=int, default=100)
     ap.add_argument("--disable-wandb", action="store_true")
+    ap.add_argument(
+        "--resume-from-checkpoint",
+        default=None,
+        help=(
+            "Checkpoint path to resume from, or 'latest' to use the newest "
+            "checkpoint under --output-dir. If 'latest' finds none, training "
+            "starts from scratch."
+        ),
+    )
     args = ap.parse_args()
 
     cfg = load_config(args.config)
@@ -295,9 +309,30 @@ def main():
     eval_n = cfg["eval_size"]
     train_examples = examples[eval_n:]
     eval_examples = examples[:eval_n]
+    cf_seed = cfg.get("counterfactual_seed", cfg["seed"])
+    cf_positive_fraction = cfg.get("counterfactual_positive_fraction", 0.5)
+    cf_train_n = int(cfg.get("counterfactual_train_size") or 0)
+    cf_eval_n = int(cfg.get("counterfactual_eval_size") or 0)
+    if cf_train_n:
+        train_examples.extend(
+            build_counterfactual_examples(
+                cf_train_n,
+                seed=cf_seed,
+                positive_fraction=cf_positive_fraction,
+            )
+        )
+    if cf_eval_n:
+        eval_examples.extend(
+            build_counterfactual_examples(
+                cf_eval_n,
+                seed=cf_seed + 10_000,
+                positive_fraction=cf_positive_fraction,
+            )
+        )
     print(
         f"[data] train={len(train_examples)} eval={len(eval_examples)} "
-        f"(filtered from {len(ds)} raw)",
+        f"(filtered from {len(ds)} raw; counterfactual train={cf_train_n} "
+        f"eval={cf_eval_n})",
         flush=True,
     )
 
@@ -346,6 +381,7 @@ def main():
         eval_steps=cfg["eval_steps"],
         save_strategy="no" if args.dry_run else "steps",
         save_steps=cfg["save_steps"],
+        save_total_limit=cfg.get("save_total_limit"),
         max_steps=args.max_steps if args.dry_run else -1,
         report_to=[] if args.disable_wandb or args.dry_run else ["wandb"],
         remove_unused_columns=False,
@@ -368,7 +404,14 @@ def main():
         data_collator=collator,
         callbacks=callbacks,
     )
-    trainer.train()
+    resume_from_checkpoint = args.resume_from_checkpoint
+    if resume_from_checkpoint == "latest":
+        resume_from_checkpoint = get_last_checkpoint(str(out_dir))
+        if resume_from_checkpoint:
+            print(f"[resume] using latest checkpoint {resume_from_checkpoint}", flush=True)
+        else:
+            print(f"[resume] no checkpoint found under {out_dir}; starting fresh", flush=True)
+    trainer.train(resume_from_checkpoint=resume_from_checkpoint)
     if not args.dry_run:
         trainer.save_model(str(out_dir / "final"))
 

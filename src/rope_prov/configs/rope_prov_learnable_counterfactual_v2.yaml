@@ -1,0 +1,18 @@
+# Variant: learnable role-angle RoPE on the v2 counterfactual curriculum.
+# Init at identical angles so training must create the role gap if useful.
+extends: base.yaml
+
+attention_variant: rope_prov
+provenance_dims: 8
+learnable_angles: true
+role_angles: [0.0, 0.0]
+
+counterfactual_train_size: 12000
+counterfactual_eval_size: 400
+counterfactual_positive_fraction: 0.5
+
+save_steps: 500
+save_total_limit: 3
+
+wandb_group: smollm2-135m-counterfactual-v2
+wandb_run_name: rope_prov_P8_learnable_counterfactual_v2

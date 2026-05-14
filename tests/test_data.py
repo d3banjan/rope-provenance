@@ -17,6 +17,7 @@ from rope_prov.data import (
     ASSISTANT_MARKER,
     PROMPT_TEMPLATE,
     RoleTaggingCollator,
+    build_counterfactual_examples,
     filter_alpaca_examples,
     render_example,
 )
@@ -190,3 +191,91 @@ def test_idempotence(collator):
     b2 = collator(_EXAMPLES)
     for k in b1:
         assert torch.equal(b1[k], b2[k]), f"key {k!r} not idempotent"
+
+
+def test_counterfactual_builder_creates_matched_roles(collator, role_map):
+    examples = build_counterfactual_examples(12, seed=123, positive_fraction=0.5)
+    assert len(examples) == 12
+    assert {
+        "synthetic_counterfactual_data_negative",
+        "synthetic_counterfactual_instruction_positive",
+    }.issubset({ex["source"] for ex in examples})
+
+    # Both classes must produce loss-bearing assistant tokens and both role ids.
+    batch = collator(examples)
+    assert (batch["labels"] != -100).any()
+    assert set(batch["role_ids"].unique().tolist()) == set(role_map.roles.values())
+
+
+def test_data_negative_counterfactual_labels_ignore_injected_directive():
+    examples = build_counterfactual_examples(20, seed=0, positive_fraction=0.0)
+    for ex in examples:
+        assert ex["source"] == "synthetic_counterfactual_data_negative"
+        assert ex["counterfactual_witness"] in ex["input"]
+        assert ex["output"] != ex["counterfactual_witness"]
+        assert ex["counterfactual_witness"] not in ex["instruction"]
+
+
+def test_instruction_positive_counterfactual_labels_follow_same_directive():
+    examples = build_counterfactual_examples(20, seed=0, positive_fraction=1.0)
+    for ex in examples:
+        assert ex["source"] == "synthetic_counterfactual_instruction_positive"
+        assert ex["output"] in ex["instruction"]
+        assert ex["output"] not in ex["input"]
+
+
+def test_counterfactual_builder_covers_diversity_axes():
+    examples = build_counterfactual_examples(120, seed=0, positive_fraction=0.5)
+    assert {ex["counterfactual_task_type"] for ex in examples} == {
+        "field_extraction",
+        "factual_lookup",
+        "computation",
+        "generation",
+        "refusal_label",
+    }
+    assert {ex["counterfactual_directive_style"] for ex in examples} == {
+        "imperative",
+        "question",
+        "assertion_then_action",
+        "embedded",
+        "systemish",
+        "json",
+    }
+    assert {ex["counterfactual_placement"] for ex in examples} == {
+        "early",
+        "middle",
+        "late",
+        "multiple",
+    }
+    assert {ex["counterfactual_distractor_difficulty"] for ex in examples} == {
+        "mundane",
+        "semantic_fit",
+    }
+
+
+def test_counterfactual_pairs_reuse_same_directive_across_roles():
+    examples = build_counterfactual_examples(40, seed=0, positive_fraction=0.5)
+    by_pair: dict[int, list[dict]] = {}
+    for ex in examples:
+        by_pair.setdefault(ex["counterfactual_pair_id"], []).append(ex)
+
+    assert by_pair
+    for pair in by_pair.values():
+        assert {ex["source"] for ex in pair} == {
+            "synthetic_counterfactual_data_negative",
+            "synthetic_counterfactual_instruction_positive",
+        }
+        negative = next(
+            ex
+            for ex in pair
+            if ex["source"] == "synthetic_counterfactual_data_negative"
+        )
+        positive = next(
+            ex
+            for ex in pair
+            if ex["source"] == "synthetic_counterfactual_instruction_positive"
+        )
+        witness = positive["counterfactual_witness"]
+        assert positive["output"] == witness
+        assert witness in positive["instruction"]
+        assert witness in negative["input"]

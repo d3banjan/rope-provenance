@@ -1,0 +1,16 @@
+# Variant: vanilla-with-zeroed-provenance-pairs on the v2 counterfactual curriculum.
+extends: base.yaml
+
+attention_variant: vanilla_zeroed
+provenance_dims: 8
+role_angles: [0.0]
+
+counterfactual_train_size: 12000
+counterfactual_eval_size: 400
+counterfactual_positive_fraction: 0.5
+
+save_steps: 500
+save_total_limit: 3
+
+wandb_group: smollm2-135m-counterfactual-v2
+wandb_run_name: vanilla_zeroed_P8_counterfactual_v2

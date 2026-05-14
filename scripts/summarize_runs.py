@@ -136,7 +136,7 @@ def to_markdown(arms: list[ArmSummary]) -> str:
         "the role signal is doing real work."
     )
     lines.append(
-        "- **`vanilla_zeroed` ≈ `vanilla`** ⇒ high-freq RoPE pairs are dimensionally underutilized; "
+        "- **`vanilla_zeroed` ≈ `vanilla`** ⇒ the zeroed low-frequency RoPE pairs are cheap at this sequence length; "
         "rope_prov has no intrinsic capacity penalty. **`vanilla_zeroed` ≫ `vanilla`** ⇒ those pairs "
         "were structural; ceiling is constrained."
     )
