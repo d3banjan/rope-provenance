@@ -113,71 +113,8 @@ def test_t2a_uniform_role_logits_invariant_under_angle_change():
     )
 
 
-class _ZeroedProvPairsAttention:
-    """Reference attention class: vanilla LlamaAttention with positional
-    RoPE replaced by identity on the prov-pair coord set. Defined here
-    inside the test module (rather than in src/) because it is specifically
-    a reference implementation for Theorem T2b's claim — not production
-    code. It zeros cos/sin on the prov coord set before delegating to the
-    parent's forward.
-    """
-    # Implemented as a free factory at call time so the LlamaAttention
-    # base class isn't imported at module-import time (it's slow).
-
-
-def _build_zeroed_attention_class(prov_dim_value: int):
-    """Constructs an attention class capturing prov_dim. Deferred import to
-    keep test collection cheap when transformers isn't needed."""
-    from transformers.models.llama.modeling_llama import LlamaAttention
-
-    class ZeroedProvPairsLlamaAttention(LlamaAttention):
-        prov_dim = prov_dim_value
-
-        def forward(
-            self,
-            hidden_states,
-            position_embeddings,
-            attention_mask,
-            past_key_value=None,
-            cache_position=None,
-            **kwargs,
-        ):
-            cos, sin = position_embeddings
-            head_dim = self.head_dim
-            half_h = head_dim // 2
-            pos_dim = head_dim - self.prov_dim
-            half_p = pos_dim // 2
-            cos = cos.clone()
-            sin = sin.clone()
-            # Identity rotation on prov coords: cos := 1, sin := 0.
-            cos[..., half_p:half_h] = 1.0
-            cos[..., half_h + half_p :] = 1.0
-            sin[..., half_p:half_h] = 0.0
-            sin[..., half_h + half_p :] = 0.0
-            return super().forward(
-                hidden_states,
-                (cos, sin),
-                attention_mask,
-                past_key_value=past_key_value,
-                cache_position=cache_position,
-                **kwargs,
-            )
-
-    return ZeroedProvPairsLlamaAttention
-
-
-def _patch_with_zeroed_prov_pairs(model, prov_dim: int):
-    Cls = _build_zeroed_attention_class(prov_dim)
-    for layer in model.model.layers:
-        src = layer.self_attn
-        new = Cls(src.config, src.layer_idx)
-        example = next(src.parameters(), None)
-        if example is not None:
-            new.to(device=example.device, dtype=example.dtype)
-        missing, unexpected = new.load_state_dict(src.state_dict(), strict=True)
-        assert not missing and not unexpected, (missing, unexpected)
-        layer.self_attn = new
-    return model
+# Zeroed-prov-pairs reference attention now lives in rope_prov.model so the
+# vanilla-zeroed training arm can reuse it. The test imports it directly.
 
 
 def test_t2b_uniform_role_equals_vanilla_with_zeroed_prov_pairs():
@@ -202,8 +139,10 @@ def test_t2b_uniform_role_equals_vanilla_with_zeroed_prov_pairs():
     patched_logits = _logits(model_patched, input_ids, role_ids=role_ids)
 
     # Reference: vanilla model with prov-pair RoPE zeroed.
+    from rope_prov.model import patch_model_with_zeroed_prov_pairs
+
     model_zeroed = _fresh_model()
-    _patch_with_zeroed_prov_pairs(model_zeroed, prov_dim=prov_dim)
+    patch_model_with_zeroed_prov_pairs(model_zeroed, prov_dim=prov_dim)
     zeroed_logits = _logits(model_zeroed, input_ids)
 
     max_abs_diff = (patched_logits - zeroed_logits).abs().max().item()

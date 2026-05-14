@@ -45,7 +45,10 @@ from transformers import (
 )
 
 from .data import RoleTaggingCollator, filter_alpaca_examples
-from .model import patch_model_with_role_aware_attention
+from .model import (
+    patch_model_with_role_aware_attention,
+    patch_model_with_zeroed_prov_pairs,
+)
 from .parser import RoleMap
 
 
@@ -149,6 +152,50 @@ class SanityWrappedCollator:
         return batch
 
 
+class LearnableAnglesCallback(TrainerCallback):
+    """Log shared learnable role-angle Parameter (θ_I, θ_D) to W&B + stderr
+    every ``log_every`` steps. The angle trajectory IS the experimental
+    signal for v2.5; eval loss is secondary."""
+
+    def __init__(self, model_ref, log_every: int = 10):
+        self.model_ref = model_ref
+        self.log_every = log_every
+
+    def on_step_end(self, args, state, control, **kwargs):
+        if state.global_step == 0 or state.global_step % self.log_every != 0:
+            return
+        param = getattr(self.model_ref, "role_angles_param", None)
+        if param is None:
+            return
+        angles = param.detach().float().cpu().tolist()
+        log = {f"angle/role_{i}": a for i, a in enumerate(angles)}
+        try:
+            import wandb
+            if wandb.run is not None:
+                wandb.log(log, step=state.global_step)
+        except Exception:
+            pass
+        print(f"[angles step={state.global_step}] {log}", flush=True)
+
+
+class PreEvalCacheFlushCallback(TrainerCallback):
+    """Flush the CUDA allocator cache right before an eval step. Cheap
+    defense against fragmentation-induced OOM at eval time — the
+    trainer-side allocations grow over many train steps; eval then adds
+    activations whose required contiguous blocks may not fit even though
+    total free memory is sufficient.
+
+    HF's ``on_evaluate`` callback fires *after* eval, not before. We hook
+    ``on_step_end`` and flush at the step preceding an eval boundary.
+    """
+
+    def on_step_end(self, args, state, control, **kwargs):
+        if not torch.cuda.is_available():
+            return
+        if args.eval_steps and state.global_step % args.eval_steps == 0 and state.global_step > 0:
+            torch.cuda.empty_cache()
+
+
 class ThroughputCallback(TrainerCallback):
     """Logs examples/sec every ``log_every`` global steps. Stamps a final
     summary to stderr at train end."""
@@ -222,7 +269,10 @@ def main():
     if tokenizer.pad_token is None:
         tokenizer.pad_token = tokenizer.eos_token
     role_map = RoleMap.from_yaml(cfg["role_map"])
-    if len(cfg["role_angles"]) != len(role_map.roles):
+    # Only the rope_prov variant actually consumes role_angles; vanilla and
+    # vanilla_zeroed carry placeholders that we don't want to police.
+    if cfg.get("attention_variant", "rope_prov") == "rope_prov" and \
+            len(cfg["role_angles"]) != len(role_map.roles):
         raise ValueError(
             f"role_angles has {len(cfg['role_angles'])} entries but role_map "
             f"declares {len(role_map.roles)} roles. Bring them in sync before "
@@ -254,11 +304,25 @@ def main():
     # --- Model ---
     dtype = torch.bfloat16 if cfg["bf16"] else torch.float32
     model = AutoModelForCausalLM.from_pretrained(cfg["model"], torch_dtype=dtype)
-    patch_model_with_role_aware_attention(
-        model,
-        prov_dim=cfg["provenance_dims"],
-        role_angles=cfg["role_angles"],
-    )
+    variant = cfg.get("attention_variant", "rope_prov")
+    if variant == "rope_prov":
+        patch_model_with_role_aware_attention(
+            model,
+            prov_dim=cfg["provenance_dims"],
+            role_angles=cfg["role_angles"],
+            learnable_angles=cfg.get("learnable_angles", False),
+        )
+    elif variant == "vanilla":
+        # prov_dim=0 makes the subclass a no-op kwarg sink.
+        patch_model_with_role_aware_attention(model, prov_dim=0)
+    elif variant == "vanilla_zeroed":
+        # Same positional capacity loss as rope_prov, no role signal.
+        # Establishes the T2b ceiling.
+        patch_model_with_zeroed_prov_pairs(
+            model, prov_dim=cfg["provenance_dims"]
+        )
+    else:
+        raise ValueError(f"unknown attention_variant: {variant!r}")
 
     # --- Trainer ---
     targs = TrainingArguments(
@@ -267,6 +331,7 @@ def main():
         seed=cfg["seed"],
         data_seed=cfg["seed"],
         per_device_train_batch_size=cfg["batch_size"],
+        per_device_eval_batch_size=cfg.get("eval_batch_size", cfg["batch_size"]),
         gradient_accumulation_steps=cfg["grad_accum"],
         learning_rate=cfg["lr"],
         weight_decay=cfg["weight_decay"],
@@ -274,6 +339,8 @@ def main():
         max_grad_norm=cfg["max_grad_norm"],
         num_train_epochs=cfg["epochs"],
         bf16=cfg["bf16"],
+        gradient_checkpointing=cfg.get("gradient_checkpointing", False),
+        prediction_loss_only=cfg.get("prediction_loss_only", False),
         logging_steps=cfg["logging_steps"],
         eval_strategy="no" if args.dry_run else "steps",
         eval_steps=cfg["eval_steps"],
@@ -289,13 +356,17 @@ def main():
         os.environ.setdefault("WANDB_ENTITY", cfg["wandb_entity"])
         os.environ.setdefault("WANDB_RUN_GROUP", cfg["wandb_group"])
 
+    callbacks = [PreEvalCacheFlushCallback(), ThroughputCallback()]
+    if cfg.get("learnable_angles", False):
+        callbacks.append(LearnableAnglesCallback(model, log_every=10))
+
     trainer = Trainer(
         model=model,
         args=targs,
         train_dataset=train_examples,
         eval_dataset=eval_examples if not args.dry_run else None,
         data_collator=collator,
-        callbacks=[ThroughputCallback()],
+        callbacks=callbacks,
     )
     trainer.train()
     if not args.dry_run:

@@ -2,6 +2,7 @@
 # for role rotation). Loads base, overrides only architecture knobs.
 extends: base.yaml
 
+attention_variant: rope_prov
 provenance_dims: 8
 role_angles: [0.0, 1.5708]    # INSTRUCTION=0, DATA=π/2
 

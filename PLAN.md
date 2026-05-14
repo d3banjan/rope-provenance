@@ -224,7 +224,24 @@ wandb_entity: d3banjan
 
 Vanilla config sets `provenance_dims: 0` and shares everything else. `role_angles` length must equal the number of roles in `role_map.roles`; assert this at startup.
 
-**Expected wall-clock**: ~4-6 hours per variant on the 3060.
+**Three training arms** (paired, identical hyperparameters apart from architecture):
+
+| Arm | Config | Architecture |
+|---|---|---|
+| `vanilla` | full positional capacity, no role signal | practical ceiling |
+| `vanilla_zeroed` | reduced positional capacity (RoPE on prov-pair coords replaced by identity), no role signal | **achievable** ceiling — T2b architecture used as a trainable baseline |
+| `rope_prov` | reduced positional capacity, plus role signal at angle π/2 | the experimental arm |
+
+`vanilla_zeroed` was promoted from the T2b structural-test reference (`ZeroedProvPairsLlamaAttention` in `model.py`) to a full training arm because rope_prov's correct comparison anchor is **the architectural ceiling**, not vanilla. If rope_prov converges *below* `vanilla_zeroed`, the role signal is doing real work — clean experimental claim. If at or above, training did not exploit the role signal.
+
+Decision tree on `vanilla_zeroed` outcome:
+- `vanilla_zeroed` within ~0.3 nat of `vanilla` ⇒ high-freq pairs weren't structural; rope_prov has architectural room.
+- `vanilla_zeroed` ≥ 1 nat above `vanilla` ⇒ those pairs *were* structural; the right comparison is rope_prov vs vanilla_zeroed (NOT vs vanilla). Actually strengthens the experimental claim.
+- `vanilla_zeroed` diverges/stalls ⇒ architectural issue, not training. Investigate before reading any rope_prov result.
+
+Run order: **vanilla_zeroed first** — fail-fast on the unknown architecture. Vanilla is a sanity rerun.
+
+**Expected wall-clock**: ~30-45 min per arm on the 3060 (measured: 30 ex/s without GC, ~22 ex/s with GC). Three arms total ~100 min if cheap OOM fixes hold (`prediction_loss_only=True`, `per_device_eval_batch_size=2`, pre-eval `torch.cuda.empty_cache()`). If still OOM, flip `gradient_checkpointing=True` (~140 min total).
 
 **Watch from step 0**:
 - *Initial training loss vs. vanilla on the same Alpaca subset*. If the rope-prov run starts dramatically higher than vanilla and doesn't converge during epoch 1, the architectural disruption is too much for SFT to recover from in the budget. Log both runs in the same W&B group so they overlay.

@@ -1,0 +1,11 @@
+# v2.5: learnable role angles. Two nn.Parameter scalars (θ_INSTRUCTION,
+# θ_DATA), both init=0 → identical to vanilla_zeroed at init. Discriminates
+# "mechanism dead at all angles" from "manual sweep searched wrong angles".
+extends: base.yaml
+
+attention_variant: rope_prov
+provenance_dims: 8
+learnable_angles: true
+role_angles: [0.0, 0.0]    # Init values; both learnable.
+
+wandb_run_name: rope_prov_P8_learnable

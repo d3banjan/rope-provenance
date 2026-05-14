@@ -1,0 +1,7 @@
+{
+  "sep_score": -0.02,
+  "exec_rate_instr": 0.0,
+  "exec_rate_data": 0.02,
+  "n": 200,
+  "variant": "rope_prov"
+}

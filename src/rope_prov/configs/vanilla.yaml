@@ -3,6 +3,7 @@
 # paired-run guarantee tight.
 extends: base.yaml
 
+attention_variant: vanilla
 provenance_dims: 0
 role_angles: [0.0]            # placeholder; ignored at prov_dim=0
 

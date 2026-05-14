@@ -1,0 +1,9 @@
+# Variant: role-aware RoPE, role-angle gap = π/6.
+# cos(π/6) ≈ 0.866 cross-role content retention.
+extends: base.yaml
+
+attention_variant: rope_prov
+provenance_dims: 8
+role_angles: [0.0, 0.52359878]    # INSTRUCTION=0, DATA=π/6
+
+wandb_run_name: rope_prov_P8_pi6

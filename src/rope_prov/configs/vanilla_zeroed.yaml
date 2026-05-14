@@ -1,0 +1,16 @@
+# Variant: vanilla SmolLM2 with RoPE on the prov-pair coords zeroed out
+# (cos=1, sin=0). Same positional capacity loss as rope_prov but no role
+# signal — establishes the architectural ceiling per Theorem T2b.
+#
+# Interpretation table for the paired three-way result:
+#   vanilla         : full positional capacity, no role signal
+#   vanilla_zeroed  : reduced positional capacity, no role signal  (T2b ceiling)
+#   rope_prov       : reduced positional capacity, plus role signal
+# rope_prov < vanilla_zeroed ⇒ role signal is doing real work.
+extends: base.yaml
+
+attention_variant: vanilla_zeroed
+provenance_dims: 8            # same as rope_prov for fair comparison
+role_angles: [0.0]            # unused; placeholder
+
+wandb_run_name: vanilla_zeroed_P8

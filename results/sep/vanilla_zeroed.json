@@ -1,0 +1,7 @@
+{
+  "sep_score": -0.195,
+  "exec_rate_instr": 0.105,
+  "exec_rate_data": 0.3,
+  "n": 200,
+  "variant": "vanilla_zeroed"
+}

@@ -5,15 +5,16 @@ model: HuggingFaceTB/SmolLM2-135M
 role_map: src/rope_prov/configs/role_map.yaml
 
 # --- Data ---
-dataset: tatsu-lab/alpaca-cleaned
+dataset: yahma/alpaca-cleaned
 dataset_split: train
 seq_len: 1024
 train_size: null            # null = all examples with non-empty input field
 eval_size: 200              # held-out for eval; same indices across variants
 
 # --- Optimizer ---
-batch_size: 8
-grad_accum: 4               # effective batch 32
+batch_size: 4
+grad_accum: 8               # effective batch 32 (same math as 8x4, half per-step memory)
+eval_batch_size: 2          # eval allocates extra activations; halve again
 lr: 2.0e-5
 weight_decay: 0.0
 warmup_ratio: 0.03
@@ -22,6 +23,11 @@ epochs: 3
 
 # --- Precision / hardware ---
 bf16: true
+prediction_loss_only: true    # skip accumulating eval logits tensor (huge);
+                              # we only care about eval loss for now
+gradient_checkpointing: false # kept off — try-cheap-first; flip to true only
+                              # if prediction_loss_only + eval_batch_size=2 +
+                              # pre-eval cache flush still OOM.
 
 # --- Logging / eval cadence ---
 logging_steps: 10

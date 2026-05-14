@@ -167,6 +167,7 @@ def patch_model_with_role_aware_attention(
     model: nn.Module,
     prov_dim: int = 0,
     role_angles: Optional[Sequence[float]] = None,
+    learnable_angles: bool = False,
 ) -> nn.Module:
     """Replace every ``model.model.layers[i].self_attn`` with a
     :class:`RoleAwareLlamaAttention`, preserving weights. In place; returns
@@ -174,9 +175,113 @@ def patch_model_with_role_aware_attention(
 
     ``prov_dim=0`` (default) preserves vanilla behavior — the override exists
     solely to accept and ignore a ``role_ids`` kwarg.
+
+    ``learnable_angles=True``: ``role_angles`` becomes a single shared
+    ``nn.Parameter`` registered once on the outer ``model`` (as
+    ``model.role_angles_param``) and tied by reference into each layer's
+    ``self_attn.role_angles`` via ``object.__setattr__`` — bypassing
+    ``nn.Module``'s parameter-registration logic so the optimizer sees the
+    tensor exactly once. The kernel reads ``self.role_angles`` as a tensor;
+    Parameter vs buffer is transparent at compute time but enables gradient
+    flow.
     """
-    for layer in model.model.layers:
-        layer.self_attn = _rebuild_attention_module(
-            layer.self_attn, prov_dim=prov_dim, role_angles=role_angles
+    if learnable_angles:
+        if role_angles is None:
+            role_angles = [0.0]
+        shared = nn.Parameter(
+            torch.as_tensor(list(role_angles), dtype=torch.float32)
         )
+        model.role_angles_param = shared  # register once at top level
+        for layer in model.model.layers:
+            new = _rebuild_attention_module(
+                layer.self_attn, prov_dim=prov_dim, role_angles=role_angles
+            )
+            # Drop the non-persistent buffer and replace with a plain-attr
+            # reference to the shared Parameter. object.__setattr__ skips
+            # nn.Module.__setattr__, preventing per-layer Parameter
+            # registration (would explode named_parameters() to 30× and
+            # trip Optimizer.add_param_group's duplicate-param check).
+            if "role_angles" in new._buffers:
+                del new._buffers["role_angles"]
+            object.__setattr__(new, "role_angles", shared)
+            layer.self_attn = new
+    else:
+        for layer in model.model.layers:
+            layer.self_attn = _rebuild_attention_module(
+                layer.self_attn, prov_dim=prov_dim, role_angles=role_angles
+            )
+    return model
+
+
+# ---------------------------------------------------------------------- #
+# Vanilla-with-zeroed-prov-pairs reference architecture.
+#
+# Used as the third training arm: same positional capacity loss as
+# rope_prov (cos=1, sin=0 on the prov pair coords) but no role signal.
+# Establishes the architectural ceiling per Theorem T2b. If rope_prov
+# converges below this arm, the role signal is doing measurable work.
+# ---------------------------------------------------------------------- #
+
+
+def make_zeroed_prov_pairs_attention_cls(prov_dim_value: int) -> type:
+    """Build a ``LlamaAttention`` subclass that zeroes RoPE on the prov-pair
+    coord set before delegating to the parent. Deferred import keeps cost
+    out of module load."""
+    from transformers.models.llama.modeling_llama import LlamaAttention
+
+    class ZeroedProvPairsLlamaAttention(LlamaAttention):
+        prov_dim = prov_dim_value
+
+        def forward(
+            self,
+            hidden_states,
+            position_embeddings,
+            attention_mask,
+            past_key_value=None,
+            cache_position=None,
+            **kwargs,
+        ):
+            cos, sin = position_embeddings
+            head_dim = self.head_dim
+            half_h = head_dim // 2
+            pos_dim = head_dim - self.prov_dim
+            half_p = pos_dim // 2
+            cos = cos.clone()
+            sin = sin.clone()
+            # Identity rotation (cos=1, sin=0) on prov-pair coord set —
+            # equivalent to "no RoPE" on those pairs.
+            cos[..., half_p:half_h] = 1.0
+            cos[..., half_h + half_p :] = 1.0
+            sin[..., half_p:half_h] = 0.0
+            sin[..., half_h + half_p :] = 0.0
+            return super().forward(
+                hidden_states,
+                (cos, sin),
+                attention_mask,
+                past_key_value=past_key_value,
+                cache_position=cache_position,
+                **kwargs,
+            )
+
+    return ZeroedProvPairsLlamaAttention
+
+
+def patch_model_with_zeroed_prov_pairs(
+    model: nn.Module, prov_dim: int
+) -> nn.Module:
+    """Replace each decoder layer's ``self_attn`` with a
+    ``ZeroedProvPairsLlamaAttention`` instance, preserving weights. The model
+    behaves like vanilla SmolLM2 except RoPE on the prov-pair coords is
+    identity — establishing the T2b cost-bound architecture as a trainable
+    baseline."""
+    Cls = make_zeroed_prov_pairs_attention_cls(prov_dim)
+    for layer in model.model.layers:
+        src = layer.self_attn
+        new = Cls(src.config, src.layer_idx)
+        example = next(src.parameters(), None)
+        if example is not None:
+            new.to(device=example.device, dtype=example.dtype)
+        missing, unexpected = new.load_state_dict(src.state_dict(), strict=True)
+        assert not missing and not unexpected, (missing, unexpected)
+        layer.self_attn = new
     return model
