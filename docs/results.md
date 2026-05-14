@@ -84,16 +84,19 @@ data in the DATA span.
 | Arm | W&B | Final train loss | Last eval loss | SEP | exec_instr | exec_data |
 |---|---|---:|---:|---:|---:|---:|
 | vanilla | `n3b2ajjb` | 1.6655 | 1.1782 | -0.135 | 0.155 | 0.290 |
+| vanilla_zeroed | `vp7rso3y` | 1.6655 | 1.1801 | -0.125 | 0.150 | 0.275 |
 
 Training gate: passed. The vanilla v2 run completed cleanly in 46.4 minutes at
-33.35 examples/sec, with stable eval loss around 1.18 after convergence.
+33.35 examples/sec, and the zeroed control completed in 47.4 minutes at 32.67
+examples/sec. Both have stable eval loss around 1.18 after convergence.
 
 SEP interpretation: v2 data improved vanilla SEP by +0.085 relative to the
-Alpaca vanilla baseline (-0.220 to -0.135), but did not make the architecture-free
-model actually separate roles; DATA-slot probe execution remains higher than
-INSTRUCTION-slot execution. This makes the remaining architectural arms
-informative: a rope_prov arm must beat this data-only gain, not merely improve
-over its v1 Alpaca number.
+Alpaca vanilla baseline (-0.220 to -0.135) and improved zeroed SEP by +0.070
+relative to its Alpaca baseline (-0.195 to -0.125). It still did not make either
+architecture-free model actually separate roles; DATA-slot probe execution
+remains higher than INSTRUCTION-slot execution. This makes the remaining
+architectural arms informative: a rope_prov arm must beat this data/control gain,
+not merely improve over its v1 Alpaca number.
 
 See [experiments.md](experiments.md) for the live run tracker and
 pre-registered gates.

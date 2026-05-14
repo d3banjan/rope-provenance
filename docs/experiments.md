@@ -1,6 +1,6 @@
 # Experiment Tracker
 
-Last updated: 2026-05-14T20:03:20+02:00.
+Last updated: 2026-05-14T21:10:42+02:00.
 
 This file is the active tracker. Every run gets one row. Do not encode active
 state in README, ad hoc notes, or generated logs.
@@ -33,7 +33,7 @@ transient progress here only if it affects an operational decision.
 | Run id | Status | Config | Output dir | W&B | Checkpoints | Notes |
 |---|---|---|---|---|---|---|
 | `cfv2-vanilla-s0` | completed | `src/rope_prov/configs/vanilla_counterfactual_v2.yaml` | `runs/vanilla_counterfactual_v2_online-seed0` | `n3b2ajjb` | every 500 steps, keep 3 | Completed cleanly. Final artifacts in `final/`; retained checkpoints: `checkpoint-2000`, `checkpoint-2500`, `checkpoint-2901`. |
-| `cfv2-zeroed-s0` | running | `src/rope_prov/configs/vanilla_zeroed_counterfactual_v2.yaml` | `runs/vanilla_zeroed_P8_counterfactual_v2_online-seed0` | `vp7rso3y` | every 500 steps, keep 3 | Started fresh after vanilla gate passed. Dataset counts match vanilla; early role sanity shows both role ids. |
+| `cfv2-zeroed-s0` | completed | `src/rope_prov/configs/vanilla_zeroed_counterfactual_v2.yaml` | `runs/vanilla_zeroed_P8_counterfactual_v2_online-seed0` | `vp7rso3y` | every 500 steps, keep 3 | Completed cleanly. Final artifacts in `final/`; retained checkpoints: `checkpoint-2000`, `checkpoint-2500`, `checkpoint-2901`. |
 
 W&B URLs:
 
@@ -56,12 +56,28 @@ Gate read: passed. Vanilla v2 has stable utility loss and improves SEP over the
 old Alpaca vanilla baseline by +0.085, so the remaining ablations are
 informative.
 
+Completed state for `cfv2-zeroed-s0`:
+
+- dataset: train 30957, eval 600, counterfactual train 12000, eval 400.
+- role sanity: both role ids present in train/eval batches.
+- eval loss: step 200 = 2.604, step 400 = 1.836, step 600 = 1.531,
+  step 1000 = 1.288, step 1600 = 1.189, step 2200 = 1.186,
+  step 2600 = 1.181, step 2800 = 1.180.
+- final train loss: 1.6655.
+- runtime: 47.4 min.
+- throughput: 32.67 examples/sec.
+- SEP: -0.125, with instruction execution 0.150 and data execution 0.275.
+
+Gate read: passed. Zeroing the lowest-frequency RoPE pairs again behaves like a
+cheap control at this context length, with stable utility loss and SEP within
+0.010 of the vanilla counterfactual baseline.
+
 ## Counterfactual v2 Matrix
 
 | Run id | Status | Hypothesis | Config | Output dir |
 |---|---|---|---|---|
 | `cfv2-vanilla-s0` | completed | data-only baseline | `src/rope_prov/configs/vanilla_counterfactual_v2.yaml` | `runs/vanilla_counterfactual_v2_online-seed0` |
-| `cfv2-zeroed-s0` | running | capacity/zeroed-dim control | `src/rope_prov/configs/vanilla_zeroed_counterfactual_v2.yaml` | `runs/vanilla_zeroed_P8_counterfactual_v2_online-seed0` |
+| `cfv2-zeroed-s0` | completed | capacity/zeroed-dim control | `src/rope_prov/configs/vanilla_zeroed_counterfactual_v2.yaml` | `runs/vanilla_zeroed_P8_counterfactual_v2_online-seed0` |
 | `cfv2-rope-pi8-s0` | planned | fixed small role rotation | `src/rope_prov/configs/rope_prov_pi8_counterfactual_v2.yaml` | `runs/rope_prov_P8_pi8_counterfactual_v2_online-seed0` |
 | `cfv2-rope-learnable-s0` | planned | model chooses role-angle gap | `src/rope_prov/configs/rope_prov_learnable_counterfactual_v2.yaml` | `runs/rope_prov_P8_learnable_counterfactual_v2_online-seed0` |
 | `cfv2-best-rope-s1` | conditional | seed variance calibration | duplicate best rope config with seed 1 | TBD |
@@ -71,8 +87,8 @@ the counterfactual curriculum before spending GPU on the other arms. If vanilla
 does not move SEP relative to the old vanilla baseline, the data did not teach
 role-conditioning to the architecture-free baseline.
 
-The vanilla gate passed on 2026-05-14. Next action: run `cfv2-zeroed-s0`, then
-the fixed-angle and learnable-angle rope_prov arms.
+The vanilla and zeroed gates passed on 2026-05-14. Next action: run the
+fixed-angle and learnable-angle rope_prov arms.
 
 ## Commands
 
