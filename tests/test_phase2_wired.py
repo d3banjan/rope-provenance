@@ -1,7 +1,7 @@
 """Phase 2 wired test: ``apply_role_aware_rotary_paired`` plumbed into
 ``LlamaAttention.forward``.
 
-Architectural note (see PLAN.md Phase 6, T2 wording): with the pair-aware
+Architectural note (see docs/research.md, T2 wording): with the pair-aware
 split, "uniform-role logits == vanilla logits" is **not** the right
 invariant — the highest-frequency RoPE pairs are *replaced* with role
 rotation, so patched ≠ vanilla even at uniform role (positional info on

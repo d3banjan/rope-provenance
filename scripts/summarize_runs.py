@@ -6,7 +6,7 @@ Usage:
         --vanilla /tmp/vanilla_full.log \
         --vanilla-zeroed /tmp/vanilla_zeroed_full.log \
         --rope-prov /tmp/rope_prov_full.log \
-        --output results/three_arm_summary.md
+        --output results/three_arm_summary.generated.md
 
 Parses HF Trainer's stdout (loss/grad_norm/eval_loss dicts emitted as ``{...}``
 lines) plus our own ``[throughput SUMMARY]`` footer. Output is a markdown
@@ -172,7 +172,7 @@ def main():
     ap.add_argument("--vanilla", required=True)
     ap.add_argument("--vanilla-zeroed", required=True)
     ap.add_argument("--rope-prov", required=True)
-    ap.add_argument("--output", default="results/three_arm_summary.md")
+    ap.add_argument("--output", default="results/three_arm_summary.generated.md")
     args = ap.parse_args()
 
     arms = [

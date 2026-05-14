@@ -63,7 +63,7 @@ def apply_role_aware_rotary_paired(
     information, so repurposing them costs the least pretrained capacity.
     Concretely, with head_dim=64 and P=8 you sacrifice pair indices 28-31
     out of 32, i.e. 4/32 = 12.5% of positional pairs. This is the
-    architectural cost bounded by Theorem T2b in PLAN.md.
+    architectural cost bounded by the T2b statement in docs/research.md.
 
     Coordinate diagram (head_dim=64, prov_dim=8, half_h=32, half_p=28)::
 
