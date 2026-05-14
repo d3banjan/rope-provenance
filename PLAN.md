@@ -65,9 +65,10 @@ This is the core mechanism. Single file: `src/rope_prov/rotary.py`.
 
 **Design**
 
-Split `head_dim = 64` into two contiguous subspaces:
-- **Positional subspace**: dims `[0 : head_dim - P]` — receives standard RoPE based on `position_ids`.
-- **Provenance subspace**: dims `[head_dim - P : head_dim]` — receives role-dependent rotation based on `role_ids`.
+The codebase carries two formulations:
+
+1. **Contiguous split** (`apply_role_aware_rotary`): dims `[0 : head_dim - P]` get standard RoPE, dims `[head_dim - P : head_dim]` get the role rotation. Clean math, suited to from-scratch training where the embedding pair structure aligns with the slice. Used for the mathematical unit tests in `tests/test_rotary.py`.
+2. **Pair-aware split** (`apply_role_aware_rotary_paired`, **used for SmolLM2 patching**): HF Llama pairs coords `(i, i + head_dim/2)`. A naïve contiguous slice scrambles those pairs for a pretrained model — coord `i` ends up paired with `i + pos_dim/2` instead of `i + head_dim/2`. The pair-aware variant carves the *highest-frequency* `P/2` RoPE pairs out into the provenance subspace (coords `{half_p..half_h-1, half_h+half_p..head_dim-1}`), leaving low-frequency pairs alone. Sacrifices the finest-grained positional info — the part least costly to repurpose during SFT.
 
 Start with `P = 8`. Make it a config knob.
 
@@ -262,7 +263,7 @@ Do **not** start Lean work until Phase 5 numbers land. If they're flat you refra
 **Theorem set**
 
 - **T1 — Identity at P=0**: When provenance subspace is empty, role-aware RoPE = standard RoPE. ("No behavior change unless we ask for it.")
-- **T2 — Same-role invariance**: For tokens with identical role IDs, role rotation cancels in `Q·K^T` (R(θ)·R(-θ) = I). Attention between same-role tokens bit-identical to vanilla.
+- **T2 — Same-role role-rotation invariance**: For tokens with identical role IDs, the role rotation cancels in `Q·K^T` (R(θ)·R(-θ) = I). Equivalently, with uniform `role_ids` the logits are invariant under changes to the per-role angle. (Note: with the pair-aware split this does *not* imply patched ≡ vanilla — the high-frequency RoPE pairs are replaced by role rotation regardless of role assignment, so patched ≠ vanilla even at uniform role. The cancellation is between *different angle choices for the same role*, which is what attention-pattern invariance actually requires.)
 - **T3 — Cross-role phase offset**: For roles r₁ ≠ r₂, provenance-subspace dot product is scaled by `cos(θ_{r₁} - θ_{r₂})` on aligned components. Quantifies decorrelation precisely.
 - **T4 — Subspace independence**: Positional and role rotations act on disjoint coordinate subspaces → commute, no interference. Direct sum of orthogonal groups.
 - **T5 — Orthogonality preservation**: Combined transform is orthogonal → preserves vector norms. No scale instability injected into attention logits.

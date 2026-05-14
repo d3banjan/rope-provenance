@@ -25,3 +25,13 @@ __all__ = [
     "parse_to_role_ids",
     "rotate_half",
 ]
+
+
+def __getattr__(name):
+    # Lazy import: model.py pulls transformers, which is heavy and not always
+    # needed (parser/rotary work without it). Keep the public surface but
+    # defer the import cost.
+    if name in {"RoleAwareLlamaAttention", "patch_model_with_role_aware_attention"}:
+        from . import model as _model
+        return getattr(_model, name)
+    raise AttributeError(f"module 'rope_prov' has no attribute {name!r}")
