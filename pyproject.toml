@@ -4,11 +4,14 @@ version = "0.0.1"
 requires-python = ">=3.10"
 dependencies = [
     "torch>=2.4",
+    "pyyaml>=6",
+    "transformers>=4.45,<4.50",
 ]
 
 [project.optional-dependencies]
 dev = [
     "pytest>=8",
+    "hypothesis>=6",
 ]
 
 [build-system]
@@ -20,4 +23,7 @@ packages = ["src/rope_prov"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-addopts = "-q"
+addopts = "-q -m 'not slow'"
+markers = [
+    "slow: tests that download models or are otherwise heavy; opt in with -m slow",
+]

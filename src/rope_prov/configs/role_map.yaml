@@ -1,0 +1,11 @@
+roles:
+  INSTRUCTION: 0
+  DATA: 1
+default_role: INSTRUCTION
+spans:
+  - {open: "<|instruction|>", close: "<|data|>",      role: INSTRUCTION}
+  - {open: "<|data|>",        close: "<|assistant|>", role: DATA}
+  - {open: "<payload>",       close: "</payload>",    role: DATA}
+  - {open: "<retrieved>",     close: "</retrieved>",  role: DATA}
+overlap_policy: error           # error | innermost-wins | outermost-wins
+on_unclosed: error              # error | treat-as-default
