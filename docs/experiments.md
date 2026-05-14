@@ -1,6 +1,6 @@
 # Experiment Tracker
 
-Last updated: 2026-05-14T21:10:42+02:00.
+Last updated: 2026-05-14T21:12:15+02:00.
 
 This file is the active tracker. Every run gets one row. Do not encode active
 state in README, ad hoc notes, or generated logs.
@@ -34,11 +34,13 @@ transient progress here only if it affects an operational decision.
 |---|---|---|---|---|---|---|
 | `cfv2-vanilla-s0` | completed | `src/rope_prov/configs/vanilla_counterfactual_v2.yaml` | `runs/vanilla_counterfactual_v2_online-seed0` | `n3b2ajjb` | every 500 steps, keep 3 | Completed cleanly. Final artifacts in `final/`; retained checkpoints: `checkpoint-2000`, `checkpoint-2500`, `checkpoint-2901`. |
 | `cfv2-zeroed-s0` | completed | `src/rope_prov/configs/vanilla_zeroed_counterfactual_v2.yaml` | `runs/vanilla_zeroed_P8_counterfactual_v2_online-seed0` | `vp7rso3y` | every 500 steps, keep 3 | Completed cleanly. Final artifacts in `final/`; retained checkpoints: `checkpoint-2000`, `checkpoint-2500`, `checkpoint-2901`. |
+| `cfv2-rope-pi8-s0` | running | `src/rope_prov/configs/rope_prov_pi8_counterfactual_v2.yaml` | `runs/rope_prov_P8_pi8_counterfactual_v2_online-seed0` | `y0033rou` | every 500 steps, keep 3 | Started fresh after zeroed gate passed. Dataset counts match vanilla/zeroed; early role sanity shows both role ids. |
 
 W&B URLs:
 
 - `cfv2-vanilla-s0`: `https://wandb.ai/d3banjan/rope-provenance/runs/n3b2ajjb`
 - `cfv2-zeroed-s0`: `https://wandb.ai/d3banjan/rope-provenance/runs/vp7rso3y`
+- `cfv2-rope-pi8-s0`: `https://wandb.ai/d3banjan/rope-provenance/runs/y0033rou`
 
 Completed state for `cfv2-vanilla-s0`:
 
@@ -78,7 +80,7 @@ cheap control at this context length, with stable utility loss and SEP within
 |---|---|---|---|---|
 | `cfv2-vanilla-s0` | completed | data-only baseline | `src/rope_prov/configs/vanilla_counterfactual_v2.yaml` | `runs/vanilla_counterfactual_v2_online-seed0` |
 | `cfv2-zeroed-s0` | completed | capacity/zeroed-dim control | `src/rope_prov/configs/vanilla_zeroed_counterfactual_v2.yaml` | `runs/vanilla_zeroed_P8_counterfactual_v2_online-seed0` |
-| `cfv2-rope-pi8-s0` | planned | fixed small role rotation | `src/rope_prov/configs/rope_prov_pi8_counterfactual_v2.yaml` | `runs/rope_prov_P8_pi8_counterfactual_v2_online-seed0` |
+| `cfv2-rope-pi8-s0` | running | fixed small role rotation | `src/rope_prov/configs/rope_prov_pi8_counterfactual_v2.yaml` | `runs/rope_prov_P8_pi8_counterfactual_v2_online-seed0` |
 | `cfv2-rope-learnable-s0` | planned | model chooses role-angle gap | `src/rope_prov/configs/rope_prov_learnable_counterfactual_v2.yaml` | `runs/rope_prov_P8_learnable_counterfactual_v2_online-seed0` |
 | `cfv2-best-rope-s1` | conditional | seed variance calibration | duplicate best rope config with seed 1 | TBD |
 
