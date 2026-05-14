@@ -1,0 +1,8 @@
+# Variant: role-aware RoPE with prov_dim=8 (4 of 32 RoPE pairs reserved
+# for role rotation). Loads base, overrides only architecture knobs.
+extends: base.yaml
+
+provenance_dims: 8
+role_angles: [0.0, 1.5708]    # INSTRUCTION=0, DATA=π/2
+
+wandb_run_name: rope_prov_P8

@@ -1,0 +1,9 @@
+# Variant: vanilla SmolLM2 (no role-aware RoPE). Loads base, overrides
+# only architecture knobs. Do not duplicate any other field — keep the
+# paired-run guarantee tight.
+extends: base.yaml
+
+provenance_dims: 0
+role_angles: [0.0]            # placeholder; ignored at prov_dim=0
+
+wandb_run_name: vanilla

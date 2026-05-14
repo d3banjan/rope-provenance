@@ -1,0 +1,37 @@
+# Shared training base. vanilla.yaml and rope_prov.yaml each override only
+# the architecture-specific fields below the divider; everything else MUST
+# stay identical across the paired runs so the comparison is clean.
+model: HuggingFaceTB/SmolLM2-135M
+role_map: src/rope_prov/configs/role_map.yaml
+
+# --- Data ---
+dataset: tatsu-lab/alpaca-cleaned
+dataset_split: train
+seq_len: 1024
+train_size: null            # null = all examples with non-empty input field
+eval_size: 200              # held-out for eval; same indices across variants
+
+# --- Optimizer ---
+batch_size: 8
+grad_accum: 4               # effective batch 32
+lr: 2.0e-5
+weight_decay: 0.0
+warmup_ratio: 0.03
+max_grad_norm: 1.0
+epochs: 3
+
+# --- Precision / hardware ---
+bf16: true
+
+# --- Logging / eval cadence ---
+logging_steps: 10
+eval_steps: 200
+save_steps: 1000
+
+# --- Reproducibility ---
+seed: 0                     # SAME seed across paired variants
+
+# --- W&B ---
+wandb_project: rope-provenance
+wandb_entity: d3banjan
+wandb_group: smollm2-135m-alpaca-v1   # SAME group; variants distinguished by run_name
