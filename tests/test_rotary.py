@@ -45,10 +45,17 @@ def test_identity_when_prov_dim_zero(rng):
     torch.testing.assert_close(k_out, k_ref, rtol=0, atol=1e-12)
 
 
-def test_equal_role_preserves_attention_scores(rng):
-    """When every token has the same role, role rotation is global and
-    cancels inside Q K^T. So attention scores match the prov_dim=0 case
-    (same standard RoPE on the leading subspace, no rotation on trailing)."""
+def test_t2b_uniform_role_equals_pos_rope_on_pos_slice_only(rng):
+    """**Theorem T2b (contiguous formulation)**: with uniform ``role_ids``,
+    the patched attention scores equal those of a model in which standard
+    RoPE is applied to the positional slice and the provenance slice
+    contributes the *unrotated* ``Q_prov · K_prov^T`` dot product.
+
+    Equivalent statement: uniform role rotation cancels in `Q·K^T`, so the
+    provenance slice contribution is invariant to the chosen role angle,
+    and equals the "identity rotation" reference. This bounds what the
+    architecture gives up — the operational counterpart on SmolLM2 is in
+    ``tests/test_phase2_wired.py::test_t2b_uniform_role_equals_vanilla_with_zeroed_prov_pairs``."""
     B, H, T, D, P = 1, 2, 6, 16, 4
     pos_dim = D - P
     q = torch.randn(B, H, T, D, generator=rng, dtype=torch.float64)
@@ -77,6 +84,41 @@ def test_equal_role_preserves_attention_scores(rng):
         )
 
         torch.testing.assert_close(scores, scores_ref, rtol=1e-10, atol=1e-10)
+
+
+def test_t2a_uniform_role_logits_invariant_under_angle_change(rng):
+    """**Theorem T2a (contiguous formulation)**: with uniform ``role_ids``,
+    attention scores are invariant under arbitrary changes to the
+    per-role angle vector. Cycle three distinct angle assignments and
+    assert all produce bit-identical (modulo fp64 noise) Q·K^T."""
+    B, H, T, D, P = 1, 2, 6, 16, 4
+    pos_dim = D - P
+    q = torch.randn(B, H, T, D, generator=rng, dtype=torch.float64)
+    k = torch.randn(B, H, T, D, generator=rng, dtype=torch.float64)
+
+    cos_full, sin_full = _pos_cos_sin(B, T, D)
+    cos_pos, sin_pos = cos_full[..., :pos_dim], sin_full[..., :pos_dim]
+
+    angle_vectors = [
+        torch.tensor([0.0, 0.0, 0.0], dtype=torch.float64),       # all zero
+        torch.tensor([0.7, -1.3, 2.4], dtype=torch.float64),
+        torch.tensor([math.pi, math.pi / 7, -math.pi / 3], dtype=torch.float64),
+    ]
+    reference_scores = None
+    for ang in angle_vectors:
+        # Pin every token to role 0 — same uniform assignment across runs;
+        # only the angle attached to that role varies.
+        role_ids = torch.zeros((B, T), dtype=torch.long)
+        q_rot, k_rot = apply_role_aware_rotary(
+            q, k, cos_pos, sin_pos, role_ids, prov_dim=P, role_angles=ang,
+        )
+        scores = q_rot @ k_rot.transpose(-1, -2)
+        if reference_scores is None:
+            reference_scores = scores
+        else:
+            torch.testing.assert_close(
+                scores, reference_scores, rtol=1e-10, atol=1e-10
+            )
 
 
 def test_cross_role_phase_offset_predicted_score():

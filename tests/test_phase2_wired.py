@@ -77,11 +77,17 @@ def test_prov_dim_zero_matches_vanilla_bitwise():
     assert max_abs_diff < 1e-5
 
 
-def test_uniform_role_logits_invariant_under_angle_change():
-    """T2 operational: uniform-role rotation cancels in Q·K^T, so patched
-    logits with the same role_ids should not depend on the per-role angle
-    chosen for that role. (They will differ from vanilla because high-freq
-    RoPE pairs are replaced by role rotation; that's a different concern.)"""
+def test_t2a_uniform_role_logits_invariant_under_angle_change():
+    """**Theorem T2a operational**: uniform-role rotation cancels in Q·K^T,
+    so patched logits at fixed ``role_ids`` are invariant under changes to
+    the per-role angle. (Patched ≠ vanilla — that's T2b's concern.)
+
+    Observed numerics (fp32 model, 30 layers): max_abs_diff ≈ 4e-5 across
+    role_angles=[0.0,…] vs [0.7,…]. Logits magnitude is O(10), so this is
+    ~1e-6 relative ≈ a few fp32 ULPs of multi-layer accumulation noise.
+    No bf16 in the test path; this is the fp32 floor for SmolLM2 at
+    seqlen=64. If you rerun in fp64 the diff should drop to ~1e-12.
+    """
     from rope_prov.model import patch_model_with_role_aware_attention
 
     role_ids = torch.zeros(BATCH, SEQLEN, dtype=torch.long)  # all role 0
@@ -100,12 +106,114 @@ def test_uniform_role_logits_invariant_under_angle_change():
     logits_b = _logits(model_b, input_ids, role_ids=role_ids)
 
     max_abs_diff = (logits_a - logits_b).abs().max().item()
-    print(f"[wired T2 operational] max_abs_diff={max_abs_diff:.3e}")
-    # 30-layer fp32 accumulation; cancellation is exact in principle, so
-    # the gap should sit at numerical noise.
+    print(f"[wired T2a operational] max_abs_diff={max_abs_diff:.3e}")
     assert max_abs_diff < 1e-3, (
         f"Uniform-role logits depended on role angle (diff={max_abs_diff:.3e}); "
-        "the role-rotation cancellation in Q·K^T (Theorem T2) is broken."
+        "the role-rotation cancellation in Q·K^T (Theorem T2a) is broken."
+    )
+
+
+class _ZeroedProvPairsAttention:
+    """Reference attention class: vanilla LlamaAttention with positional
+    RoPE replaced by identity on the prov-pair coord set. Defined here
+    inside the test module (rather than in src/) because it is specifically
+    a reference implementation for Theorem T2b's claim — not production
+    code. It zeros cos/sin on the prov coord set before delegating to the
+    parent's forward.
+    """
+    # Implemented as a free factory at call time so the LlamaAttention
+    # base class isn't imported at module-import time (it's slow).
+
+
+def _build_zeroed_attention_class(prov_dim_value: int):
+    """Constructs an attention class capturing prov_dim. Deferred import to
+    keep test collection cheap when transformers isn't needed."""
+    from transformers.models.llama.modeling_llama import LlamaAttention
+
+    class ZeroedProvPairsLlamaAttention(LlamaAttention):
+        prov_dim = prov_dim_value
+
+        def forward(
+            self,
+            hidden_states,
+            position_embeddings,
+            attention_mask,
+            past_key_value=None,
+            cache_position=None,
+            **kwargs,
+        ):
+            cos, sin = position_embeddings
+            head_dim = self.head_dim
+            half_h = head_dim // 2
+            pos_dim = head_dim - self.prov_dim
+            half_p = pos_dim // 2
+            cos = cos.clone()
+            sin = sin.clone()
+            # Identity rotation on prov coords: cos := 1, sin := 0.
+            cos[..., half_p:half_h] = 1.0
+            cos[..., half_h + half_p :] = 1.0
+            sin[..., half_p:half_h] = 0.0
+            sin[..., half_h + half_p :] = 0.0
+            return super().forward(
+                hidden_states,
+                (cos, sin),
+                attention_mask,
+                past_key_value=past_key_value,
+                cache_position=cache_position,
+                **kwargs,
+            )
+
+    return ZeroedProvPairsLlamaAttention
+
+
+def _patch_with_zeroed_prov_pairs(model, prov_dim: int):
+    Cls = _build_zeroed_attention_class(prov_dim)
+    for layer in model.model.layers:
+        src = layer.self_attn
+        new = Cls(src.config, src.layer_idx)
+        example = next(src.parameters(), None)
+        if example is not None:
+            new.to(device=example.device, dtype=example.dtype)
+        missing, unexpected = new.load_state_dict(src.state_dict(), strict=True)
+        assert not missing and not unexpected, (missing, unexpected)
+        layer.self_attn = new
+    return model
+
+
+def test_t2b_uniform_role_equals_vanilla_with_zeroed_prov_pairs():
+    """**Theorem T2b operational**: with uniform ``role_ids``, the patched
+    model's logits equal those of a vanilla SmolLM2 whose positional RoPE
+    on prov-pair coords has been replaced by identity (cos=1, sin=0). This
+    is the architecture's *cost bound* — what the modification gives up
+    regardless of training: the lowest-frequency P/2 RoPE pairs no longer
+    carry positional information."""
+    from rope_prov.model import patch_model_with_role_aware_attention
+
+    prov_dim = 8
+
+    # Patched model with arbitrary non-zero role angle (uniform role ⇒
+    # cancels in Q·K^T regardless of angle, per T2a).
+    model_patched = _fresh_model()
+    input_ids = _common_inputs(model_patched.config.vocab_size)
+    patch_model_with_role_aware_attention(
+        model_patched, prov_dim=prov_dim, role_angles=[0.7, math.pi / 2]
+    )
+    role_ids = torch.zeros(BATCH, SEQLEN, dtype=torch.long)
+    patched_logits = _logits(model_patched, input_ids, role_ids=role_ids)
+
+    # Reference: vanilla model with prov-pair RoPE zeroed.
+    model_zeroed = _fresh_model()
+    _patch_with_zeroed_prov_pairs(model_zeroed, prov_dim=prov_dim)
+    zeroed_logits = _logits(model_zeroed, input_ids)
+
+    max_abs_diff = (patched_logits - zeroed_logits).abs().max().item()
+    print(f"[wired T2b structural] max_abs_diff={max_abs_diff:.3e}")
+    # Both paths funnel through the same SDPA implementation post-RoPE;
+    # the only numerical difference is the order in which constants
+    # multiply onto Q/K. Should sit at fp32 noise.
+    assert max_abs_diff < 1e-3, (
+        f"Patched (uniform role) != vanilla-with-zeroed-prov-pairs "
+        f"(diff={max_abs_diff:.3e}); T2b cost-bound claim broken."
     )
 
 

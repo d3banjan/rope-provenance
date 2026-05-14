@@ -40,21 +40,47 @@ def apply_role_aware_rotary_paired(
 ) -> tuple[Tensor, Tensor]:
     """Pair-aware role-aware RoPE for HF Llama-style attention.
 
-    HF Llama pairs coords (i, i + head_dim//2) for RoPE. To avoid scrambling
-    those pairs when carving out a provenance subspace, this variant assigns:
+    HF Llama pairs coords ``(i, i + head_dim//2)`` for RoPE rotation. The
+    rotation angle for pair index ``i`` is ``position_id * inv_freq[i]``
+    where ``inv_freq[i] = base ** (-2i / head_dim)``. So **pair index 0 is
+    the highest angular frequency** (fastest rotation; discriminates short
+    distances) and **pair index half_h - 1 is the lowest** (slowest;
+    informative only over long contexts).
 
-      - **Positional subspace** = the *lowest-frequency* half-pairs.
-        Coords {0..half_p-1, half_h..half_h+half_p-1}, where
-        half_h = head_dim // 2 and half_p = pos_dim // 2. Receives standard
-        RoPE rotation by ``position_ids`` (via the supplied full-length
-        ``cos`` / ``sin``).
-      - **Provenance subspace** = the *highest-frequency* half-pairs.
-        Coords {half_p..half_h-1, half_h+half_p..head_dim-1}. Receives a
-        per-token rotation by ``role_angles[role_ids]``.
+    To avoid scrambling the pretrained pair structure, this variant assigns:
 
-    Sacrifices the highest-frequency positional info to encode role. For a
-    pretrained model this is the right trade — the high-freq pairs carry
-    fine-grained position info that's least costly to repurpose during SFT.
+      - **Positional subspace** = pair indices ``[0, half_p)`` — the
+        ``half_p`` *highest-frequency* (lowest-indexed) pairs.
+        Coords ``{0..half_p-1, half_h..half_h+half_p-1}``, where
+        ``half_h = head_dim // 2`` and ``half_p = pos_dim // 2``.
+        Receives standard RoPE rotation by ``position_ids``.
+      - **Provenance subspace** = pair indices ``[half_p, half_h)`` — the
+        ``half_h - half_p`` *lowest-frequency* (highest-indexed) pairs.
+        Coords ``{half_p..half_h-1, half_h+half_p..head_dim-1}``.
+        Receives a per-token rotation by ``role_angles[role_ids]``.
+
+    Why the lowest-freq pairs: they carry the least position-discriminative
+    information, so repurposing them costs the least pretrained capacity.
+    Concretely, with head_dim=64 and P=8 you sacrifice pair indices 28-31
+    out of 32, i.e. 4/32 = 12.5% of positional pairs. This is the
+    architectural cost bounded by Theorem T2b in PLAN.md.
+
+    Coordinate diagram (head_dim=64, prov_dim=8, half_h=32, half_p=28)::
+
+        first half               second half
+        |                       |                       |
+        |--- pos pairs ---|prov |--- pos pairs ---|prov |
+        0                28   32                60   64
+                         ^     ^                  ^     ^
+                         half_p half_h           half_h+half_p
+
+        Coord 0 pairs with coord 32 (pair index 0,    pos)
+        Coord 1 pairs with coord 33 (pair index 1,    pos)
+                                       ...
+        Coord 27 pairs with coord 59 (pair index 27,  pos)
+        Coord 28 pairs with coord 60 (pair index 28,  prov)
+                                       ...
+        Coord 31 pairs with coord 63 (pair index 31,  prov)
 
     q, k:        [B, H, T, head_dim]
     cos, sin:    full-length cos/sin from the model's

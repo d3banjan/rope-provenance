@@ -95,8 +95,10 @@ class RoleAwareLlamaAttention(LlamaAttention):
         else:
             # Pair-aware split keeps the pretrained pair structure
             # (coord i paired with coord i + head_dim//2) on the positional
-            # subspace, sacrificing only the highest-frequency pairs to
-            # provenance. See rotary.apply_role_aware_rotary_paired docstring.
+            # subspace, sacrificing only the *lowest-frequency* pairs
+            # (highest-indexed in inv_freq) to provenance. See
+            # rotary.apply_role_aware_rotary_paired docstring for the
+            # convention + coordinate diagram.
             query_states, key_states = apply_role_aware_rotary_paired(
                 query_states,
                 key_states,

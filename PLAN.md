@@ -68,7 +68,9 @@ This is the core mechanism. Single file: `src/rope_prov/rotary.py`.
 The codebase carries two formulations:
 
 1. **Contiguous split** (`apply_role_aware_rotary`): dims `[0 : head_dim - P]` get standard RoPE, dims `[head_dim - P : head_dim]` get the role rotation. Clean math, suited to from-scratch training where the embedding pair structure aligns with the slice. Used for the mathematical unit tests in `tests/test_rotary.py`.
-2. **Pair-aware split** (`apply_role_aware_rotary_paired`, **used for SmolLM2 patching**): HF Llama pairs coords `(i, i + head_dim/2)`. A naïve contiguous slice scrambles those pairs for a pretrained model — coord `i` ends up paired with `i + pos_dim/2` instead of `i + head_dim/2`. The pair-aware variant carves the *highest-frequency* `P/2` RoPE pairs out into the provenance subspace (coords `{half_p..half_h-1, half_h+half_p..head_dim-1}`), leaving low-frequency pairs alone. Sacrifices the finest-grained positional info — the part least costly to repurpose during SFT.
+2. **Pair-aware split** (`apply_role_aware_rotary_paired`, **used for SmolLM2 patching**): HF Llama pairs coords `(i, i + head_dim/2)`. A naïve contiguous slice scrambles those pairs for a pretrained model — coord `i` ends up paired with `i + pos_dim/2` instead of `i + head_dim/2`. The pair-aware variant carves the *lowest-frequency* `P/2` RoPE pairs (highest-indexed in `inv_freq`, where `inv_freq[i] = base^(-2i/head_dim)`) out into the provenance subspace — coord set `{half_p..half_h-1, half_h+half_p..head_dim-1}`. The high-frequency pairs (low pair index) stay positional. Sacrifices the slowest-rotating, least position-discriminative pairs — the part least costly to repurpose during SFT. Recent "Dimension Inefficiency in Attention Heads for Long-Distance Retrieval" work argues these lowest-frequency dims are already underused in pretrained models, which is independent justification for the choice.
+
+**Cost bound**: at `head_dim=64`, `P=8` ⇒ 4 of 32 positional pairs gone = 12.5% positional capacity. Probably fine for ≤2k context, untested beyond. Phase-5 ablation: sweep `P ∈ {4, 8, 16}` and watch for long-context degradation in AlpacaEval-lite.
 
 Start with `P = 8`. Make it a config knob.
 
@@ -224,7 +226,19 @@ Vanilla config sets `provenance_dims: 0` and shares everything else. `role_angle
 
 **Expected wall-clock**: ~4-6 hours per variant on the 3060.
 
-**Acceptance**: Both variants train to convergence (loss curve plateaus, no divergence). W&B run logs include loss, grad-norm, and at least one sample generation per eval step.
+**Watch from step 0**:
+- *Initial training loss vs. vanilla on the same Alpaca subset*. If the rope-prov run starts dramatically higher than vanilla and doesn't converge during epoch 1, the architectural disruption is too much for SFT to recover from in the budget. Log both runs in the same W&B group so they overlay.
+- Sample generations every N steps. If the patched model produces gibberish even after several thousand steps, that's a sign the high-freq RoPE-pair replacement broke too much pretrained capacity — drop P, try the linear angle schedule, or both.
+
+**`prepare_inputs_for_generation` footgun** — non-negotiable:
+
+HF's default `prepare_inputs_for_generation` strips unknown kwargs before passing them to `forward()`. `role_ids` is unknown to it. If you do nothing, **`model.generate(input_ids, role_ids=...)` silently drops `role_ids`** and Phase 5 SEP/BIPIA evaluation runs the model with **no role rotation at all** — you get vanilla-equivalent scores while thinking you're benchmarking the modification.
+
+Mitigation:
+1. Override `prepare_inputs_for_generation` on the wrapped model to thread `role_ids` (and, at decoding time, append a role-id for each newly generated token — assistant tokens get `INSTRUCTION` role by the v1 convention).
+2. Dedicated test `tests/test_generation_propagation.py` (slow): hook the attention module of layer 0 with a spy, call `model.generate(input_ids, role_ids=...)`, assert the spy recorded a non-`None` `role_ids` tensor whose shape covers both the prompt and the newly generated tokens.
+
+**Acceptance**: Both variants train to convergence (loss curve plateaus, no divergence). W&B run logs include loss, grad-norm, and at least one sample generation per eval step. `test_generation_propagation.py` green.
 
 ---
 
@@ -248,6 +262,12 @@ BIPIA repo: `microsoft/BIPIA`. Run the email-injection split — smallest and mo
 
 If you don't hit these, the result is still publishable as a negative finding, but reframe the writeup.
 
+**Queued ablations (cheap; run if compute permits)**
+
+1. *P sweep*: `P ∈ {4, 8, 16}`. Tests the T2b cost-bound empirically — at what fraction of pretrained pairs sacrificed does long-context perplexity start to degrade? Watch AlpacaEval-lite as the primary signal.
+2. *Linear angle schedule*: ramp role-angle assignment 0 → π/2 over the first 10% of training. Fixed angles are the right v1 (matches ASIDE's setup, simpler analysis), but the schedule variant is cheap and might give cleaner dynamics. File if step-0 training loss with fixed angles is much higher than vanilla — the schedule lets the model adapt to the increasing role separation gradually.
+3. *Learned angles*: replace the fixed `role_angles` buffer with a learnable `nn.Parameter`. Phase-5 ablation, not v1; documented in the "deferred" list.
+
 ---
 
 ## Phase 6 — Lean 4 formalization (post-Phase-5; gated on positive results)
@@ -263,7 +283,11 @@ Do **not** start Lean work until Phase 5 numbers land. If they're flat you refra
 **Theorem set**
 
 - **T1 — Identity at P=0**: When provenance subspace is empty, role-aware RoPE = standard RoPE. ("No behavior change unless we ask for it.")
-- **T2 — Same-role role-rotation invariance**: For tokens with identical role IDs, the role rotation cancels in `Q·K^T` (R(θ)·R(-θ) = I). Equivalently, with uniform `role_ids` the logits are invariant under changes to the per-role angle. (Note: with the pair-aware split this does *not* imply patched ≡ vanilla — the high-frequency RoPE pairs are replaced by role rotation regardless of role assignment, so patched ≠ vanilla even at uniform role. The cancellation is between *different angle choices for the same role*, which is what attention-pattern invariance actually requires.)
+- **T2a — Role-angle invariance under uniform role**: For any uniform role assignment and any two role-angle vectors `θ`, `θ'`, the attention logits are identical. *Proof*: on the provenance subspace, the rotation is global per token; `Q' K'^T = (Q R(θ)) (K R(θ))^T = Q R(θ) R(θ)^T K^T = Q K^T`, independent of `θ`.
+
+- **T2b — Positional capacity loss (cost bound)**: The modified model with uniform role assignment is equivalent to a vanilla model in which positional RoPE on pair indices `{half_p, ..., half_h - 1}` has been replaced by the identity. In particular, `half_h - half_p = P/2` lowest-frequency RoPE pairs no longer carry position information, regardless of role assignment. This is the tight bound on what the modification gives up *architecturally*; further losses on the trained model are empirical and depend on SFT.
+
+  T2b is the honest framing of the cost. It is also the theorem that makes the cost quantitative — referees will ask "what does the role bias cost you," and T2b answers in closed form. Pair operationally with `tests/test_phase2_wired.py::test_t2b_*`, which checks that patched (uniform role) logits equal vanilla-with-zeroed-prov-pairs logits on SmolLM2-135M.
 - **T3 — Cross-role phase offset**: For roles r₁ ≠ r₂, provenance-subspace dot product is scaled by `cos(θ_{r₁} - θ_{r₂})` on aligned components. Quantifies decorrelation precisely.
 - **T4 — Subspace independence**: Positional and role rotations act on disjoint coordinate subspaces → commute, no interference. Direct sum of orthogonal groups.
 - **T5 — Orthogonality preservation**: Combined transform is orthogonal → preserves vector norms. No scale instability injected into attention logits.
