@@ -1,6 +1,6 @@
 # Experiment Tracker
 
-Last updated: 2026-05-15T05:21:16+02:00.
+Last updated: 2026-05-15T05:41:50+02:00.
 
 This file is the active tracker. Every run gets one row. Do not encode active
 state in README, ad hoc notes, or generated logs.
@@ -118,7 +118,9 @@ slow convergence from failure to find the transport path.
 | `cfv2-rope-pi8-s0` | completed | fixed small post-projection role rotation | `src/rope_prov/configs/rope_prov_pi8_counterfactual_v2.yaml` | `runs/rope_prov_P8_pi8_counterfactual_v2_online-seed0` |
 | `cfv2-rope-prew-pi8-smoke-s0` | completed | pre-W role rotation smoke; tests placement correction | `src/rope_prov/configs/rope_prov_pre_w_pi8_counterfactual_v2_smoke.yaml` | `runs/rope_prov_pre_w_P8_pi8_counterfactual_v2_smoke-seed0` |
 | `cfv2-rope-learnable-s0` | planned | model chooses role-angle gap | `src/rope_prov/configs/rope_prov_learnable_counterfactual_v2.yaml` | `runs/rope_prov_P8_learnable_counterfactual_v2_online-seed0` |
+| `cfv2-rope-learnable-pi8-unfreeze-s0` | conditional | nonzero learnable gap tests whether optimizer drives angle back to zero | TBD | TBD |
 | `cfv2-rope-prew-pi8-full-s0` | conditional | budget-vs-findability check for pre-W transport | duplicate pre-W smoke config with full step budget | TBD |
+| `cfv2-rope-independent-angles-s0` | conditional | rotational steelman against equal-frequency collapse | TBD | TBD |
 | `cfv2-best-rope-s1` | conditional | seed variance calibration | duplicate best rope config with seed 1 | TBD |
 
 Run vanilla first. If vanilla final eval loss is unstable or above 2.0, revise
@@ -132,6 +134,12 @@ on 2026-05-15. Next operational step is the learnable-angle arm. A full-budget
 pre-W run remains needed for matched placement comparability, and an
 independent-angle rotational arm is the strongest steelman against the
 equal-frequency bottleneck.
+
+The pi8 SEP failure is asymmetric rather than merely null: INSTRUCTION-slot
+execution collapses while DATA-slot execution is unchanged. That makes the
+learnable-angle arms more diagnostic. If standard learnable angles converge near
+zero, run a nonzero-initialized/unfrozen variant before treating "zero angle" as
+only a bandwidth result.
 
 ## Commands
 

@@ -106,6 +106,14 @@ while vanilla improved by +0.085, giving a delta-of-deltas of -0.080. The arm
 mostly suppresses INSTRUCTION-slot execution (0.020) while leaving DATA-slot
 execution near vanilla/zeroed levels.
 
+Asymmetric compliance damage: the surprising result is that fixed pi/8 does not
+merely regress to vanilla-like SEP. It selectively destroys the
+harness-tag-aware INSTRUCTION-slot compliance gained from counterfactual data
+(0.155 to 0.020), while DATA-slot style-following is unchanged within noise
+(0.290 to 0.295). This updates the cost-law framing: the aggregate loss budget
+can look smooth while the capability cost lands almost entirely on one focused
+role-aware pathway.
+
 Manual output audit: a 20-example INSTRUCTION-slot audit is recorded in
 `results/sep/pi8_instruction_output_audit.json`. Vanilla executed the witness
 in 3/20 cases; pi/8 executed 0/20. Both models produced non-empty outputs on all

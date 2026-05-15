@@ -1,6 +1,6 @@
 # Research Brief
 
-Last updated: 2026-05-15T05:21:16+02:00.
+Last updated: 2026-05-15T05:41:50+02:00.
 
 ## One-Sentence Objective
 
@@ -92,11 +92,27 @@ SEP -0.275 with instruction execution 0.020 and DATA execution 0.295. Its
 delta-of-deltas versus vanilla is -0.080, so aligned counterfactual training did
 not make this fixed post-projection channel useful.
 
+More importantly, the failure is asymmetric: INSTRUCTION-slot execution falls
+from 0.155 to 0.020, while DATA-slot execution is essentially unchanged
+(0.290 to 0.295). This is not just "rotation unused." It is a functional
+dissociation: the fixed rotation damages the harness-tag-aware compliance
+pathway learned by counterfactual training, while the style-driven DATA-slot
+execution pathway remains intact. Treat this as behavioral evidence for Ye et
+al.'s style-dominance thesis, not yet as a localized circuit proof.
+
 H3: the learnable channel is accepted by the model. If the learned role-angle
 gap moves above 5 degrees and SEP improves, the channel becomes useful under
 aligned training. If the gap stays near zero with stable training, the sharper
 diagnosis is that this post-projection rotational placement is structurally
 inadequate even with the right curriculum.
+
+Because fixed pi/8 selectively destroys instruction compliance, the learnable
+prediction is overdetermined. Near-zero learned angles can now mean either
+equal-frequency bandwidth is too narrow or the optimizer has learned to avoid
+the asymmetric compliance damage. A useful follow-up is a nonzero-initialized
+learnable arm with the role gap held fixed briefly and then unfrozen. If the
+gap is driven back toward zero, the optimizer can see the damaging direction. If
+it stalls or oscillates, the structural-inadequacy reading is cleaner.
 
 ## Symmetry-Survey Interpretation
 
@@ -110,6 +126,13 @@ This is enough bandwidth for binary instruction-vs-DATA provenance in
 principle. It is probably too narrow for full source/span provenance unless a
 future design adds independent angle sectors, source embeddings, additive id
 channels, or another higher-bandwidth carrier.
+
+The independent-angle rotational steelman is therefore still inside the paper's
+cell: break the equal-frequency collapse without moving to an additive AIR
+channel. The key question is whether distinct per-pair angles pay independent
+compliance damage, causing super-linear failure, or whether the compliance cost
+saturates after the first role-rotated subspace, leaving room for multiple
+rotational carriers.
 
 Transport geometry gives the better diagnostic language for v2. A usable
 provenance direction has to pass three filters: the observable must resolve it,
