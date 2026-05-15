@@ -1,6 +1,6 @@
 # Experiment Tracker
 
-Last updated: 2026-05-15T04:52:30+02:00.
+Last updated: 2026-05-15T05:06:06+02:00.
 
 This file is the active tracker. Every run gets one row. Do not encode active
 state in README, ad hoc notes, or generated logs.
@@ -88,8 +88,12 @@ Completed state for `cfv2-rope-prew-pi8-smoke-s0`:
 
 Gate read: mixed. Pre-W starts less disruptive than post-projection pi/8 at
 step 200 (2.666 vs 3.003), but it does not catch up by step 400 or 600 on eval
-loss. This does not answer SEP, but it kills the strongest version of "pre-W is
-obviously cheaper on utility" for this 600-step smoke.
+loss. The concerning number is the step-400 to step-600 decrease: vanilla drops
+0.312, zeroed drops 0.305, and pre-W drops only 0.043. That supports the
+"algebraically available" part of the transport-filter hypothesis but weakly
+undercuts the "SGD finds the near-commutant quickly" part. This does not answer
+SEP, and a matched 2901-step pre-W run remains the clean way to distinguish
+slow convergence from failure to find the transport path.
 
 ## Counterfactual v2 Matrix
 
@@ -100,6 +104,7 @@ obviously cheaper on utility" for this 600-step smoke.
 | `cfv2-rope-pi8-s0` | completed, SEP pending | fixed small post-projection role rotation | `src/rope_prov/configs/rope_prov_pi8_counterfactual_v2.yaml` | `runs/rope_prov_P8_pi8_counterfactual_v2_online-seed0` |
 | `cfv2-rope-prew-pi8-smoke-s0` | completed | pre-W role rotation smoke; tests placement correction | `src/rope_prov/configs/rope_prov_pre_w_pi8_counterfactual_v2_smoke.yaml` | `runs/rope_prov_pre_w_P8_pi8_counterfactual_v2_smoke-seed0` |
 | `cfv2-rope-learnable-s0` | planned | model chooses role-angle gap | `src/rope_prov/configs/rope_prov_learnable_counterfactual_v2.yaml` | `runs/rope_prov_P8_learnable_counterfactual_v2_online-seed0` |
+| `cfv2-rope-prew-pi8-full-s0` | conditional | budget-vs-findability check for pre-W transport | duplicate pre-W smoke config with full step budget | TBD |
 | `cfv2-best-rope-s1` | conditional | seed variance calibration | duplicate best rope config with seed 1 | TBD |
 
 Run vanilla first. If vanilla final eval loss is unstable or above 2.0, revise
@@ -110,7 +115,9 @@ role-conditioning to the architecture-free baseline.
 The vanilla and zeroed gates passed on 2026-05-14. The fixed pi8 training run
 completed on 2026-05-15. The pre-W smoke also completed on 2026-05-15; next
 operational step is SEP for the fixed pi8 arm, then the learnable-angle arm
-unless the fixed pi8 SEP result changes the decision tree.
+unless the fixed pi8 SEP result changes the decision tree. A full-budget pre-W
+run is conditional: run it if fixed pi8 and learnable leave placement/budget
+ambiguity unresolved.
 
 ## Commands
 

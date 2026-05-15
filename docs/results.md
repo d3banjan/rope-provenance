@@ -104,7 +104,10 @@ not a full comparison to the 2901-step vanilla/zeroed runs. It started less
 disruptively than post-projection pi/8 at step 200 (2.666 vs 3.003 eval loss),
 but was worse by step 400 and step 600 (2.379 vs 2.259; 2.336 vs 1.860). This
 does not answer SEP, but it rules out an immediate utility-loss win for this
-pre-W placement at smoke scale.
+pre-W placement at smoke scale. The step-400 to step-600 decrease is also
+slow: 0.043 for pre-W versus about 0.31 for vanilla and zeroed. The smoke
+therefore supports lower initial cost but not quick optimizer absorption into a
+low-loss transport path.
 
 See [experiments.md](experiments.md) for the live run tracker and
 pre-registered gates.

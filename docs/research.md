@@ -1,6 +1,6 @@
 # Research Brief
 
-Last updated: 2026-05-15T04:52:30+02:00.
+Last updated: 2026-05-15T05:06:06+02:00.
 
 ## One-Sentence Objective
 
@@ -113,13 +113,21 @@ transport through the block stack. Counterfactual training is the observable
 refinement; vanilla_zeroed is the budget/capacity control; the pre-W smoke is a
 placement test for the transport filter.
 
+The pre-W smoke splits the transport hypothesis into two pieces. It supports
+the algebraic availability claim: moving the role rotation upstream of `Wq`/`Wk`
+has lower initial utility cost than post-projection pi/8. It weakly undercuts
+the findability claim: between steps 400 and 600, vanilla and zeroed drop about
+0.31 eval-loss nats, while pre-W drops only 0.043. That is not the trajectory of
+a projection quickly learning to absorb the role rotation into a near-commutant
+subspace.
+
 The current claim should therefore avoid saying post-projection rotation is
 uncompensatable in an absolute sense. The cleaner claim is that it is a
 low-slack transport path through a thin commutant-compatible region. If pre-W
-improves utility or SEP, placement was the binding constraint. If pre-W also
-fails under the counterfactual curriculum, the next kill target is rotational
-per-layer channels as a class, with additive channels or RWKV/SSM gates as the
-natural pivot.
+improves utility or SEP with a matched full run, placement was the binding
+constraint but needs more budget than the smoke. If pre-W also fails under the
+counterfactual curriculum, the next kill target is rotational per-layer channels
+as a class, with additive channels or RWKV/SSM gates as the natural pivot.
 
 Sector-attractor language also cautions against over-reading one SEP scalar:
 two runs can share the same macro SEP while using different microscopic
