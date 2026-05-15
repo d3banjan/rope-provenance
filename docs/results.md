@@ -87,6 +87,10 @@ data in the DATA span.
 | vanilla_zeroed | `vp7rso3y` | 1.6655 | 1.1801 | -0.125 | 0.150 | 0.275 |
 | rope_prov pi/8 | `y0033rou` | n/a | 1.5224 | -0.275 | 0.020 | 0.295 |
 | rope_prov pre-W pi/8 smoke | `rw38jp7x` | 1.7671 | 2.3358 | n/a | n/a | n/a |
+| rope_prov learnable | `mn858blz` | 1.6656 | 1.1856 | -0.130 | 0.155 | 0.285 |
+| rope_prov pre-W pi/8 full | `vmgck3dr` | 1.6654 | 1.1832 | -0.125 | 0.160 | 0.285 |
+| rope_prov learnable pi/8 unfreeze | `kkrlei1m` | 1.7438 | 1.5296 | -0.290 | 0.025 | 0.315 |
+| rope_prov independent angles | `i4dwm9tf` | 1.7686 | 1.5546 | -0.240 | 0.010 | 0.250 |
 
 Training gate: passed. The vanilla v2 run completed cleanly in 46.4 minutes at
 33.35 examples/sec, and the zeroed control completed in 47.4 minutes at 32.67
@@ -129,7 +133,43 @@ does not answer SEP, but it rules out an immediate utility-loss win for this
 pre-W placement at smoke scale. The step-400 to step-600 decrease is also
 slow: 0.043 for pre-W versus about 0.31 for vanilla and zeroed. The smoke
 therefore supports lower initial cost but not quick optimizer absorption into a
-low-loss transport path.
+low-loss transport path. The full-budget pre-W run supersedes this read: it
+converged to the vanilla/zeroed utility band and landed at SEP -0.125. The smoke
+is best treated as an operational/usability warning rather than a stable
+architecture result.
+
+Learnable post-projection interpretation: the standard learnable-angle arm
+converged with vanilla-like utility and vanilla-like SEP. Its final role-angle
+gap was about -0.55 degrees, far below pi/8. Under aligned counterfactual
+training, the optimizer still avoids opening the post-projection rotational
+channel.
+
+Full-budget pre-W interpretation: fixed pi/8 before Wq/Wk avoids the catastrophic
+instruction-compliance collapse seen in post-projection pi8, but it does not
+produce positive role separation. This keeps pre-W in the comparison matrix as a
+cleaner null: placement fixes utility damage but not provenance utility.
+
+Freeze/unfreeze interpretation: initializing the learnable post-projection gap
+near pi/8, freezing it for 200 steps, and then unfreezing does not recover the
+zero-gap basin within budget. The final gap remains large, about 19.84 degrees,
+and the SEP result is worse than fixed pi/8. This rules against the idea that
+standard learnable only stayed near zero because it lacked a nonzero starting
+push.
+
+Independent-angle interpretation: assigning different fixed angles per
+provenance pair was the rotational steelman against the equal-frequency
+single-phase bottleneck. It failed: utility stayed in the high-loss fixed-angle
+band and instruction execution collapsed to 0.010. Extra rotational bandwidth
+did not create usable substring provenance at this placement and scale.
+
+Rotational-cell conclusion: the counterfactual curriculum was necessary and
+worked as a data intervention, but no per-layer rotational arm produced positive
+role separation. Post-projection nonzero rotations preferentially damage the
+focused instruction-compliance pathway. Learnable post-projection angles avoid
+damage by closing the channel. Pre-W placement restores utility and compliance
+but lands on the same SEP as zeroed. This closes the v1/v2 rotational matrix as
+a negative result, with pre-W as the strongest null and post-W nonzero rotations
+as the informative failure mode.
 
 See [experiments.md](experiments.md) for the live run tracker and
 pre-registered gates.
