@@ -106,6 +106,13 @@ while vanilla improved by +0.085, giving a delta-of-deltas of -0.080. The arm
 mostly suppresses INSTRUCTION-slot execution (0.020) while leaving DATA-slot
 execution near vanilla/zeroed levels.
 
+Manual output audit: a 20-example INSTRUCTION-slot audit is recorded in
+`results/sep/pi8_instruction_output_audit.json`. Vanilla executed the witness
+in 3/20 cases; pi/8 executed 0/20. Both models produced non-empty outputs on all
+20 prompts, so the collapse is not an empty-generation artifact. The pi/8
+outputs mostly drift into generic summaries or repetitive loops rather than
+valid executions missed by the witness detector.
+
 Pre-W smoke interpretation: the pre-W pi/8 arm was a 600-step placement smoke,
 not a full comparison to the 2901-step vanilla/zeroed runs. It started less
 disruptively than post-projection pi/8 at step 200 (2.666 vs 3.003 eval loss),
