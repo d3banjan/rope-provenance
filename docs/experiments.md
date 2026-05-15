@@ -1,6 +1,6 @@
 # Experiment Tracker
 
-Last updated: 2026-05-14T21:12:15+02:00.
+Last updated: 2026-05-15T04:41:41+02:00.
 
 This file is the active tracker. Every run gets one row. Do not encode active
 state in README, ad hoc notes, or generated logs.
@@ -34,13 +34,15 @@ transient progress here only if it affects an operational decision.
 |---|---|---|---|---|---|---|
 | `cfv2-vanilla-s0` | completed | `src/rope_prov/configs/vanilla_counterfactual_v2.yaml` | `runs/vanilla_counterfactual_v2_online-seed0` | `n3b2ajjb` | every 500 steps, keep 3 | Completed cleanly. Final artifacts in `final/`; retained checkpoints: `checkpoint-2000`, `checkpoint-2500`, `checkpoint-2901`. |
 | `cfv2-zeroed-s0` | completed | `src/rope_prov/configs/vanilla_zeroed_counterfactual_v2.yaml` | `runs/vanilla_zeroed_P8_counterfactual_v2_online-seed0` | `vp7rso3y` | every 500 steps, keep 3 | Completed cleanly. Final artifacts in `final/`; retained checkpoints: `checkpoint-2000`, `checkpoint-2500`, `checkpoint-2901`. |
-| `cfv2-rope-pi8-s0` | running | `src/rope_prov/configs/rope_prov_pi8_counterfactual_v2.yaml` | `runs/rope_prov_P8_pi8_counterfactual_v2_online-seed0` | `y0033rou` | every 500 steps, keep 3 | Started fresh after zeroed gate passed. Dataset counts match vanilla/zeroed; early role sanity shows both role ids. |
+| `cfv2-rope-pi8-s0` | completed | `src/rope_prov/configs/rope_prov_pi8_counterfactual_v2.yaml` | `runs/rope_prov_P8_pi8_counterfactual_v2_online-seed0` | `y0033rou` | every 500 steps, keep 3 | Completed cleanly. Final artifacts in `final/`; retained checkpoints: `checkpoint-2000`, `checkpoint-2500`, `checkpoint-2901`. SEP intentionally deferred until after pre-W smoke. |
+| `cfv2-rope-prew-pi8-smoke-s0` | running | `src/rope_prov/configs/rope_prov_pre_w_pi8_counterfactual_v2_smoke.yaml` | `runs/rope_prov_pre_w_P8_pi8_counterfactual_v2_smoke-seed0` | `rw38jp7x` | every 200 steps, keep 2 | 600-step GPU smoke queued immediately after fixed pi8 completed, before pi8 SEP. Dataset counts match other v2 arms; early role sanity shows both role ids. |
 
 W&B URLs:
 
 - `cfv2-vanilla-s0`: `https://wandb.ai/d3banjan/rope-provenance/runs/n3b2ajjb`
 - `cfv2-zeroed-s0`: `https://wandb.ai/d3banjan/rope-provenance/runs/vp7rso3y`
 - `cfv2-rope-pi8-s0`: `https://wandb.ai/d3banjan/rope-provenance/runs/y0033rou`
+- `cfv2-rope-prew-pi8-smoke-s0`: `https://wandb.ai/d3banjan/rope-provenance/runs/rw38jp7x`
 
 Completed state for `cfv2-vanilla-s0`:
 
@@ -80,7 +82,8 @@ cheap control at this context length, with stable utility loss and SEP within
 |---|---|---|---|---|
 | `cfv2-vanilla-s0` | completed | data-only baseline | `src/rope_prov/configs/vanilla_counterfactual_v2.yaml` | `runs/vanilla_counterfactual_v2_online-seed0` |
 | `cfv2-zeroed-s0` | completed | capacity/zeroed-dim control | `src/rope_prov/configs/vanilla_zeroed_counterfactual_v2.yaml` | `runs/vanilla_zeroed_P8_counterfactual_v2_online-seed0` |
-| `cfv2-rope-pi8-s0` | running | fixed small role rotation | `src/rope_prov/configs/rope_prov_pi8_counterfactual_v2.yaml` | `runs/rope_prov_P8_pi8_counterfactual_v2_online-seed0` |
+| `cfv2-rope-pi8-s0` | completed, SEP pending | fixed small post-projection role rotation | `src/rope_prov/configs/rope_prov_pi8_counterfactual_v2.yaml` | `runs/rope_prov_P8_pi8_counterfactual_v2_online-seed0` |
+| `cfv2-rope-prew-pi8-smoke-s0` | running | pre-W role rotation smoke; tests placement correction | `src/rope_prov/configs/rope_prov_pre_w_pi8_counterfactual_v2_smoke.yaml` | `runs/rope_prov_pre_w_P8_pi8_counterfactual_v2_smoke-seed0` |
 | `cfv2-rope-learnable-s0` | planned | model chooses role-angle gap | `src/rope_prov/configs/rope_prov_learnable_counterfactual_v2.yaml` | `runs/rope_prov_P8_learnable_counterfactual_v2_online-seed0` |
 | `cfv2-best-rope-s1` | conditional | seed variance calibration | duplicate best rope config with seed 1 | TBD |
 
@@ -89,8 +92,9 @@ the counterfactual curriculum before spending GPU on the other arms. If vanilla
 does not move SEP relative to the old vanilla baseline, the data did not teach
 role-conditioning to the architecture-free baseline.
 
-The vanilla and zeroed gates passed on 2026-05-14. Next action: run the
-fixed-angle and learnable-angle rope_prov arms.
+The vanilla and zeroed gates passed on 2026-05-14. The fixed pi8 training run
+completed on 2026-05-15; SEP is deferred until after the pre-W smoke so the
+placement correction gets a cheap GPU check before post-hoc pi8 analysis.
 
 ## Commands
 
@@ -114,6 +118,11 @@ uv run env WANDB_MODE=online python -m rope_prov.train \
 uv run env WANDB_MODE=online python -m rope_prov.train \
   --config src/rope_prov/configs/rope_prov_pi8_counterfactual_v2.yaml \
   --output-dir runs/rope_prov_P8_pi8_counterfactual_v2_online-seed0 \
+  --resume-from-checkpoint latest
+
+uv run env WANDB_MODE=online python -m rope_prov.train \
+  --config src/rope_prov/configs/rope_prov_pre_w_pi8_counterfactual_v2_smoke.yaml \
+  --output-dir runs/rope_prov_pre_w_P8_pi8_counterfactual_v2_smoke-seed0 \
   --resume-from-checkpoint latest
 
 uv run env WANDB_MODE=online python -m rope_prov.train \
