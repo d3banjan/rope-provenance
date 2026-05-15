@@ -1,6 +1,6 @@
 # Experiment Tracker
 
-Last updated: 2026-05-15T05:06:06+02:00.
+Last updated: 2026-05-15T05:21:16+02:00.
 
 This file is the active tracker. Every run gets one row. Do not encode active
 state in README, ad hoc notes, or generated logs.
@@ -34,7 +34,7 @@ transient progress here only if it affects an operational decision.
 |---|---|---|---|---|---|---|
 | `cfv2-vanilla-s0` | completed | `src/rope_prov/configs/vanilla_counterfactual_v2.yaml` | `runs/vanilla_counterfactual_v2_online-seed0` | `n3b2ajjb` | every 500 steps, keep 3 | Completed cleanly. Final artifacts in `final/`; retained checkpoints: `checkpoint-2000`, `checkpoint-2500`, `checkpoint-2901`. |
 | `cfv2-zeroed-s0` | completed | `src/rope_prov/configs/vanilla_zeroed_counterfactual_v2.yaml` | `runs/vanilla_zeroed_P8_counterfactual_v2_online-seed0` | `vp7rso3y` | every 500 steps, keep 3 | Completed cleanly. Final artifacts in `final/`; retained checkpoints: `checkpoint-2000`, `checkpoint-2500`, `checkpoint-2901`. |
-| `cfv2-rope-pi8-s0` | completed | `src/rope_prov/configs/rope_prov_pi8_counterfactual_v2.yaml` | `runs/rope_prov_P8_pi8_counterfactual_v2_online-seed0` | `y0033rou` | every 500 steps, keep 3 | Completed cleanly. Final artifacts in `final/`; retained checkpoints: `checkpoint-2000`, `checkpoint-2500`, `checkpoint-2901`. SEP intentionally deferred until after pre-W smoke. |
+| `cfv2-rope-pi8-s0` | completed | `src/rope_prov/configs/rope_prov_pi8_counterfactual_v2.yaml` | `runs/rope_prov_P8_pi8_counterfactual_v2_online-seed0` | `y0033rou` | every 500 steps, keep 3 | Completed cleanly. Final artifacts in `final/`; retained checkpoints: `checkpoint-2000`, `checkpoint-2500`, `checkpoint-2901`. SEP completed. |
 | `cfv2-rope-prew-pi8-smoke-s0` | completed | `src/rope_prov/configs/rope_prov_pre_w_pi8_counterfactual_v2_smoke.yaml` | `runs/rope_prov_pre_w_P8_pi8_counterfactual_v2_smoke-seed0` | `rw38jp7x` | every 200 steps, keep 2 | Completed cleanly. Final artifacts in `final/`; retained checkpoints: `checkpoint-400`, `checkpoint-600`. |
 
 W&B URLs:
@@ -76,6 +76,20 @@ Gate read: passed. Zeroing the lowest-frequency RoPE pairs again behaves like a
 cheap control at this context length, with stable utility loss and SEP within
 0.010 of the vanilla counterfactual baseline.
 
+Completed state for `cfv2-rope-pi8-s0`:
+
+- dataset: train 30957, eval 600, counterfactual train 12000, eval 400.
+- role sanity: both role ids present in train/eval batches.
+- eval loss: step 200 = 3.003, step 400 = 2.259, step 600 = 1.860,
+  step 1000 = 1.605, step 1600 = 1.530, step 2200 = 1.524,
+  step 2600 = 1.526, step 2800 = 1.522.
+- SEP: -0.275, with instruction execution 0.020 and data execution 0.295.
+- delta-of-deltas vs vanilla: -0.080.
+
+Gate read: failed. Fixed post-projection pi/8 does not exploit the aligned v2
+training signal. It mostly suppresses instruction-slot execution while leaving
+DATA-slot execution near the vanilla/zeroed level.
+
 Completed state for `cfv2-rope-prew-pi8-smoke-s0`:
 
 - dataset: train 30957, eval 600, counterfactual train 12000, eval 400.
@@ -101,7 +115,7 @@ slow convergence from failure to find the transport path.
 |---|---|---|---|---|
 | `cfv2-vanilla-s0` | completed | data-only baseline | `src/rope_prov/configs/vanilla_counterfactual_v2.yaml` | `runs/vanilla_counterfactual_v2_online-seed0` |
 | `cfv2-zeroed-s0` | completed | capacity/zeroed-dim control | `src/rope_prov/configs/vanilla_zeroed_counterfactual_v2.yaml` | `runs/vanilla_zeroed_P8_counterfactual_v2_online-seed0` |
-| `cfv2-rope-pi8-s0` | completed, SEP pending | fixed small post-projection role rotation | `src/rope_prov/configs/rope_prov_pi8_counterfactual_v2.yaml` | `runs/rope_prov_P8_pi8_counterfactual_v2_online-seed0` |
+| `cfv2-rope-pi8-s0` | completed | fixed small post-projection role rotation | `src/rope_prov/configs/rope_prov_pi8_counterfactual_v2.yaml` | `runs/rope_prov_P8_pi8_counterfactual_v2_online-seed0` |
 | `cfv2-rope-prew-pi8-smoke-s0` | completed | pre-W role rotation smoke; tests placement correction | `src/rope_prov/configs/rope_prov_pre_w_pi8_counterfactual_v2_smoke.yaml` | `runs/rope_prov_pre_w_P8_pi8_counterfactual_v2_smoke-seed0` |
 | `cfv2-rope-learnable-s0` | planned | model chooses role-angle gap | `src/rope_prov/configs/rope_prov_learnable_counterfactual_v2.yaml` | `runs/rope_prov_P8_learnable_counterfactual_v2_online-seed0` |
 | `cfv2-rope-prew-pi8-full-s0` | conditional | budget-vs-findability check for pre-W transport | duplicate pre-W smoke config with full step budget | TBD |
@@ -113,11 +127,11 @@ does not move SEP relative to the old vanilla baseline, the data did not teach
 role-conditioning to the architecture-free baseline.
 
 The vanilla and zeroed gates passed on 2026-05-14. The fixed pi8 training run
-completed on 2026-05-15. The pre-W smoke also completed on 2026-05-15; next
-operational step is SEP for the fixed pi8 arm, then the learnable-angle arm
-unless the fixed pi8 SEP result changes the decision tree. A full-budget pre-W
-run is conditional: run it if fixed pi8 and learnable leave placement/budget
-ambiguity unresolved.
+completed on 2026-05-15 and failed the SEP gate. The pre-W smoke also completed
+on 2026-05-15. Next operational step is the learnable-angle arm. A full-budget
+pre-W run remains needed for matched placement comparability, and an
+independent-angle rotational arm is the strongest steelman against the
+equal-frequency bottleneck.
 
 ## Commands
 
@@ -163,11 +177,16 @@ uv run python -m rope_prov.eval_sep \
   --variant vanilla \
   --sep-json /tmp/sep_repo/SEP_dataset/SEP_dataset.json \
   --output results/sep/vanilla_counterfactual_v2.json \
+  --batch-size 8 \
   --progress-every 10
 ```
 
 For `rope_prov` arms, pass `--variant rope_prov --prov-dim 8` and the matching
 `--role-angles`; for the learnable arm also pass `--learnable-angles`.
+
+SEP evaluation intentionally uses manual no-cache decoding so `role_ids` are
+supplied on every forward pass. Use `--batch-size` for throughput; this batches
+multiple no-cache generations without relying on HF cached generation plumbing.
 
 ## Pre-Registered Gates
 

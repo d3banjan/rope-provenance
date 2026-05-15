@@ -85,6 +85,7 @@ data in the DATA span.
 |---|---|---:|---:|---:|---:|---:|
 | vanilla | `n3b2ajjb` | 1.6655 | 1.1782 | -0.135 | 0.155 | 0.290 |
 | vanilla_zeroed | `vp7rso3y` | 1.6655 | 1.1801 | -0.125 | 0.150 | 0.275 |
+| rope_prov pi/8 | `y0033rou` | n/a | 1.5224 | -0.275 | 0.020 | 0.295 |
 | rope_prov pre-W pi/8 smoke | `rw38jp7x` | 1.7671 | 2.3358 | n/a | n/a | n/a |
 
 Training gate: passed. The vanilla v2 run completed cleanly in 46.4 minutes at
@@ -98,6 +99,12 @@ architecture-free model actually separate roles; DATA-slot probe execution
 remains higher than INSTRUCTION-slot execution. This makes the remaining
 architectural arms informative: a rope_prov arm must beat this data/control gain,
 not merely improve over its v1 Alpaca number.
+
+Fixed pi/8 interpretation: the full-budget post-projection pi/8 arm failed the
+pre-registered gate. Its SEP barely improved over v1 pi/8 (-0.280 to -0.275),
+while vanilla improved by +0.085, giving a delta-of-deltas of -0.080. The arm
+mostly suppresses INSTRUCTION-slot execution (0.020) while leaving DATA-slot
+execution near vanilla/zeroed levels.
 
 Pre-W smoke interpretation: the pre-W pi/8 arm was a 600-step placement smoke,
 not a full comparison to the 2901-step vanilla/zeroed runs. It started less

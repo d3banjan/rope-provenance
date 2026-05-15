@@ -123,6 +123,86 @@ def generate_with_roles(
     return tokenizer.decode(generated_ids, skip_special_tokens=True)
 
 
+@torch.no_grad()
+def generate_batch_with_roles(
+    model,
+    tokenizer,
+    prompt_texts: list[str],
+    role_map: RoleMap,
+    max_new_tokens: int = 96,
+    eos_token_id: Optional[int] = None,
+    role_for_generated: Optional[int] = None,
+) -> list[str]:
+    """Batched greedy decode with full ``role_ids`` and no KV cache.
+
+    This keeps the correctness property of :func:`generate_with_roles`: every
+    decoding step is a fresh full forward with role ids supplied for every token.
+    Padding is right-sided; logits are gathered from each row's last real token,
+    not from the padded final column.
+    """
+    if not prompt_texts:
+        return []
+
+    device = next(model.parameters()).device
+    eos = eos_token_id if eos_token_id is not None else tokenizer.eos_token_id
+    gen_role = role_for_generated if role_for_generated is not None else role_map.default_id
+    pad_id = tokenizer.pad_token_id
+    if pad_id is None:
+        pad_id = eos if eos is not None else 0
+
+    encoded = [_tokenize_with_roles(text, tokenizer, role_map) for text in prompt_texts]
+    seq_ids = [list(input_ids) for input_ids, _ in encoded]
+    seq_roles = [list(role_ids) for _, role_ids in encoded]
+    generated_ids: list[list[int]] = [[] for _ in prompt_texts]
+    done = [False for _ in prompt_texts]
+
+    for _ in range(max_new_tokens):
+        max_len = max(len(ids) for ids in seq_ids)
+        batch_input_ids = []
+        batch_role_ids = []
+        batch_attention_mask = []
+        lengths = []
+        for input_ids, role_ids in zip(seq_ids, seq_roles):
+            length = len(input_ids)
+            pad_len = max_len - length
+            lengths.append(length)
+            batch_input_ids.append(input_ids + [pad_id] * pad_len)
+            batch_role_ids.append(role_ids + [role_map.default_id] * pad_len)
+            batch_attention_mask.append([1] * length + [0] * pad_len)
+
+        in_t = torch.tensor(batch_input_ids, dtype=torch.long, device=device)
+        role_t = torch.tensor(batch_role_ids, dtype=torch.long, device=device)
+        mask_t = torch.tensor(batch_attention_mask, dtype=torch.long, device=device)
+        length_t = torch.tensor(lengths, dtype=torch.long, device=device)
+
+        out = model(
+            input_ids=in_t,
+            attention_mask=mask_t,
+            role_ids=role_t,
+            use_cache=False,
+        )
+        row_idx = torch.arange(len(seq_ids), device=device)
+        last_logits = out.logits[row_idx, length_t - 1, :]
+        next_ids = last_logits.argmax(dim=-1).tolist()
+
+        for i, next_id in enumerate(next_ids):
+            if done[i]:
+                continue
+            generated_ids[i].append(int(next_id))
+            if eos is not None and int(next_id) == eos:
+                done[i] = True
+                continue
+            seq_ids[i].append(int(next_id))
+            seq_roles[i].append(gen_role)
+        if all(done):
+            break
+
+    return [
+        tokenizer.decode(ids, skip_special_tokens=True)
+        for ids in generated_ids
+    ]
+
+
 # ---------- example scoring -------------------------------------------------
 
 
@@ -191,56 +271,59 @@ def evaluate_sep(
     examples: Iterable[SepExample],
     max_new_tokens: int = 96,
     progress_every: int = 10,
+    batch_size: int = 1,
 ) -> dict:
     """Run SEP eval. Returns ``{sep_score, exec_rate_instr, exec_rate_data, n}``."""
     model.eval()
-    try:
-        total: Optional[int] = len(examples)  # type: ignore[arg-type]
-    except TypeError:
-        total = None
-    total_label = str(total) if total is not None else "?"
-    generations = str(2 * total) if total is not None else "?"
+    if batch_size < 1:
+        raise ValueError(f"batch_size must be >= 1, got {batch_size}")
+    example_list = list(examples)
+    total = len(example_list)
+    total_label = str(total)
+    generations = str(2 * total)
     device = next(model.parameters()).device
     start = time.monotonic()
     print(
         f"[sep] evaluating {total_label} examples ({generations} generations), "
         f"max_new_tokens={max_new_tokens}, device={device}, "
-        f"progress_every={progress_every}",
+        f"batch_size={batch_size}, progress_every={progress_every}",
         flush=True,
     )
     n = 0
     exec_instr = 0
     exec_data = 0
-    for ex in examples:
+    next_report = 1
+    for batch_start in range(0, total, batch_size):
+        batch = example_list[batch_start:batch_start + batch_size]
         # Probe in INSTRUCTION slot: instructed system prompt + clean data.
-        out_a = generate_with_roles(
-            model, tokenizer,
-            _render(instruction=ex.system_prompt_instructed, data=ex.prompt_clean),
-            role_map, max_new_tokens=max_new_tokens,
-        )
+        instr_prompts = [
+            _render(instruction=ex.system_prompt_instructed, data=ex.prompt_clean)
+            for ex in batch
+        ]
         # Probe in DATA slot: clean system prompt + instructed data.
-        out_b = generate_with_roles(
-            model, tokenizer,
-            _render(instruction=ex.system_prompt_clean, data=ex.prompt_instructed),
-            role_map, max_new_tokens=max_new_tokens,
+        data_prompts = [
+            _render(instruction=ex.system_prompt_clean, data=ex.prompt_instructed)
+            for ex in batch
+        ]
+        outputs = generate_batch_with_roles(
+            model,
+            tokenizer,
+            instr_prompts + data_prompts,
+            role_map,
+            max_new_tokens=max_new_tokens,
         )
-        exec_instr += int(_executed(out_a, ex.witness))
-        exec_data += int(_executed(out_b, ex.witness))
-        n += 1
-        should_report = (
-            progress_every > 0
-            and (
-                n == 1
-                or n % progress_every == 0
-                or (total is not None and n == total)
-            )
-        )
+        instr_outputs = outputs[: len(batch)]
+        data_outputs = outputs[len(batch):]
+
+        for ex, out_a, out_b in zip(batch, instr_outputs, data_outputs):
+            exec_instr += int(_executed(out_a, ex.witness))
+            exec_data += int(_executed(out_b, ex.witness))
+            n += 1
+        should_report = progress_every > 0 and (n >= next_report or n == total)
         if should_report:
             elapsed = max(time.monotonic() - start, 1e-9)
             rate = n / elapsed
-            eta = None
-            if total is not None and rate > 0:
-                eta = (total - n) / rate
+            eta = (total - n) / rate if rate > 0 else None
             sep_now = (exec_instr - exec_data) / max(n, 1)
             eta_text = f", eta={eta:.1f}s" if eta is not None else ""
             print(
@@ -251,6 +334,7 @@ def evaluate_sep(
                 f"sep={sep_now:.3f}",
                 flush=True,
             )
+            next_report = max(next_report + progress_every, n + progress_every)
     return {
         "sep_score": (exec_instr - exec_data) / max(n, 1),
         "exec_rate_instr": exec_instr / max(n, 1),
@@ -351,6 +435,12 @@ def main():
     ap.add_argument("--max-new-tokens", type=int, default=96)
     ap.add_argument("--limit", type=int, default=200)
     ap.add_argument(
+        "--batch-size",
+        type=int,
+        default=1,
+        help="SEP examples per no-cache decoding batch; actual prompt batch is 2x.",
+    )
+    ap.add_argument(
         "--progress-every",
         type=int,
         default=10,
@@ -386,6 +476,7 @@ def main():
         examples,
         max_new_tokens=args.max_new_tokens,
         progress_every=args.progress_every,
+        batch_size=args.batch_size,
     )
     results["variant"] = args.variant
     print(json.dumps(results, indent=2))

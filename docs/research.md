@@ -1,6 +1,6 @@
 # Research Brief
 
-Last updated: 2026-05-15T05:06:06+02:00.
+Last updated: 2026-05-15T05:21:16+02:00.
 
 ## One-Sentence Objective
 
@@ -86,6 +86,11 @@ result is explained by the zeroed/repurposed dimensions, not by role rotation.
 H2: fixed pi/8 role rotation is useful. If rope_prov pi/8 beats vanilla by the
 pre-registered delta-of-deltas threshold while preserving utility, the fixed
 architectural channel is doing work.
+
+Status: killed for post-projection pi/8. Under v2, fixed pi/8 reached
+SEP -0.275 with instruction execution 0.020 and DATA execution 0.295. Its
+delta-of-deltas versus vanilla is -0.080, so aligned counterfactual training did
+not make this fixed post-projection channel useful.
 
 H3: the learnable channel is accepted by the model. If the learned role-angle
 gap moves above 5 degrees and SEP improves, the channel becomes useful under
