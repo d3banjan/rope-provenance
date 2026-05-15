@@ -387,6 +387,35 @@ def _load_variant(
     role_angles,
     learnable_angles: bool = False,
 ):
+    def _load_role_angles_param(model):
+        # from_pretrained doesn't know about role_angles_param (it lives on
+        # the patched model, not in the base LlamaForCausalLM schema), so
+        # it's silently dropped during state_dict load. Recover it from the
+        # safetensors file post-patch.
+        import os
+        from safetensors.torch import load_file
+        sf = os.path.join(model_path, "model.safetensors")
+        if os.path.exists(sf):
+            ckpt = load_file(sf)
+            if "role_angles_param" in ckpt:
+                with torch.no_grad():
+                    saved = ckpt["role_angles_param"].to(
+                        model.role_angles_param.device,
+                        model.role_angles_param.dtype,
+                    )
+                    model.role_angles_param.copy_(saved)
+                print(
+                    f"[load] role_angles_param := "
+                    f"{model.role_angles_param.detach().float().tolist()}",
+                    flush=True,
+                )
+            else:
+                print(
+                    "[load] WARN: role_angles_param missing from "
+                    "checkpoint; using init values",
+                    flush=True,
+                )
+
     model = AutoModelForCausalLM.from_pretrained(
         model_path, torch_dtype=torch.bfloat16
     )
@@ -398,39 +427,16 @@ def _load_variant(
             learnable_angles=learnable_angles,
         )
         if learnable_angles:
-            # from_pretrained doesn't know about role_angles_param (it lives on
-            # the patched model, not in the base LlamaForCausalLM schema), so
-            # it's silently dropped during state_dict load. Recover it from
-            # the safetensors file post-patch.
-            import os
-            from safetensors.torch import load_file
-            sf = os.path.join(model_path, "model.safetensors")
-            if os.path.exists(sf):
-                ckpt = load_file(sf)
-                if "role_angles_param" in ckpt:
-                    with torch.no_grad():
-                        saved = ckpt["role_angles_param"].to(
-                            model.role_angles_param.device,
-                            model.role_angles_param.dtype,
-                        )
-                        model.role_angles_param.copy_(saved)
-                    print(
-                        f"[load] role_angles_param := "
-                        f"{model.role_angles_param.detach().float().tolist()}",
-                        flush=True,
-                    )
-                else:
-                    print(
-                        "[load] WARN: role_angles_param missing from "
-                        "checkpoint; using init values",
-                        flush=True,
-                    )
+            _load_role_angles_param(model)
     elif variant == "rope_prov_pre_w":
         patch_model_with_pre_w_role_aware_attention(
             model,
             prov_dim=prov_dim,
             role_angles=role_angles,
+            learnable_angles=learnable_angles,
         )
+        if learnable_angles:
+            _load_role_angles_param(model)
     elif variant == "vanilla":
         patch_model_with_role_aware_attention(model, prov_dim=0)
     elif variant == "vanilla_zeroed":

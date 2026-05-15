@@ -333,12 +333,29 @@ def patch_model_with_pre_w_role_aware_attention(
     model: nn.Module,
     prov_dim: int = 0,
     role_angles: Optional[Sequence[float]] = None,
+    learnable_angles: bool = False,
 ) -> nn.Module:
     """Replace every attention module with the pre-W role-rotation variant."""
-    for layer in model.model.layers:
-        layer.self_attn = _rebuild_pre_w_attention_module(
-            layer.self_attn, prov_dim=prov_dim, role_angles=role_angles
+    if learnable_angles:
+        if role_angles is None:
+            role_angles = [0.0]
+        shared = nn.Parameter(
+            torch.as_tensor(list(role_angles), dtype=torch.float32)
         )
+        model.role_angles_param = shared
+        for layer in model.model.layers:
+            new = _rebuild_pre_w_attention_module(
+                layer.self_attn, prov_dim=prov_dim, role_angles=role_angles
+            )
+            if "role_angles" in new._buffers:
+                del new._buffers["role_angles"]
+            object.__setattr__(new, "role_angles", shared)
+            layer.self_attn = new
+    else:
+        for layer in model.model.layers:
+            layer.self_attn = _rebuild_pre_w_attention_module(
+                layer.self_attn, prov_dim=prov_dim, role_angles=role_angles
+            )
     return model
 
 

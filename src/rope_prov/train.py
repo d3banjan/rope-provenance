@@ -445,6 +445,7 @@ def main():
             model,
             prov_dim=cfg["provenance_dims"],
             role_angles=cfg["role_angles"],
+            learnable_angles=cfg.get("learnable_angles", False),
         )
     elif variant == "vanilla":
         # prov_dim=0 makes the subclass a no-op kwarg sink.
