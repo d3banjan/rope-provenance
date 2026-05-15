@@ -24,6 +24,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import time
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Iterable, Optional
@@ -189,9 +190,24 @@ def evaluate_sep(
     role_map: RoleMap,
     examples: Iterable[SepExample],
     max_new_tokens: int = 96,
+    progress_every: int = 10,
 ) -> dict:
     """Run SEP eval. Returns ``{sep_score, exec_rate_instr, exec_rate_data, n}``."""
     model.eval()
+    try:
+        total: Optional[int] = len(examples)  # type: ignore[arg-type]
+    except TypeError:
+        total = None
+    total_label = str(total) if total is not None else "?"
+    generations = str(2 * total) if total is not None else "?"
+    device = next(model.parameters()).device
+    start = time.monotonic()
+    print(
+        f"[sep] evaluating {total_label} examples ({generations} generations), "
+        f"max_new_tokens={max_new_tokens}, device={device}, "
+        f"progress_every={progress_every}",
+        flush=True,
+    )
     n = 0
     exec_instr = 0
     exec_data = 0
@@ -211,6 +227,30 @@ def evaluate_sep(
         exec_instr += int(_executed(out_a, ex.witness))
         exec_data += int(_executed(out_b, ex.witness))
         n += 1
+        should_report = (
+            progress_every > 0
+            and (
+                n == 1
+                or n % progress_every == 0
+                or (total is not None and n == total)
+            )
+        )
+        if should_report:
+            elapsed = max(time.monotonic() - start, 1e-9)
+            rate = n / elapsed
+            eta = None
+            if total is not None and rate > 0:
+                eta = (total - n) / rate
+            sep_now = (exec_instr - exec_data) / max(n, 1)
+            eta_text = f", eta={eta:.1f}s" if eta is not None else ""
+            print(
+                f"[sep] {n}/{total_label} examples, elapsed={elapsed:.1f}s, "
+                f"rate={rate:.3f} ex/s{eta_text}, "
+                f"exec_instr={exec_instr}/{n} ({exec_instr / n:.3f}), "
+                f"exec_data={exec_data}/{n} ({exec_data / n:.3f}), "
+                f"sep={sep_now:.3f}",
+                flush=True,
+            )
     return {
         "sep_score": (exec_instr - exec_data) / max(n, 1),
         "exec_rate_instr": exec_instr / max(n, 1),
@@ -311,6 +351,12 @@ def main():
     ap.add_argument("--max-new-tokens", type=int, default=96)
     ap.add_argument("--limit", type=int, default=200)
     ap.add_argument(
+        "--progress-every",
+        type=int,
+        default=10,
+        help="Print SEP progress every N examples; use 0 to disable.",
+    )
+    ap.add_argument(
         "--sep-json",
         default="/tmp/sep_repo/SEP_dataset/SEP_dataset.json",
         help="Path to SEP_dataset.json (clone github.com/egozverev/...).",
@@ -334,7 +380,12 @@ def main():
 
     examples = load_sep_examples(path=args.sep_json, limit=args.limit)
     results = evaluate_sep(
-        model, tokenizer, role_map, examples, max_new_tokens=args.max_new_tokens
+        model,
+        tokenizer,
+        role_map,
+        examples,
+        max_new_tokens=args.max_new_tokens,
+        progress_every=args.progress_every,
     )
     results["variant"] = args.variant
     print(json.dumps(results, indent=2))

@@ -155,7 +155,8 @@ uv run python -m rope_prov.eval_sep \
   --tokenizer HuggingFaceTB/SmolLM2-135M \
   --variant vanilla \
   --sep-json /tmp/sep_repo/SEP_dataset/SEP_dataset.json \
-  --output results/sep/vanilla_counterfactual_v2.json
+  --output results/sep/vanilla_counterfactual_v2.json \
+  --progress-every 10
 ```
 
 For `rope_prov` arms, pass `--variant rope_prov --prov-dim 8` and the matching
