@@ -1,6 +1,6 @@
 # Experiment Tracker
 
-Last updated: 2026-05-15T05:41:50+02:00.
+Last updated: 2026-05-15T05:48:50+02:00.
 
 This file is the active tracker. Every run gets one row. Do not encode active
 state in README, ad hoc notes, or generated logs.
@@ -117,10 +117,10 @@ slow convergence from failure to find the transport path.
 | `cfv2-zeroed-s0` | completed | capacity/zeroed-dim control | `src/rope_prov/configs/vanilla_zeroed_counterfactual_v2.yaml` | `runs/vanilla_zeroed_P8_counterfactual_v2_online-seed0` |
 | `cfv2-rope-pi8-s0` | completed | fixed small post-projection role rotation | `src/rope_prov/configs/rope_prov_pi8_counterfactual_v2.yaml` | `runs/rope_prov_P8_pi8_counterfactual_v2_online-seed0` |
 | `cfv2-rope-prew-pi8-smoke-s0` | completed | pre-W role rotation smoke; tests placement correction | `src/rope_prov/configs/rope_prov_pre_w_pi8_counterfactual_v2_smoke.yaml` | `runs/rope_prov_pre_w_P8_pi8_counterfactual_v2_smoke-seed0` |
-| `cfv2-rope-learnable-s0` | planned | model chooses role-angle gap | `src/rope_prov/configs/rope_prov_learnable_counterfactual_v2.yaml` | `runs/rope_prov_P8_learnable_counterfactual_v2_online-seed0` |
-| `cfv2-rope-learnable-pi8-unfreeze-s0` | conditional | nonzero learnable gap tests whether optimizer drives angle back to zero | TBD | TBD |
-| `cfv2-rope-prew-pi8-full-s0` | conditional | budget-vs-findability check for pre-W transport | duplicate pre-W smoke config with full step budget | TBD |
-| `cfv2-rope-independent-angles-s0` | conditional | rotational steelman against equal-frequency collapse | TBD | TBD |
+| `cfv2-rope-learnable-s0` | queued | model chooses role-angle gap | `src/rope_prov/configs/rope_prov_learnable_counterfactual_v2.yaml` | `runs/rope_prov_P8_learnable_counterfactual_v2_online-seed0` |
+| `cfv2-rope-prew-pi8-full-s0` | queued | budget-vs-findability check for pre-W transport | `src/rope_prov/configs/rope_prov_pre_w_pi8_counterfactual_v2.yaml` | `runs/rope_prov_pre_w_P8_pi8_counterfactual_v2_online-seed0` |
+| `cfv2-rope-learnable-pi8-unfreeze-s0` | queued | nonzero learnable gap tests whether optimizer drives angle back to zero | `src/rope_prov/configs/rope_prov_learnable_pi8_unfreeze_counterfactual_v2.yaml` | `runs/rope_prov_P8_learnable_pi8_unfreeze_counterfactual_v2_online-seed0` |
+| `cfv2-rope-independent-angles-s0` | queued | rotational steelman against equal-frequency collapse | `src/rope_prov/configs/rope_prov_independent_angles_counterfactual_v2.yaml` | `runs/rope_prov_P8_independent_angles_counterfactual_v2_online-seed0` |
 | `cfv2-best-rope-s1` | conditional | seed variance calibration | duplicate best rope config with seed 1 | TBD |
 
 Run vanilla first. If vanilla final eval loss is unstable or above 2.0, revise
@@ -130,10 +130,10 @@ role-conditioning to the architecture-free baseline.
 
 The vanilla and zeroed gates passed on 2026-05-14. The fixed pi8 training run
 completed on 2026-05-15 and failed the SEP gate. The pre-W smoke also completed
-on 2026-05-15. Next operational step is the learnable-angle arm. A full-budget
-pre-W run remains needed for matched placement comparability, and an
-independent-angle rotational arm is the strongest steelman against the
-equal-frequency bottleneck.
+on 2026-05-15. The final rotational-cell batch is queued in this order:
+standard learnable, full-budget pre-W pi8, pi8-initialized learnable with
+200-step freeze, and independent fixed per-pair angles. A seed-1 rerun is only
+needed if one rope arm clears the positive/marginal decision threshold.
 
 The pi8 SEP failure is asymmetric rather than merely null: INSTRUCTION-slot
 execution collapses while DATA-slot execution is unchanged. That makes the
@@ -174,6 +174,21 @@ uv run env WANDB_MODE=online python -m rope_prov.train \
   --config src/rope_prov/configs/rope_prov_learnable_counterfactual_v2.yaml \
   --output-dir runs/rope_prov_P8_learnable_counterfactual_v2_online-seed0 \
   --resume-from-checkpoint latest
+
+uv run env WANDB_MODE=online python -m rope_prov.train \
+  --config src/rope_prov/configs/rope_prov_pre_w_pi8_counterfactual_v2.yaml \
+  --output-dir runs/rope_prov_pre_w_P8_pi8_counterfactual_v2_online-seed0 \
+  --resume-from-checkpoint latest
+
+uv run env WANDB_MODE=online python -m rope_prov.train \
+  --config src/rope_prov/configs/rope_prov_learnable_pi8_unfreeze_counterfactual_v2.yaml \
+  --output-dir runs/rope_prov_P8_learnable_pi8_unfreeze_counterfactual_v2_online-seed0 \
+  --resume-from-checkpoint latest
+
+uv run env WANDB_MODE=online python -m rope_prov.train \
+  --config src/rope_prov/configs/rope_prov_independent_angles_counterfactual_v2.yaml \
+  --output-dir runs/rope_prov_P8_independent_angles_counterfactual_v2_online-seed0 \
+  --resume-from-checkpoint latest
 ```
 
 SEP after training:
@@ -190,7 +205,9 @@ uv run python -m rope_prov.eval_sep \
 ```
 
 For `rope_prov` arms, pass `--variant rope_prov --prov-dim 8` and the matching
-`--role-angles`; for the learnable arm also pass `--learnable-angles`.
+`--role-angles`; for learnable arms also pass `--learnable-angles`. For
+independent per-pair angles, pass the flattened role rows, e.g.
+`--role-angles 0 0 0 0 0.19634954 0.26179939 0.39269908 0.52359878`.
 
 SEP evaluation intentionally uses manual no-cache decoding so `role_ids` are
 supplied on every forward pass. Use `--batch-size` for throughput; this batches

@@ -115,12 +115,26 @@ def apply_role_aware_rotary_paired(
     k_rope = (k * cos) + (rotate_half(k) * sin)
 
     # Role rotation on prov pair (half_p+j, half_h+half_p+j) for j in [0, half_v).
+    # role_angles can be either [num_roles] for one shared phase or
+    # [num_roles, half_v] for independent per-pair phases.
     work_dtype = (
         torch.float32 if q.dtype in (torch.bfloat16, torch.float16) else q.dtype
     )
-    theta = role_angles.to(q.device, work_dtype)[role_ids]  # [B, T]
-    cos_r = theta.cos()[:, None, :, None]   # [B, 1, T, 1]
-    sin_r = theta.sin()[:, None, :, None]
+    theta = role_angles.to(q.device, work_dtype)[role_ids]
+    if theta.dim() == 2:
+        cos_r = theta.cos()[:, None, :, None]   # [B, 1, T, 1]
+        sin_r = theta.sin()[:, None, :, None]
+    elif theta.dim() == 3:
+        half_v = half_h - half_p
+        if theta.shape[-1] != half_v:
+            raise ValueError(
+                f"per-pair role_angles last dim must be {half_v}, "
+                f"got {theta.shape[-1]}"
+            )
+        cos_r = theta.cos()[:, None, :, :]      # [B, 1, T, half_v]
+        sin_r = theta.sin()[:, None, :, :]
+    else:
+        raise ValueError(f"role_angles[role_ids] must be rank 2 or 3, got {theta.dim()}")
     if cos_r.dtype != q.dtype:
         cos_r = cos_r.to(q.dtype)
         sin_r = sin_r.to(q.dtype)
@@ -185,8 +199,20 @@ def apply_hidden_role_rotation_paired(
         else hidden_states.dtype
     )
     theta = role_angles.to(hidden_states.device, work_dtype)[role_ids]
-    cos_r = theta.cos()[..., None]
-    sin_r = theta.sin()[..., None]
+    if theta.dim() == 2:
+        cos_r = theta.cos()[..., None]
+        sin_r = theta.sin()[..., None]
+    elif theta.dim() == 3:
+        half_v = half_h - half_p
+        if theta.shape[-1] != half_v:
+            raise ValueError(
+                f"per-pair role_angles last dim must be {half_v}, "
+                f"got {theta.shape[-1]}"
+            )
+        cos_r = theta.cos()
+        sin_r = theta.sin()
+    else:
+        raise ValueError(f"role_angles[role_ids] must be rank 2 or 3, got {theta.dim()}")
     if cos_r.dtype != hidden_states.dtype:
         cos_r = cos_r.to(hidden_states.dtype)
         sin_r = sin_r.to(hidden_states.dtype)

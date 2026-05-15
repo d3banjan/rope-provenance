@@ -1,0 +1,17 @@
+# Variant: full-budget pre-W role-aware rotation, role-angle gap = pi/8,
+# trained with the v2 matched counterfactual instruction/data curriculum.
+extends: base.yaml
+
+attention_variant: rope_prov_pre_w
+provenance_dims: 8
+role_angles: [0.0, 0.39269908]
+
+counterfactual_train_size: 12000
+counterfactual_eval_size: 400
+counterfactual_positive_fraction: 0.5
+
+save_steps: 500
+save_total_limit: 3
+
+wandb_group: smollm2-135m-counterfactual-v2
+wandb_run_name: rope_prov_pre_w_P8_pi8_counterfactual_v2

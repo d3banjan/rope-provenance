@@ -260,6 +260,40 @@ def load_sep_examples(
     return out
 
 
+def _normalize_role_angles(role_angles, num_roles: int, prov_dim: int) -> list:
+    """Match train-time role-angle shape handling for SEP CLI inputs."""
+    if prov_dim % 2 != 0:
+        raise ValueError(f"prov_dim must be even, got {prov_dim}")
+    pair_count = prov_dim // 2
+    angles = list(role_angles)
+    if angles and isinstance(angles[0], (list, tuple)):
+        if len(angles) != num_roles:
+            raise ValueError(
+                f"role_angles has {len(angles)} role rows but role_map "
+                f"declares {num_roles} roles."
+            )
+        out = [list(row) for row in angles]
+        bad_rows = [i for i, row in enumerate(out) if len(row) != pair_count]
+        if bad_rows:
+            raise ValueError(
+                f"per-pair role_angles rows must each have {pair_count} "
+                f"entries for prov_dim={prov_dim}; bad rows={bad_rows}."
+            )
+        return out
+    if len(angles) == num_roles:
+        return angles
+    if len(angles) == num_roles * pair_count:
+        return [
+            angles[i * pair_count : (i + 1) * pair_count]
+            for i in range(num_roles)
+        ]
+    raise ValueError(
+        f"role_angles must have {num_roles} entries for shared role phases "
+        f"or {num_roles * pair_count} entries for per-pair phases; "
+        f"got {len(angles)}."
+    )
+
+
 def _executed(output_text: str, witness: str) -> bool:
     return witness.strip().lower() in output_text.strip().lower()
 
@@ -458,11 +492,16 @@ def main():
     if tokenizer.pad_token is None:
         tokenizer.pad_token = tokenizer.eos_token
     role_map = RoleMap.from_yaml(args.role_map)
+    role_angles = _normalize_role_angles(
+        args.role_angles,
+        num_roles=len(role_map.roles),
+        prov_dim=args.prov_dim,
+    )
     model = _load_variant(
         args.model_path,
         args.variant,
         args.prov_dim,
-        args.role_angles,
+        role_angles,
         learnable_angles=args.learnable_angles,
     )
     if torch.cuda.is_available():

@@ -7,6 +7,7 @@ from rope_prov.rotary import (
     Role,
     apply_hidden_role_rotation_paired,
     apply_role_aware_rotary,
+    apply_role_aware_rotary_paired,
     rotate_half,
 )
 
@@ -159,6 +160,39 @@ def test_cross_role_phase_offset_predicted_score():
             )
 
 
+def test_paired_per_pair_role_angles_score():
+    """Independent per-pair phases add separate cosine terms in QK."""
+    B, H, T, D, P = 1, 1, 2, 8, 4
+    half_h = D // 2
+    half_p = (D - P) // 2
+
+    qk = torch.zeros(B, H, T, D, dtype=torch.float64)
+    qk[..., half_p:half_h] = torch.tensor([1.0, 2.0], dtype=torch.float64)
+
+    cos, sin = _pos_cos_sin(B, T, D, dtype=torch.float64)
+    role_angles = torch.tensor(
+        [
+            [0.0, 0.0],
+            [math.pi / 2, math.pi / 3],
+        ],
+        dtype=torch.float64,
+    )
+    role_ids = torch.tensor([[0, 1]], dtype=torch.long)
+
+    q_rot, k_rot = apply_role_aware_rotary_paired(
+        qk.clone(),
+        qk.clone(),
+        cos,
+        sin,
+        role_ids,
+        prov_dim=P,
+        role_angles=role_angles,
+    )
+    score = (q_rot[0, 0, 0] @ k_rot[0, 0, 1]).item()
+    expected = 1.0**2 * math.cos(math.pi / 2) + 2.0**2 * math.cos(math.pi / 3)
+    assert score == pytest.approx(expected, abs=1e-12)
+
+
 def test_role_enum_matches_default_angles():
     """Sanity: Role.INSTRUCTION=0 (angle 0), Role.DATA=1 (angle pi/2)."""
     assert Role.INSTRUCTION == 0
@@ -195,3 +229,30 @@ def test_hidden_role_rotation_paired_preserves_pair_norms(rng):
         out[..., half_h : half_h + half_p],
         hidden[..., half_h : half_h + half_p],
     )
+
+
+def test_hidden_role_rotation_paired_accepts_per_pair_angles(rng):
+    B, T, D, P = 2, 5, 16, 4
+    hidden = torch.randn(B, T, D, generator=rng, dtype=torch.float64)
+    role_ids = torch.tensor(
+        [[0, 1, 0, 1, 0], [1, 0, 1, 0, 1]],
+        dtype=torch.long,
+    )
+    role_angles = torch.tensor(
+        [[0.0, 0.0], [math.pi / 8, math.pi / 3]],
+        dtype=torch.float64,
+    )
+
+    out = apply_hidden_role_rotation_paired(hidden, role_ids, P, role_angles)
+
+    half_h = D // 2
+    half_p = (D - P) // 2
+    before = (
+        hidden[..., half_p:half_h].pow(2)
+        + hidden[..., half_h + half_p :].pow(2)
+    )
+    after = (
+        out[..., half_p:half_h].pow(2)
+        + out[..., half_h + half_p :].pow(2)
+    )
+    torch.testing.assert_close(after, before, rtol=1e-12, atol=1e-12)

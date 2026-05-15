@@ -1,0 +1,20 @@
+# Variant: fixed post-projection role rotation with independent per-pair
+# angles. This is the rotational steelman against the equal-frequency
+# bottleneck: provenance_dims=8 gives four role-modulated RoPE pairs.
+extends: base.yaml
+
+attention_variant: rope_prov
+provenance_dims: 8
+role_angles:
+  - [0.0, 0.0, 0.0, 0.0]
+  - [0.19634954, 0.26179939, 0.39269908, 0.52359878]
+
+counterfactual_train_size: 12000
+counterfactual_eval_size: 400
+counterfactual_positive_fraction: 0.5
+
+save_steps: 500
+save_total_limit: 3
+
+wandb_group: smollm2-135m-counterfactual-v2
+wandb_run_name: rope_prov_P8_independent_angles_counterfactual_v2

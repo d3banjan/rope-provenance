@@ -90,6 +90,47 @@ def _find_repo_root(start: Path) -> Path:
     return Path.cwd()
 
 
+def normalize_role_angles(role_angles, num_roles: int, prov_dim: int) -> list:
+    """Validate role angles and reshape flat per-pair configs if needed.
+
+    Accepted forms:
+
+    - ``[num_roles]``: one shared phase per role.
+    - ``[num_roles][prov_dim/2]``: independent phase per role and pair.
+    - flat ``num_roles * prov_dim/2``: CLI-friendly per-pair form, reshaped.
+    """
+    if prov_dim % 2 != 0:
+        raise ValueError(f"provenance_dims must be even, got {prov_dim}")
+    pair_count = prov_dim // 2
+    angles = list(role_angles)
+    if angles and isinstance(angles[0], (list, tuple)):
+        if len(angles) != num_roles:
+            raise ValueError(
+                f"role_angles has {len(angles)} role rows but role_map "
+                f"declares {num_roles} roles."
+            )
+        out = [list(row) for row in angles]
+        bad_rows = [i for i, row in enumerate(out) if len(row) != pair_count]
+        if bad_rows:
+            raise ValueError(
+                f"per-pair role_angles rows must each have {pair_count} "
+                f"entries for provenance_dims={prov_dim}; bad rows={bad_rows}."
+            )
+        return out
+    if len(angles) == num_roles:
+        return angles
+    if len(angles) == num_roles * pair_count:
+        return [
+            angles[i * pair_count : (i + 1) * pair_count]
+            for i in range(num_roles)
+        ]
+    raise ValueError(
+        f"role_angles must have {num_roles} entries for shared role phases "
+        f"or {num_roles * pair_count} entries for per-pair phases; "
+        f"got {len(angles)}."
+    )
+
+
 # ---------- reproducibility ------------------------------------------------
 
 
@@ -173,8 +214,29 @@ class LearnableAnglesCallback(TrainerCallback):
         param = getattr(self.model_ref, "role_angles_param", None)
         if param is None:
             return
-        angles = param.detach().float().cpu().tolist()
-        log = {f"angle/role_{i}": a for i, a in enumerate(angles)}
+        angles_t = param.detach().float().cpu()
+        log = {}
+        if angles_t.ndim == 1:
+            angles = angles_t.tolist()
+            log.update({f"angle/role_{i}": a for i, a in enumerate(angles)})
+            if len(angles) >= 2:
+                log["angle/gap_1_minus_0"] = angles[1] - angles[0]
+        elif angles_t.ndim == 2:
+            for role_idx in range(angles_t.shape[0]):
+                for pair_idx in range(angles_t.shape[1]):
+                    log[f"angle/role_{role_idx}_pair_{pair_idx}"] = float(
+                        angles_t[role_idx, pair_idx]
+                    )
+            if angles_t.shape[0] >= 2:
+                gap = angles_t[1] - angles_t[0]
+                log["angle/gap_1_minus_0_mean"] = float(gap.mean())
+                log["angle/gap_1_minus_0_max_abs"] = float(gap.abs().max())
+                for pair_idx, value in enumerate(gap.tolist()):
+                    log[f"angle/gap_1_minus_0_pair_{pair_idx}"] = value
+        else:
+            raise ValueError(
+                f"role_angles_param must be rank 1 or 2, got {angles_t.ndim}"
+            )
         try:
             import wandb
             if wandb.run is not None:
@@ -182,6 +244,37 @@ class LearnableAnglesCallback(TrainerCallback):
         except Exception:
             pass
         print(f"[angles step={state.global_step}] {log}", flush=True)
+
+
+class LearnableAngleFreezeCallback(TrainerCallback):
+    """Hold learnable role angles fixed for the first N optimizer steps."""
+
+    def __init__(self, model_ref, freeze_steps: int):
+        self.model_ref = model_ref
+        self.freeze_steps = freeze_steps
+        self.last_trainable: bool | None = None
+
+    def _set_trainable(self, step: int) -> None:
+        param = getattr(self.model_ref, "role_angles_param", None)
+        if param is None:
+            return
+        trainable = step >= self.freeze_steps
+        if self.last_trainable is trainable:
+            return
+        param.requires_grad_(trainable)
+        self.last_trainable = trainable
+        state = "unfrozen" if trainable else "frozen"
+        print(
+            f"[angles-freeze step={step}] role_angles_param {state} "
+            f"(freeze_steps={self.freeze_steps})",
+            flush=True,
+        )
+
+    def on_train_begin(self, args, state, control, **kwargs):
+        self._set_trainable(state.global_step)
+
+    def on_step_begin(self, args, state, control, **kwargs):
+        self._set_trainable(state.global_step)
 
 
 class PreEvalCacheFlushCallback(TrainerCallback):
@@ -286,12 +379,11 @@ def main():
     role_map = RoleMap.from_yaml(cfg["role_map"])
     # Only the rope_prov variant actually consumes role_angles; vanilla and
     # vanilla_zeroed carry placeholders that we don't want to police.
-    if cfg.get("attention_variant", "rope_prov") in {"rope_prov", "rope_prov_pre_w"} and \
-            len(cfg["role_angles"]) != len(role_map.roles):
-        raise ValueError(
-            f"role_angles has {len(cfg['role_angles'])} entries but role_map "
-            f"declares {len(role_map.roles)} roles. Bring them in sync before "
-            f"running."
+    if cfg.get("attention_variant", "rope_prov") in {"rope_prov", "rope_prov_pre_w"}:
+        cfg["role_angles"] = normalize_role_angles(
+            cfg["role_angles"],
+            num_roles=len(role_map.roles),
+            prov_dim=cfg["provenance_dims"],
         )
     base_collator = RoleTaggingCollator(
         tokenizer=tokenizer,
@@ -401,6 +493,9 @@ def main():
 
     callbacks = [PreEvalCacheFlushCallback(), ThroughputCallback()]
     if cfg.get("learnable_angles", False):
+        freeze_steps = int(cfg.get("angle_freeze_steps") or 0)
+        if freeze_steps:
+            callbacks.append(LearnableAngleFreezeCallback(model, freeze_steps))
         callbacks.append(LearnableAnglesCallback(model, log_every=10))
 
     trainer = Trainer(

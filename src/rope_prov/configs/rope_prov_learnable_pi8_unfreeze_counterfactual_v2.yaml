@@ -1,0 +1,20 @@
+# Variant: learnable post-projection role angles initialized at pi/8 gap.
+# The gap is frozen briefly, then released so the optimizer can keep it,
+# shrink it, or move it elsewhere under the v2 counterfactual signal.
+extends: base.yaml
+
+attention_variant: rope_prov
+provenance_dims: 8
+learnable_angles: true
+angle_freeze_steps: 200
+role_angles: [0.0, 0.39269908]
+
+counterfactual_train_size: 12000
+counterfactual_eval_size: 400
+counterfactual_positive_fraction: 0.5
+
+save_steps: 500
+save_total_limit: 3
+
+wandb_group: smollm2-135m-counterfactual-v2
+wandb_run_name: rope_prov_P8_learnable_pi8_unfreeze_counterfactual_v2
