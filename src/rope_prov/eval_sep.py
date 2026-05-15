@@ -33,6 +33,7 @@ from transformers import AutoModelForCausalLM, AutoTokenizer
 
 from .data import ASSISTANT_MARKER, PROMPT_TEMPLATE, SYSTEM_PROMPT
 from .model import (
+    patch_model_with_pre_w_role_aware_attention,
     patch_model_with_role_aware_attention,
     patch_model_with_zeroed_prov_pairs,
 )
@@ -266,6 +267,12 @@ def _load_variant(
                         "checkpoint; using init values",
                         flush=True,
                     )
+    elif variant == "rope_prov_pre_w":
+        patch_model_with_pre_w_role_aware_attention(
+            model,
+            prov_dim=prov_dim,
+            role_angles=role_angles,
+        )
     elif variant == "vanilla":
         patch_model_with_role_aware_attention(model, prov_dim=0)
     elif variant == "vanilla_zeroed":
@@ -285,7 +292,9 @@ def main():
         "if checkpoint dir doesn't include tokenizer files.",
     )
     ap.add_argument(
-        "--variant", required=True, choices=["vanilla", "vanilla_zeroed", "rope_prov"]
+        "--variant",
+        required=True,
+        choices=["vanilla", "vanilla_zeroed", "rope_prov", "rope_prov_pre_w"],
     )
     ap.add_argument("--prov-dim", type=int, default=8)
     ap.add_argument("--role-angles", type=float, nargs="+", default=[0.0, 1.5708])

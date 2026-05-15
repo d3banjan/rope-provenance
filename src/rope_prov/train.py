@@ -51,6 +51,7 @@ from .data import (
     filter_alpaca_examples,
 )
 from .model import (
+    patch_model_with_pre_w_role_aware_attention,
     patch_model_with_role_aware_attention,
     patch_model_with_zeroed_prov_pairs,
 )
@@ -285,7 +286,7 @@ def main():
     role_map = RoleMap.from_yaml(cfg["role_map"])
     # Only the rope_prov variant actually consumes role_angles; vanilla and
     # vanilla_zeroed carry placeholders that we don't want to police.
-    if cfg.get("attention_variant", "rope_prov") == "rope_prov" and \
+    if cfg.get("attention_variant", "rope_prov") in {"rope_prov", "rope_prov_pre_w"} and \
             len(cfg["role_angles"]) != len(role_map.roles):
         raise ValueError(
             f"role_angles has {len(cfg['role_angles'])} entries but role_map "
@@ -347,6 +348,12 @@ def main():
             role_angles=cfg["role_angles"],
             learnable_angles=cfg.get("learnable_angles", False),
         )
+    elif variant == "rope_prov_pre_w":
+        patch_model_with_pre_w_role_aware_attention(
+            model,
+            prov_dim=cfg["provenance_dims"],
+            role_angles=cfg["role_angles"],
+        )
     elif variant == "vanilla":
         # prov_dim=0 makes the subclass a no-op kwarg sink.
         patch_model_with_role_aware_attention(model, prov_dim=0)
@@ -382,7 +389,7 @@ def main():
         save_strategy="no" if args.dry_run else "steps",
         save_steps=cfg["save_steps"],
         save_total_limit=cfg.get("save_total_limit"),
-        max_steps=args.max_steps if args.dry_run else -1,
+        max_steps=args.max_steps if args.dry_run else int(cfg.get("max_steps") or -1),
         report_to=[] if args.disable_wandb or args.dry_run else ["wandb"],
         remove_unused_columns=False,
         dataloader_num_workers=2,

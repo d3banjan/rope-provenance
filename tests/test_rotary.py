@@ -3,7 +3,12 @@ import math
 import pytest
 import torch
 
-from rope_prov.rotary import Role, apply_role_aware_rotary, rotate_half
+from rope_prov.rotary import (
+    Role,
+    apply_hidden_role_rotation_paired,
+    apply_role_aware_rotary,
+    rotate_half,
+)
 
 
 def _standard_rope(q, k, cos, sin):
@@ -158,3 +163,35 @@ def test_role_enum_matches_default_angles():
     """Sanity: Role.INSTRUCTION=0 (angle 0), Role.DATA=1 (angle pi/2)."""
     assert Role.INSTRUCTION == 0
     assert Role.DATA == 1
+
+
+def test_hidden_role_rotation_paired_preserves_pair_norms(rng):
+    """Pre-W role rotation should be an orthogonal transform on each pair."""
+    B, T, D, P = 2, 5, 16, 4
+    hidden = torch.randn(B, T, D, generator=rng, dtype=torch.float64)
+    role_ids = torch.tensor(
+        [[0, 1, 0, 1, 0], [1, 0, 1, 0, 1]],
+        dtype=torch.long,
+    )
+    role_angles = torch.tensor([0.0, math.pi / 3], dtype=torch.float64)
+
+    out = apply_hidden_role_rotation_paired(hidden, role_ids, P, role_angles)
+
+    half_h = D // 2
+    half_p = (D - P) // 2
+    before = (
+        hidden[..., half_p:half_h].pow(2)
+        + hidden[..., half_h + half_p :].pow(2)
+    )
+    after = (
+        out[..., half_p:half_h].pow(2)
+        + out[..., half_h + half_p :].pow(2)
+    )
+    torch.testing.assert_close(after, before, rtol=1e-12, atol=1e-12)
+
+    # Non-provenance coordinates are untouched.
+    torch.testing.assert_close(out[..., :half_p], hidden[..., :half_p])
+    torch.testing.assert_close(
+        out[..., half_h : half_h + half_p],
+        hidden[..., half_h : half_h + half_p],
+    )

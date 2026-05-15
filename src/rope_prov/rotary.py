@@ -144,6 +144,64 @@ def apply_role_aware_rotary_paired(
     return q_out, k_out
 
 
+def apply_hidden_role_rotation_paired(
+    hidden_states: Tensor,
+    role_ids: Tensor | None,
+    prov_dim: int,
+    role_angles: Tensor,
+) -> Tensor:
+    """Apply a role rotation before Q/K projection.
+
+    This is the "pre-W" diagnostic path: rotate a small paired subspace of the
+    residual hidden vector before ``Wq``/``Wk`` see it, then leave ordinary RoPE
+    untouched after projection. It tests whether the post-projection placement
+    is the failure mode.
+
+    hidden_states: [B, T, hidden_size]
+    role_ids:      [B, T]
+    prov_dim:      number of residual coordinates reserved for role rotation.
+                   Must be even and <= hidden_size.
+    role_angles:   [num_roles] float, indexed by role id.
+    """
+    if prov_dim == 0 or role_ids is None:
+        return hidden_states
+
+    hidden_dim = hidden_states.shape[-1]
+    if prov_dim < 0 or prov_dim > hidden_dim or prov_dim % 2 != 0:
+        raise ValueError(
+            f"prov_dim must be even and in [0, hidden_dim], got "
+            f"prov_dim={prov_dim}, hidden_dim={hidden_dim}"
+        )
+    if hidden_dim % 2 != 0:
+        raise ValueError(f"hidden_dim must be even, got {hidden_dim}")
+
+    half_h = hidden_dim // 2
+    pos_dim = hidden_dim - prov_dim
+    half_p = pos_dim // 2
+
+    work_dtype = (
+        torch.float32
+        if hidden_states.dtype in (torch.bfloat16, torch.float16)
+        else hidden_states.dtype
+    )
+    theta = role_angles.to(hidden_states.device, work_dtype)[role_ids]
+    cos_r = theta.cos()[..., None]
+    sin_r = theta.sin()[..., None]
+    if cos_r.dtype != hidden_states.dtype:
+        cos_r = cos_r.to(hidden_states.dtype)
+        sin_r = sin_r.to(hidden_states.dtype)
+
+    first = hidden_states[..., half_p:half_h]
+    second = hidden_states[..., half_h + half_p :]
+    first_rot = first * cos_r - second * sin_r
+    second_rot = second * cos_r + first * sin_r
+
+    out = hidden_states.clone()
+    out[..., half_p:half_h] = first_rot
+    out[..., half_h + half_p :] = second_rot
+    return out
+
+
 def apply_role_aware_rotary(
     q: Tensor,
     k: Tensor,

@@ -30,6 +30,7 @@ from transformers.models.llama.modeling_llama import (
 )
 
 from .rotary import apply_role_aware_rotary_paired
+from .rotary import apply_hidden_role_rotation_paired
 
 
 class RoleAwareLlamaAttention(LlamaAttention):
@@ -143,6 +144,104 @@ class RoleAwareLlamaAttention(LlamaAttention):
         return attn_output, attn_weights
 
 
+class PreWRoleAwareLlamaAttention(LlamaAttention):
+    """``LlamaAttention`` with role rotation before ``Wq``/``Wk``.
+
+    This diagnostic keeps standard post-projection RoPE intact. It rotates a
+    small residual-stream subspace before the query/key projections, but feeds
+    the original hidden states to ``v_proj`` so values are not role-rotated.
+    """
+
+    def __init__(
+        self,
+        config,
+        layer_idx: int,
+        prov_dim: int = 0,
+        role_angles: Optional[Sequence[float]] = None,
+    ):
+        super().__init__(config, layer_idx)
+        if prov_dim < 0:
+            raise ValueError(f"prov_dim must be >= 0, got {prov_dim}")
+        if prov_dim > config.hidden_size:
+            raise ValueError(
+                f"prov_dim={prov_dim} exceeds hidden_size={config.hidden_size}"
+            )
+        if prov_dim % 2 != 0:
+            raise ValueError(
+                f"prov_dim must be even (paired rotation), got {prov_dim}"
+            )
+        self.prov_dim = prov_dim
+        if role_angles is None:
+            role_angles = [0.0]
+        angles = torch.as_tensor(list(role_angles), dtype=torch.float32)
+        self.register_buffer("role_angles", angles, persistent=False)
+
+    def forward(
+        self,
+        hidden_states: torch.Tensor,
+        position_embeddings: Tuple[torch.Tensor, torch.Tensor],
+        attention_mask: Optional[torch.Tensor],
+        past_key_value: Optional[Cache] = None,
+        cache_position: Optional[torch.LongTensor] = None,
+        role_ids: Optional[torch.Tensor] = None,
+        **kwargs,
+    ) -> Tuple[torch.Tensor, Optional[torch.Tensor]]:
+        input_shape = hidden_states.shape[:-1]
+        hidden_shape = (*input_shape, -1, self.head_dim)
+
+        if self.prov_dim == 0 or role_ids is None:
+            qk_hidden_states = hidden_states
+        else:
+            qk_hidden_states = apply_hidden_role_rotation_paired(
+                hidden_states,
+                role_ids,
+                self.prov_dim,
+                self.role_angles,
+            )
+
+        query_states = self.q_proj(qk_hidden_states).view(hidden_shape).transpose(1, 2)
+        key_states = self.k_proj(qk_hidden_states).view(hidden_shape).transpose(1, 2)
+        value_states = self.v_proj(hidden_states).view(hidden_shape).transpose(1, 2)
+
+        cos, sin = position_embeddings
+        query_states, key_states = apply_rotary_pos_emb(
+            query_states, key_states, cos, sin
+        )
+
+        if past_key_value is not None:
+            cache_kwargs = {"sin": sin, "cos": cos, "cache_position": cache_position}
+            key_states, value_states = past_key_value.update(
+                key_states, value_states, self.layer_idx, cache_kwargs
+            )
+
+        attention_interface = eager_attention_forward
+        if self.config._attn_implementation != "eager":
+            if (
+                self.config._attn_implementation == "sdpa"
+                and kwargs.get("output_attentions", False)
+            ):
+                pass
+            else:
+                attention_interface = ALL_ATTENTION_FUNCTIONS[
+                    self.config._attn_implementation
+                ]
+
+        attn_output, attn_weights = attention_interface(
+            self,
+            query_states,
+            key_states,
+            value_states,
+            attention_mask,
+            dropout=0.0 if not self.training else self.attention_dropout,
+            scaling=self.scaling,
+            **kwargs,
+        )
+
+        attn_output = attn_output.reshape(*input_shape, -1).contiguous()
+        attn_output = self.o_proj(attn_output)
+        return attn_output, attn_weights
+
+
 # ---------------------------------------------------------------------- #
 def _rebuild_attention_module(
     src: LlamaAttention,
@@ -158,6 +257,23 @@ def _rebuild_attention_module(
         new.to(device=example_param.device, dtype=example_param.dtype)
     # role_angles is non-persistent, so it's absent from src.state_dict() and
     # missing/unexpected lists stay clean.
+    missing, unexpected = new.load_state_dict(src.state_dict(), strict=True)
+    assert not missing and not unexpected, (missing, unexpected)
+    return new
+
+
+def _rebuild_pre_w_attention_module(
+    src: LlamaAttention,
+    prov_dim: int = 0,
+    role_angles: Optional[Sequence[float]] = None,
+) -> PreWRoleAwareLlamaAttention:
+    """Construct a ``PreWRoleAwareLlamaAttention`` initialized from ``src``."""
+    new = PreWRoleAwareLlamaAttention(
+        src.config, src.layer_idx, prov_dim=prov_dim, role_angles=role_angles
+    )
+    example_param = next(src.parameters(), None)
+    if example_param is not None:
+        new.to(device=example_param.device, dtype=example_param.dtype)
     missing, unexpected = new.load_state_dict(src.state_dict(), strict=True)
     assert not missing and not unexpected, (missing, unexpected)
     return new
@@ -210,6 +326,19 @@ def patch_model_with_role_aware_attention(
             layer.self_attn = _rebuild_attention_module(
                 layer.self_attn, prov_dim=prov_dim, role_angles=role_angles
             )
+    return model
+
+
+def patch_model_with_pre_w_role_aware_attention(
+    model: nn.Module,
+    prov_dim: int = 0,
+    role_angles: Optional[Sequence[float]] = None,
+) -> nn.Module:
+    """Replace every attention module with the pre-W role-rotation variant."""
+    for layer in model.model.layers:
+        layer.self_attn = _rebuild_pre_w_attention_module(
+            layer.self_attn, prov_dim=prov_dim, role_angles=role_angles
+        )
     return model
 
 
