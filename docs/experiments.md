@@ -1,6 +1,6 @@
 # Experiment Tracker
 
-Last updated: 2026-05-15T09:56:19+02:00.
+Last updated: 2026-05-15T12:28:38+02:00.
 
 This file is the active tracker. Every run gets one row. Do not encode active
 state in README, ad hoc notes, or generated logs.
@@ -40,6 +40,7 @@ transient progress here only if it affects an operational decision.
 | `cfv2-rope-prew-pi8-full-s0` | completed | `src/rope_prov/configs/rope_prov_pre_w_pi8_counterfactual_v2.yaml` | `runs/rope_prov_pre_w_P8_pi8_counterfactual_v2_online-seed0` | `vmgck3dr` | every 500 steps, keep 3 | Completed cleanly. Final artifacts in `final/`; retained checkpoints: `checkpoint-2000`, `checkpoint-2500`, `checkpoint-2901`. SEP completed. |
 | `cfv2-rope-learnable-pi8-unfreeze-s0` | completed | `src/rope_prov/configs/rope_prov_learnable_pi8_unfreeze_counterfactual_v2.yaml` | `runs/rope_prov_P8_learnable_pi8_unfreeze_counterfactual_v2_online-seed0` | `kkrlei1m` | every 500 steps, keep 3 | Completed cleanly. Final artifacts in `final/`; retained checkpoints: `checkpoint-2000`, `checkpoint-2500`, `checkpoint-2901`. SEP completed. |
 | `cfv2-rope-independent-angles-s0` | completed | `src/rope_prov/configs/rope_prov_independent_angles_counterfactual_v2.yaml` | `runs/rope_prov_P8_independent_angles_counterfactual_v2_online-seed0` | `i4dwm9tf` | every 500 steps, keep 3 | Completed cleanly. Final artifacts in `final/`; retained checkpoints: `checkpoint-2000`, `checkpoint-2500`, `checkpoint-2901`. SEP completed. |
+| `cfv2-rope-prew-learnable-s0` | completed | `src/rope_prov/configs/rope_prov_pre_w_learnable_counterfactual_v2.yaml` | `runs/rope_prov_pre_w_P8_learnable_counterfactual_v2_online-seed0` | `zqfwyd7o` | every 500 steps, keep 3 | Completed cleanly. Final artifacts in `final/`; retained checkpoints: `checkpoint-2000`, `checkpoint-2500`, `checkpoint-2901`. SEP completed. |
 
 W&B URLs:
 
@@ -51,6 +52,7 @@ W&B URLs:
 - `cfv2-rope-prew-pi8-full-s0`: `https://wandb.ai/d3banjan/rope-provenance/runs/vmgck3dr`
 - `cfv2-rope-learnable-pi8-unfreeze-s0`: `https://wandb.ai/d3banjan/rope-provenance/runs/kkrlei1m`
 - `cfv2-rope-independent-angles-s0`: `https://wandb.ai/d3banjan/rope-provenance/runs/i4dwm9tf`
+- `cfv2-rope-prew-learnable-s0`: `https://wandb.ai/d3banjan/rope-provenance/runs/zqfwyd7o`
 
 Completed state for `cfv2-vanilla-s0`:
 
@@ -187,6 +189,23 @@ single-phase bottleneck, but they do not rescue role separation. Utility remains
 well above the vanilla/pre-W band, and SEP shows the same instruction-execution
 collapse pattern as the post-projection fixed-angle family.
 
+Completed state for `cfv2-rope-prew-learnable-s0`:
+
+- dataset: train 30957, eval 600, counterfactual train 12000, eval 400.
+- role sanity: both role ids present in train/eval batches.
+- eval loss: step 2800 = 1.1822.
+- final train loss: 1.6653.
+- runtime: 53.3 min.
+- throughput: 29.05 examples/sec.
+- final learned angle gap: about -0.0081 rad, or -0.46 degrees.
+- SEP: -0.115, with instruction execution 0.160 and data execution 0.275.
+
+Gate read: failed positive threshold. Pre-W learnable preserves the utility and
+compliance recovery of fixed pre-W, but it keeps the learned role-angle gap near
+zero and does not produce positive role separation. This is the cleanest
+pre-W null: when given both upstream placement and angle freedom, the optimizer
+closes the rotational channel rather than using it.
+
 ## Counterfactual v2 Matrix
 
 | Run id | Status | Hypothesis | Config | Output dir |
@@ -199,6 +218,7 @@ collapse pattern as the post-projection fixed-angle family.
 | `cfv2-rope-prew-pi8-full-s0` | completed | budget-vs-findability check for pre-W transport | `src/rope_prov/configs/rope_prov_pre_w_pi8_counterfactual_v2.yaml` | `runs/rope_prov_pre_w_P8_pi8_counterfactual_v2_online-seed0` |
 | `cfv2-rope-learnable-pi8-unfreeze-s0` | completed | nonzero learnable gap tests whether optimizer drives angle back to zero | `src/rope_prov/configs/rope_prov_learnable_pi8_unfreeze_counterfactual_v2.yaml` | `runs/rope_prov_P8_learnable_pi8_unfreeze_counterfactual_v2_online-seed0` |
 | `cfv2-rope-independent-angles-s0` | completed | rotational steelman against equal-frequency collapse | `src/rope_prov/configs/rope_prov_independent_angles_counterfactual_v2.yaml` | `runs/rope_prov_P8_independent_angles_counterfactual_v2_online-seed0` |
+| `cfv2-rope-prew-learnable-s0` | completed | upstream placement plus learned gap tests whether pre-W freedom creates a usable channel | `src/rope_prov/configs/rope_prov_pre_w_learnable_counterfactual_v2.yaml` | `runs/rope_prov_pre_w_P8_learnable_counterfactual_v2_online-seed0` |
 | `cfv2-best-rope-s1` | conditional | seed variance calibration | duplicate best rope config with seed 1 | TBD |
 
 Run vanilla first. If vanilla final eval loss is unstable or above 2.0, revise
@@ -210,15 +230,17 @@ The vanilla and zeroed gates passed on 2026-05-14. The fixed pi8 training run
 completed on 2026-05-15 and failed the SEP gate. The pre-W smoke also completed
 on 2026-05-15. The final rotational-cell batch then completed in this order:
 standard learnable, full-budget pre-W pi8, pi8-initialized learnable with
-200-step freeze, and independent fixed per-pair angles. No rope arm clears the
-positive or marginal decision threshold, so a seed-1 rerun is not required for
-a positive claim.
+200-step freeze, independent fixed per-pair angles, and pre-W learnable angles.
+No rope arm clears the positive or marginal decision threshold, so a seed-1
+rerun is not required for a positive claim.
 
 The pi8 SEP failure is asymmetric rather than merely null: INSTRUCTION-slot
 execution collapses while DATA-slot execution is unchanged. The standard
 learnable arm avoids this by keeping the angle gap near zero. The
 pi8-initialized freeze/unfreeze arm keeps a large nonzero gap and reproduces the
 damage. Independent per-pair fixed angles do not rescue the rotational channel.
+Pre-W learnable also keeps its angle gap near zero, showing that upstream
+placement plus angle freedom still does not make the channel useful.
 
 ## Commands
 

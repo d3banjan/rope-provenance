@@ -91,6 +91,7 @@ data in the DATA span.
 | rope_prov pre-W pi/8 full | `vmgck3dr` | 1.6654 | 1.1832 | -0.125 | 0.160 | 0.285 |
 | rope_prov learnable pi/8 unfreeze | `kkrlei1m` | 1.7438 | 1.5296 | -0.290 | 0.025 | 0.315 |
 | rope_prov independent angles | `i4dwm9tf` | 1.7686 | 1.5546 | -0.240 | 0.010 | 0.250 |
+| rope_prov pre-W learnable | `zqfwyd7o` | 1.6653 | 1.1822 | -0.115 | 0.160 | 0.275 |
 
 Training gate: passed. The vanilla v2 run completed cleanly in 46.4 minutes at
 33.35 examples/sec, and the zeroed control completed in 47.4 minutes at 32.67
@@ -162,14 +163,21 @@ single-phase bottleneck. It failed: utility stayed in the high-loss fixed-angle
 band and instruction execution collapsed to 0.010. Extra rotational bandwidth
 did not create usable substring provenance at this placement and scale.
 
+Pre-W learnable interpretation: giving the model both upstream placement and
+angle freedom preserves vanilla-like utility and compliance, but the learned
+role-angle gap stays near zero, about -0.46 degrees. SEP lands at -0.115, inside
+the vanilla/zeroed/pre-W band rather than above it. The optimizer uses the
+available freedom to close the rotational channel, not to turn it into a
+substring-provenance feature.
+
 Rotational-cell conclusion: the counterfactual curriculum was necessary and
 worked as a data intervention, but no per-layer rotational arm produced positive
 role separation. Post-projection nonzero rotations preferentially damage the
 focused instruction-compliance pathway. Learnable post-projection angles avoid
 damage by closing the channel. Pre-W placement restores utility and compliance
-but lands on the same SEP as zeroed. This closes the v1/v2 rotational matrix as
-a negative result, with pre-W as the strongest null and post-W nonzero rotations
-as the informative failure mode.
+but lands in the same SEP band as zeroed, even when the role angle is learnable.
+This closes the v1/v2 rotational matrix as a negative result, with pre-W as the
+strongest null and post-W nonzero rotations as the informative failure mode.
 
 See [experiments.md](experiments.md) for the live run tracker and
 pre-registered gates.
