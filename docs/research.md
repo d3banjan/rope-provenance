@@ -1,6 +1,6 @@
 # Research Brief
 
-Last updated: 2026-05-14T19:06:23+02:00.
+Last updated: 2026-05-15T04:52:30+02:00.
 
 ## One-Sentence Objective
 
@@ -93,6 +93,39 @@ aligned training. If the gap stays near zero with stable training, the sharper
 diagnosis is that this post-projection rotational placement is structurally
 inadequate even with the right curriculum.
 
+## Symmetry-Survey Interpretation
+
+The equal-frequency theorem sharpens the current fixed-angle design. Applying
+the same role angle to every provenance pair puts those pairs in one degenerate
+angle class: a closed complex-scalar fiber, not `P/2` independent role
+channels. Increasing `P` buys more role-modulated subspace size and attention
+energy, but the external binary role signal is still one phase.
+
+This is enough bandwidth for binary instruction-vs-DATA provenance in
+principle. It is probably too narrow for full source/span provenance unless a
+future design adds independent angle sectors, source embeddings, additive id
+channels, or another higher-bandwidth carrier.
+
+Transport geometry gives the better diagnostic language for v2. A usable
+provenance direction has to pass three filters: the observable must resolve it,
+the cost must fit the available slack, and the signal must survive stepwise
+transport through the block stack. Counterfactual training is the observable
+refinement; vanilla_zeroed is the budget/capacity control; the pre-W smoke is a
+placement test for the transport filter.
+
+The current claim should therefore avoid saying post-projection rotation is
+uncompensatable in an absolute sense. The cleaner claim is that it is a
+low-slack transport path through a thin commutant-compatible region. If pre-W
+improves utility or SEP, placement was the binding constraint. If pre-W also
+fails under the counterfactual curriculum, the next kill target is rotational
+per-layer channels as a class, with additive channels or RWKV/SSM gates as the
+natural pivot.
+
+Sector-attractor language also cautions against over-reading one SEP scalar:
+two runs can share the same macro SEP while using different microscopic
+allocations. Keep reporting `exec_instr`, `exec_data`, utility loss, angle
+movement, and seed variance before making a mechanism claim.
+
 ## Decision Rule
 
 Primary metric:
@@ -137,4 +170,3 @@ loss tying generated statements to supporting source spans. If RoPE is the
 wrong substrate, RWKV/SSM models are a plausible next architecture family:
 inject provenance through state-update gates or additive state channels, gated
 on whether the unmodified model has a usable SEP floor.
-
