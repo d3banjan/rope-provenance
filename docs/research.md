@@ -411,3 +411,12 @@ the witness when that valid line is instruction-role and emits the answer when
 that valid line is instruction-role. This passes the correct-role threshold, but
 do not interpret it without the constant-role control because the instruct
 checkpoint and chat framing remain confounds.
+
+Constant-role hidden result: `slm-qwen25-0.5b-instruct-hidden-role-gated-constant-s0`
+finishes at exact-match 0.500. Samples show the expected contradiction behavior:
+with all role IDs set to default, the model picks one visible side for each
+duplicated prompt, making one member of the pair right and the other wrong. The
+correct-minus-constant margin is therefore +0.500, above the pre-registered
++0.30 threshold. This is a positive additive-channel proof-of-concept on the
+instruct checkpoint, with the base-model and chat-posttraining confounds still
+explicitly in force.

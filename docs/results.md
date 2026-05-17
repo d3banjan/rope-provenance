@@ -275,3 +275,12 @@ current short LoRA protocol.
 | Run | W&B | Role control | exact_match | Interpretation |
 |---|---|---|---:|---|
 | Qwen2.5-0.5B-Instruct hidden-role gated correct | `hdjhcz4q` | correct out-of-band roles | 1.000 | Passed the pre-registered correct-role threshold. Paired visible prompts are identical, and samples alternate correctly between witness and answer based on the hidden role map. Constant-role control is still required before claiming role-channel causality. |
+| Qwen2.5-0.5B-Instruct hidden-role gated constant | `rldphw35` | all-default roles | 0.500 | Passed the required control. With role information removed, the model selects one side of each contradictory pair, so one duplicate is right and the other is wrong. |
+
+Interpretation: the confounded instruct hidden-role proof-of-concept is
+positive. Correct roles reach 1.000, constant roles cap at 0.500, and the
+margin is +0.500 against the pre-registered +0.30 threshold. This is evidence
+that a simple additive input channel can carry software-supplied substring
+provenance when the model already has instruction-following priors. It does not
+rescue the RoPE-rotation experiments and does not yet show that a clean base SLM
+can learn the same behavior under the short LoRA protocol.
