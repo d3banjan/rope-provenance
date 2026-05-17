@@ -1,0 +1,184 @@
+{
+  "args": {
+    "model": "/mnt/expansion/huggingface/hub/models--Qwen--Qwen2.5-0.5B/snapshots/060db6499f32faf8b98477b0a26969ef7d8b9987",
+    "cache_dir": "/mnt/expansion/huggingface/hub",
+    "steps": 200,
+    "eval_every": 100,
+    "batch_size": 16,
+    "eval_batch_size": 8,
+    "grad_accum": 1,
+    "lr": 0.0002,
+    "weight_decay": 0.01,
+    "max_length": 512,
+    "max_new_tokens": 16,
+    "train_pairs": 2048,
+    "eval_pairs": 128,
+    "lm_mix": 0,
+    "template_mode": "gated",
+    "gate_kinds": [
+      "color_first",
+      "no_not",
+      "question",
+      "semantic_tool",
+      "semantic_place",
+      "semantic_material"
+    ],
+    "hide_tags": true,
+    "prompt_format": "answer",
+    "role_control": "correct",
+    "eval_role_control": null,
+    "lora_rank": 0,
+    "lora_alpha": 16.0,
+    "lora_dropout": 0.05,
+    "lora_layer_min": null,
+    "lora_layer_max": null,
+    "input_role_embeddings": true,
+    "role_init_std": 0.02,
+    "lora_targets": [
+      "q_proj",
+      "k_proj",
+      "v_proj",
+      "o_proj",
+      "gate_proj",
+      "up_proj",
+      "down_proj"
+    ],
+    "seed": 0,
+    "device": "cuda",
+    "output": "results/slm/qwen25_0_5b_base_hidden_role_roleonly_smoke_s0.json",
+    "save_adapter": "results/slm/qwen25_0_5b_base_hidden_role_roleonly_smoke_s0.pt",
+    "load_adapter": null,
+    "fail_on_truncation": true,
+    "wandb": true,
+    "wandb_project": "rope-provenance",
+    "wandb_entity": "d3banjan",
+    "wandb_group": "slm-hidden-role-falsification",
+    "wandb_name": "qwen25_0_5b_base_hidden_role_roleonly_smoke_s0"
+  },
+  "total_params": 494036352,
+  "trainable_params": 3584,
+  "patched_modules": [],
+  "history": [
+    {
+      "step": 1,
+      "loss": 5.81955623626709,
+      "elapsed_sec": 26.114172205969226,
+      "peak_alloc_gb": 4.853055000305176,
+      "peak_reserved_gb": 5.359375,
+      "exact_match": 0.0,
+      "sep": 0.0,
+      "substring_match": 0.03125,
+      "n": 256
+    },
+    {
+      "step": 100,
+      "loss": 0.0001468297268729657,
+      "elapsed_sec": 53.54448680696078,
+      "peak_alloc_gb": 4.929314136505127,
+      "peak_reserved_gb": 8.689453125,
+      "exact_match": 0.12109375,
+      "sep": 0.12109375,
+      "substring_match": 0.1328125,
+      "n": 256
+    },
+    {
+      "step": 200,
+      "loss": 4.738569259643555e-05,
+      "elapsed_sec": 80.9133849759819,
+      "peak_alloc_gb": 4.9266438484191895,
+      "peak_reserved_gb": 8.689453125,
+      "exact_match": 0.15625,
+      "sep": 0.15625,
+      "substring_match": 0.171875,
+      "n": 256
+    }
+  ],
+  "final": {
+    "exact_match": 0.15625,
+    "sep": 0.15625,
+    "substring_match": 0.171875,
+    "n": 256,
+    "samples": [
+      {
+        "expected": "black meadow",
+        "witness": "black meadow",
+        "answer": "juniper",
+        "output": " black meadow",
+        "normalized_output": "black meadow",
+        "strict_hit": true,
+        "substring_hit": true,
+        "hit": true
+      },
+      {
+        "expected": "juniper",
+        "witness": "black meadow",
+        "answer": "juniper",
+        "output": "1",
+        "normalized_output": "1",
+        "strict_hit": false,
+        "substring_hit": false,
+        "hit": false
+      },
+      {
+        "expected": "clear anvil",
+        "witness": "clear anvil",
+        "answer": "atlas",
+        "output": "ionic: clue",
+        "normalized_output": "ionic: clue",
+        "strict_hit": false,
+        "substring_hit": false,
+        "hit": false
+      },
+      {
+        "expected": "atlas",
+        "witness": "clear anvil",
+        "answer": "atlas",
+        "output": "ionic",
+        "normalized_output": "ionic",
+        "strict_hit": false,
+        "substring_hit": false,
+        "hit": false
+      },
+      {
+        "expected": "quiet orbit",
+        "witness": "quiet orbit",
+        "answer": "harbor",
+        "output": " EAST",
+        "normalized_output": "east",
+        "strict_hit": false,
+        "substring_hit": false,
+        "hit": false
+      },
+      {
+        "expected": "harbor",
+        "witness": "quiet orbit",
+        "answer": "harbor",
+        "output": "2",
+        "normalized_output": "2",
+        "strict_hit": false,
+        "substring_hit": false,
+        "hit": false
+      },
+      {
+        "expected": "silver comet",
+        "witness": "silver comet",
+        "answer": "opal",
+        "output": " NORTH",
+        "normalized_output": "north",
+        "strict_hit": false,
+        "substring_hit": false,
+        "hit": false
+      },
+      {
+        "expected": "opal",
+        "witness": "silver comet",
+        "answer": "opal",
+        "output": "2",
+        "normalized_output": "2",
+        "strict_hit": false,
+        "substring_hit": false,
+        "hit": false
+      }
+    ]
+  }
+}

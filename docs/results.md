@@ -308,3 +308,9 @@ This kills the claim that LoRA/adapters are necessary for the positive hidden
 role result in the instruct model. The stronger surviving claim is that the
 instruction-tuned model already exposes a small input-control surface for
 authority routing.
+
+Base/instruct split check: the same role-only setup on Qwen2.5-0.5B base with
+answer formatting reaches only 0.156 after 200 steps, despite near-zero train
+loss. At the same point the instruct role-only run was already 0.988. This
+supports the interpretation that instruction tuning creates or exposes the
+authority-control surface that the software role vector can steer.

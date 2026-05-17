@@ -506,3 +506,10 @@ Training with constant roles gives 0.438, and removing roles at eval gives
 model. The surviving interpretation is simpler and stronger: instruction tuning
 has already built an authority-routing surface that can be steered by a tiny
 software-supplied additive role vector.
+
+Base role-only smoke: Qwen2.5-0.5B base with the same all-gate hidden-role task,
+answer formatting, no LoRA, and 200 steps reaches only 0.156 despite fitting the
+training loss. The instruct role-only arm was already 0.988 at step 200. This
+kills the thesis that the 3.5K role-vector trick is a generic pretrained-base
+capability. It appears to depend on the instruction-tuned authority/readout
+surface.
