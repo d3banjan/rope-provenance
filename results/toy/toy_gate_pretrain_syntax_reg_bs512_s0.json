@@ -1,0 +1,317 @@
+{
+  "args": {
+    "steps": 2000,
+    "batch_size": 512,
+    "block_size": 512,
+    "dim": 128,
+    "layers": 4,
+    "heads": 4,
+    "lr": 0.003,
+    "weight_decay": 0.1,
+    "label_smoothing": 0.02,
+    "dropout": 0.05,
+    "embedding_dropout": 0.05,
+    "train_pairs": 2048,
+    "eval_pairs": 128,
+    "lm_mix": 512,
+    "eval_every": 250,
+    "seed": 0,
+    "template_mode": "gate_pretrain",
+    "gate_kinds": [
+      "no_not",
+      "question"
+    ],
+    "vocab_template_modes": [
+      "gated"
+    ],
+    "no_role_emb": false,
+    "hide_tags": true,
+    "role_control": "correct",
+    "eval_role_control": null,
+    "eval_role_controls": null,
+    "answer_loss_weight": 4.0,
+    "device": "cuda",
+    "output": "results/toy/toy_gate_pretrain_syntax_reg_bs512_s0.json",
+    "save_checkpoint": "results/toy/toy_gate_pretrain_syntax_reg_bs512_s0.pt",
+    "load_checkpoint": null,
+    "fail_on_truncation": true,
+    "wandb": true,
+    "wandb_project": "rope-provenance",
+    "wandb_entity": "d3banjan",
+    "wandb_group": "toy-role-provenance-gate-pretrain",
+    "wandb_name": "toy_gate_pretrain_syntax_reg_bs512_s0"
+  },
+  "param_count": 731656,
+  "vocab_size": 69,
+  "length_stats": {
+    "max_train_chars": 339,
+    "max_eval_prompt_chars": 325,
+    "max_eval_prompt_chars_by_control": {
+      "correct": 325
+    }
+  },
+  "history": [
+    {
+      "step": 1,
+      "loss": 4.283472061157227,
+      "elapsed_sec": 28.791775060992222,
+      "peak_alloc_gb": 9.399502754211426,
+      "peak_reserved_gb": 9.572265625,
+      "sep": 0.0,
+      "exec_instr": 0.0,
+      "exec_data": 0.0,
+      "correct_instr": 0.0,
+      "correct_data": 0.0,
+      "instr_n": 256,
+      "data_n": 0
+    },
+    {
+      "step": 250,
+      "loss": 0.25461360812187195,
+      "elapsed_sec": 164.46356841700617,
+      "peak_alloc_gb": 9.404988288879395,
+      "peak_reserved_gb": 9.583984375,
+      "sep": 0.046875,
+      "exec_instr": 0.046875,
+      "exec_data": 0.0,
+      "correct_instr": 0.046875,
+      "correct_data": 0.0,
+      "instr_n": 256,
+      "data_n": 0
+    },
+    {
+      "step": 500,
+      "loss": 0.2103605419397354,
+      "elapsed_sec": 300.19254920299863,
+      "peak_alloc_gb": 9.404988288879395,
+      "peak_reserved_gb": 9.583984375,
+      "sep": 0.1015625,
+      "exec_instr": 0.1015625,
+      "exec_data": 0.0,
+      "correct_instr": 0.1015625,
+      "correct_data": 0.0,
+      "instr_n": 256,
+      "data_n": 0
+    },
+    {
+      "step": 750,
+      "loss": 0.21300195157527924,
+      "elapsed_sec": 436.19437135301996,
+      "peak_alloc_gb": 9.404988288879395,
+      "peak_reserved_gb": 9.583984375,
+      "sep": 0.1015625,
+      "exec_instr": 0.1015625,
+      "exec_data": 0.0,
+      "correct_instr": 0.1015625,
+      "correct_data": 0.0,
+      "instr_n": 256,
+      "data_n": 0
+    },
+    {
+      "step": 1000,
+      "loss": 0.2295023798942566,
+      "elapsed_sec": 571.6174132939777,
+      "peak_alloc_gb": 9.404988288879395,
+      "peak_reserved_gb": 9.583984375,
+      "sep": 0.1328125,
+      "exec_instr": 0.1328125,
+      "exec_data": 0.0,
+      "correct_instr": 0.1328125,
+      "correct_data": 0.0,
+      "instr_n": 256,
+      "data_n": 0
+    },
+    {
+      "step": 1250,
+      "loss": 0.20689284801483154,
+      "elapsed_sec": 707.1642670209985,
+      "peak_alloc_gb": 9.404988288879395,
+      "peak_reserved_gb": 9.583984375,
+      "sep": 0.1796875,
+      "exec_instr": 0.1796875,
+      "exec_data": 0.0,
+      "correct_instr": 0.1796875,
+      "correct_data": 0.0,
+      "instr_n": 256,
+      "data_n": 0
+    },
+    {
+      "step": 1500,
+      "loss": 0.20818455517292023,
+      "elapsed_sec": 842.9528968480299,
+      "peak_alloc_gb": 9.404988288879395,
+      "peak_reserved_gb": 9.583984375,
+      "sep": 0.1875,
+      "exec_instr": 0.1875,
+      "exec_data": 0.0,
+      "correct_instr": 0.1875,
+      "correct_data": 0.0,
+      "instr_n": 256,
+      "data_n": 0
+    },
+    {
+      "step": 1750,
+      "loss": 0.20716702938079834,
+      "elapsed_sec": 978.8519528480247,
+      "peak_alloc_gb": 9.404988288879395,
+      "peak_reserved_gb": 9.583984375,
+      "sep": 0.2109375,
+      "exec_instr": 0.2109375,
+      "exec_data": 0.0,
+      "correct_instr": 0.2109375,
+      "correct_data": 0.0,
+      "instr_n": 256,
+      "data_n": 0
+    },
+    {
+      "step": 2000,
+      "loss": 0.2215871959924698,
+      "elapsed_sec": 1114.6588494940079,
+      "peak_alloc_gb": 9.404988288879395,
+      "peak_reserved_gb": 9.583984375,
+      "sep": 0.1953125,
+      "exec_instr": 0.1953125,
+      "exec_data": 0.0,
+      "correct_instr": 0.1953125,
+      "correct_data": 0.0,
+      "instr_n": 256,
+      "data_n": 0
+    }
+  ],
+  "final": {
+    "sep": 0.1953125,
+    "exec_instr": 0.1953125,
+    "exec_data": 0.0,
+    "correct_instr": 0.1953125,
+    "correct_data": 0.0,
+    "instr_n": 256,
+    "data_n": 0,
+    "samples": [
+      {
+        "kind": "instruction_positive",
+        "expected": "black meadow",
+        "witness": "black meadow",
+        "answer": "juniper",
+        "output": "black meadow.\nowhyiteack ck ack ack ack "
+      },
+      {
+        "kind": "instruction_positive",
+        "expected": "black meadow",
+        "witness": "black meadow",
+        "answer": "juniper",
+        "output": "black meadow.\nowhyiteack ck ack ack ack "
+      },
+      {
+        "kind": "instruction_positive",
+        "expected": "clear anvil",
+        "witness": "clear anvil",
+        "answer": "atlas",
+        "output": "vileanvilet et Rercrowhyit ar ar ar ar a"
+      },
+      {
+        "kind": "instruction_positive",
+        "expected": "clear anvil",
+        "witness": "clear anvil",
+        "answer": "atlas",
+        "output": "vileanvilet et Rercrowhyit ar ar ar ar a"
+      },
+      {
+        "kind": "instruction_positive",
+        "expected": "quiet orbit",
+        "witness": "quiet orbit",
+        "answer": "harbor",
+        "output": "white compass.\nGircuite orbivetetetetete"
+      },
+      {
+        "kind": "instruction_positive",
+        "expected": "quiet orbit",
+        "witness": "quiet orbit",
+        "answer": "harbor",
+        "output": "white compass.\nGircuite orbivetetetetete"
+      },
+      {
+        "kind": "instruction_positive",
+        "expected": "silver comet",
+        "witness": "silver comet",
+        "answer": "opal",
+        "output": "r comet aler cl.\neteyit ar ar anvilear a"
+      },
+      {
+        "kind": "instruction_positive",
+        "expected": "silver comet",
+        "witness": "silver comet",
+        "answer": "opal",
+        "output": "r comet aler cl.\neteyit ar ar anvilear a"
+      }
+    ]
+  },
+  "final_by_control": {
+    "correct": {
+      "sep": 0.1953125,
+      "exec_instr": 0.1953125,
+      "exec_data": 0.0,
+      "correct_instr": 0.1953125,
+      "correct_data": 0.0,
+      "instr_n": 256,
+      "data_n": 0,
+      "samples": [
+        {
+          "kind": "instruction_positive",
+          "expected": "black meadow",
+          "witness": "black meadow",
+          "answer": "juniper",
+          "output": "black meadow.\nowhyiteack ck ack ack ack "
+        },
+        {
+          "kind": "instruction_positive",
+          "expected": "black meadow",
+          "witness": "black meadow",
+          "answer": "juniper",
+          "output": "black meadow.\nowhyiteack ck ack ack ack "
+        },
+        {
+          "kind": "instruction_positive",
+          "expected": "clear anvil",
+          "witness": "clear anvil",
+          "answer": "atlas",
+          "output": "vileanvilet et Rercrowhyit ar ar ar ar a"
+        },
+        {
+          "kind": "instruction_positive",
+          "expected": "clear anvil",
+          "witness": "clear anvil",
+          "answer": "atlas",
+          "output": "vileanvilet et Rercrowhyit ar ar ar ar a"
+        },
+        {
+          "kind": "instruction_positive",
+          "expected": "quiet orbit",
+          "witness": "quiet orbit",
+          "answer": "harbor",
+          "output": "white compass.\nGircuite orbivetetetetete"
+        },
+        {
+          "kind": "instruction_positive",
+          "expected": "quiet orbit",
+          "witness": "quiet orbit",
+          "answer": "harbor",
+          "output": "white compass.\nGircuite orbivetetetetete"
+        },
+        {
+          "kind": "instruction_positive",
+          "expected": "silver comet",
+          "witness": "silver comet",
+          "answer": "opal",
+          "output": "r comet aler cl.\neteyit ar ar anvilear a"
+        },
+        {
+          "kind": "instruction_positive",
+          "expected": "silver comet",
+          "witness": "silver comet",
+          "answer": "opal",
+          "output": "r comet aler cl.\neteyit ar ar anvilear a"
+        }
+      ]
+    }
+  }
+}

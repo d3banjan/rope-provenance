@@ -215,6 +215,7 @@ cheaply adopt the same channel.
 | additive hidden roles diverse | `8itmpe7b` | diverse | correct | 0.836 | 0.836 | 0.000 | 0.859 |
 | additive hidden roles diverse constant | `ub86g90v` | diverse | constant | 0.680 | 0.727 | 0.047 | 0.906 |
 | gate pretrain corrected | `nl3dkyrm` | gate_pretrain | correct | 0.000 | 0.000 | 0.000 | 0.000 |
+| gate pretrain syntax+regularized | `yy39ct44` | gate_pretrain, syntactic gates | correct | 0.195 | 0.195 | 0.000 | 0.000 |
 
 Interpretation: the simple generator is too easy. A constant-role model, with no
 usable instruction/DATA distinction, reaches SEP 0.953, so the simple result is
@@ -241,3 +242,11 @@ exact-match SEP 0.000, with only transient tiny hits at intermediate evals.
 This is a capability-floor result for the scratch toy, not a provenance
 negative. The next test should use a pretrained base SLM, starting with
 `Qwen/Qwen2.5-0.5B` base.
+
+Syntactic-gate regularized follow-up: restricting the gate to `no_not` and
+`question` and adding weight decay 0.1, dropout 0.05, embedding dropout 0.05,
+and label smoothing 0.02 improved heldout exact-match SEP to 0.195, with a best
+intermediate SEP of 0.211 at step 1750. This shows the scratch model can learn
+some syntactic selection, but it fails the pre-registered >=0.50 pass gate.
+Scratch gated-role experiments remain blocked for paper evidence; the main path
+moves to pretrained Qwen2.5-0.5B base.

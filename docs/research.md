@@ -354,3 +354,9 @@ Pre-registered SLM queue, written before any Qwen run:
 - Qwen instruct is a confounded probe. Use it only if base fails or is marginal:
   a pass shows the task is reachable by an SLM, but not that the provenance
   channel caused the behavior.
+
+Syntactic-gate result: final SEP 0.195, best intermediate SEP 0.211. This is
+above the hard-kill line, so syntactic structure is not impossible for the
+scratch model, but below the >=0.50 pass gate. Do not spend more paper-critical
+GPU on scratch gated-role variants unless a specific toy-only question is being
+answered. The Qwen base capability run is now the next unblocked experiment.
