@@ -1,0 +1,25 @@
+# Variant: pre-W role rotation behind per-layer ReZero gates, smoke-trained
+# with staged gate updates on the v2 counterfactual curriculum.
+extends: base.yaml
+
+attention_variant: rope_prov_pre_w_rezero
+provenance_dims: 8
+role_angles: [0.0, 0.39269908]
+
+counterfactual_train_size: 12000
+counterfactual_eval_size: 400
+counterfactual_positive_fraction: 0.5
+
+role_gate_lr: 1.0e-3
+rezero_gate_init: 0.0
+rezero_stage_steps: [200, 400]
+rezero_stage_layer_maxes: [4, 16, null]
+rezero_log_every: 10
+
+max_steps: 600
+eval_steps: 200
+save_steps: 200
+save_total_limit: 2
+
+wandb_group: smollm2-135m-counterfactual-v2-rezero
+wandb_run_name: rope_prov_pre_w_P8_rezero_counterfactual_v2_smoke
