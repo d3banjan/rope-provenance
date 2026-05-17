@@ -11,6 +11,7 @@ import argparse
 import json
 import math
 import random
+import re
 import sys
 import time
 from dataclasses import dataclass
@@ -27,6 +28,7 @@ if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
 from scripts.toy_role_provenance import (  # noqa: E402
+    GATED_GATE_KIND_CHOICES,
     ROLE_CONTROL_CHOICES,
     ROLE_ANSWER,
     ROLE_DATA,
@@ -42,6 +44,7 @@ DEFAULT_QWEN05_BASE = (
     "/mnt/expansion/huggingface/hub/models--Qwen--Qwen2.5-0.5B/"
     "snapshots/060db6499f32faf8b98477b0a26969ef7d8b9987"
 )
+LAYER_RE = re.compile(r"(?:^|\.)layers\.(\d+)\.")
 
 
 @dataclass
@@ -104,14 +107,25 @@ def add_lora(
     alpha: float,
     dropout: float,
     target_suffixes: tuple[str, ...],
+    layer_min: int | None,
+    layer_max: int | None,
 ) -> list[str]:
     for param in model.parameters():
         param.requires_grad_(False)
+    if rank <= 0:
+        return []
     replacements = []
     for name, module in model.named_modules():
         if not isinstance(module, nn.Linear):
             continue
         if name.endswith(target_suffixes):
+            layer_match = LAYER_RE.search(name)
+            if layer_match is not None:
+                layer_idx = int(layer_match.group(1))
+                if layer_min is not None and layer_idx < layer_min:
+                    continue
+                if layer_max is not None and layer_idx > layer_max:
+                    continue
             replacements.append((name, module))
     for name, module in replacements:
         replace_module(
@@ -314,6 +328,19 @@ def causal_loss(logits: torch.Tensor, labels: torch.Tensor) -> torch.Tensor:
     )
 
 
+def normalize_answer(text: str) -> str:
+    first_line = ""
+    for line in text.strip().splitlines():
+        if line.strip():
+            first_line = line.strip()
+            break
+    if first_line.lower().startswith("answer:"):
+        first_line = first_line.split(":", 1)[1].strip()
+    first_line = first_line.strip(" \t\r\n\"'`")
+    first_line = first_line.rstrip(" .,!?:;")
+    return " ".join(first_line.lower().split())
+
+
 def forward_model(
     model,
     *,
@@ -427,7 +454,8 @@ def evaluate(
     model.eval()
     old_padding_side = tokenizer.padding_side
     tokenizer.padding_side = "left"
-    correct = 0
+    strict_correct = 0
+    substring_correct = 0
     samples = []
     try:
         for start in range(0, len(examples), batch_size):
@@ -462,8 +490,12 @@ def evaluate(
                     skip_special_tokens=True,
                 )
             for ex, out in zip(chunk, decoded):
-                hit = ex["expected"].lower() in out.lower()
-                correct += int(hit)
+                normalized_output = normalize_answer(out)
+                normalized_expected = normalize_answer(ex["expected"])
+                strict_hit = normalized_output == normalized_expected
+                substring_hit = ex["expected"].lower() in out.lower()
+                strict_correct += int(strict_hit)
+                substring_correct += int(substring_hit)
                 if len(samples) < 8:
                     samples.append(
                         {
@@ -471,15 +503,20 @@ def evaluate(
                             "witness": ex["witness"],
                             "answer": ex["answer"],
                             "output": out[:160],
-                            "hit": hit,
+                            "normalized_output": normalized_output,
+                            "strict_hit": strict_hit,
+                            "substring_hit": substring_hit,
+                            "hit": strict_hit,
                         }
                     )
     finally:
         tokenizer.padding_side = old_padding_side
-    exact = correct / max(len(examples), 1)
+    exact = strict_correct / max(len(examples), 1)
+    substring = substring_correct / max(len(examples), 1)
     return {
         "exact_match": exact,
         "sep": exact,
+        "substring_match": substring,
         "n": len(examples),
         "samples": samples,
     }
@@ -517,8 +554,8 @@ def main() -> None:
     parser.add_argument(
         "--gate-kinds",
         nargs="+",
-        choices=("color_first", "no_not", "question"),
-        default=["color_first", "no_not", "question"],
+        choices=GATED_GATE_KIND_CHOICES,
+        default=list(GATED_GATE_KIND_CHOICES),
     )
     parser.add_argument("--hide-tags", action="store_true")
     parser.add_argument(
@@ -541,6 +578,8 @@ def main() -> None:
     parser.add_argument("--lora-rank", type=int, default=8)
     parser.add_argument("--lora-alpha", type=float, default=16.0)
     parser.add_argument("--lora-dropout", type=float, default=0.05)
+    parser.add_argument("--lora-layer-min", type=int, default=None)
+    parser.add_argument("--lora-layer-max", type=int, default=None)
     parser.add_argument("--input-role-embeddings", action="store_true")
     parser.add_argument("--role-init-std", type=float, default=0.02)
     parser.add_argument(
@@ -560,6 +599,7 @@ def main() -> None:
     parser.add_argument("--device", default="cuda" if torch.cuda.is_available() else "cpu")
     parser.add_argument("--output", default="results/slm/qwen25_0_5b_gate.json")
     parser.add_argument("--save-adapter", default=None)
+    parser.add_argument("--load-adapter", default=None)
     parser.add_argument("--fail-on-truncation", action="store_true")
     parser.add_argument("--wandb", action="store_true")
     parser.add_argument("--wandb-project", default="rope-provenance")
@@ -625,6 +665,8 @@ def main() -> None:
         alpha=args.lora_alpha,
         dropout=args.lora_dropout,
         target_suffixes=tuple(args.lora_targets),
+        layer_min=args.lora_layer_min,
+        layer_max=args.lora_layer_max,
     )
     if args.input_role_embeddings:
         model.input_role_emb = nn.Embedding(
@@ -636,8 +678,13 @@ def main() -> None:
         nn.init.normal_(model.input_role_emb.weight, mean=0.0, std=args.role_init_std)
         with torch.no_grad():
             model.input_role_emb.weight[ROLE_DEFAULT].zero_()
+    if args.load_adapter:
+        payload = torch.load(args.load_adapter, map_location=device)
+        model.load_state_dict(payload["state_dict"], strict=False)
     trainable_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
     total_params = sum(p.numel() for p in model.parameters())
+    if trainable_params == 0:
+        raise ValueError("no trainable parameters; enable LoRA or input role embeddings")
     optimizer = torch.optim.AdamW(
         [p for p in model.parameters() if p.requires_grad],
         lr=args.lr,

@@ -445,3 +445,32 @@ controls are deferred because the constant-role shortcut already made that
 generator non-diagnostic. RoPE-toy bridge rows are deferred until a script option
 exists; they are lower priority than writing up the SmolLM2 rotational negative
 and the Qwen instruct additive positive as separate cells in the design matrix.
+
+## Falsification Ladder for Qwen Additive Roles
+
+Redesigned objective: kill every remaining positive thesis as cheaply as
+possible before spending on larger models.
+
+1. Eval artifact kill. Re-evaluate the saved hidden-role adapters with strict
+   normalized first-answer equality, not substring detection. Kill the "perfect"
+   claim if correct-role exact drops materially, constant rises above 0.55, or
+   eval-swap rises above 0.10.
+2. Role-channel necessity kill. Run a role-embedding-only arm with `lora_rank=0`.
+   If it succeeds, the LoRA low-rank-adapter thesis is too strong: the fixed
+   instruct model already exposes a usable input control direction. If it fails,
+   LoRA is needed to bind the role vector into the SFT control subspace.
+3. Layer locality kill. Run early, middle, and late LoRA slices on the hidden
+   gated task. If only late works, the result supports an SFT/lazy-rudder style
+   low-dimensional authority-rudder story. If all slices work, the effect is
+   not layer-local. If none work, the all-layer result is fragile.
+4. Template shortcut kill. Use all gate kinds by default, including semantic
+   tool/place/material gates with disjoint train/eval vocabularies, and rerun
+   correct/constant/eval-swap. Kill the claim if correct drops, constant rises,
+   or eval-swap stops flipping.
+5. Subspace geometry kill. Analyze saved adapters for LoRA stable rank and
+   overlap/capture against the cached Qwen base-to-instruct weight delta. Kill
+   the lazy-rudder-compatible interpretation if the learned adapter is not
+   low-stable-rank or has no above-baseline relationship to the SFT delta.
+6. Scale test last. Only after the 0.5B strict/semantic controls survive should
+   a larger instruct model be used. Larger models are for checking whether extra
+   dimension helps or hinders, not for covering up an eval or generator flaw.

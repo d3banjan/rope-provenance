@@ -193,6 +193,14 @@ GATED_OBJECTS_EVAL = ("compass", "quartz", "meadow", "pulley", "circuit", "anvil
 GATED_LABELS_TRAIN = ("ALPHA", "BETA", "GAMMA", "DELTA")
 GATED_LABELS_EVAL = ("NORTH", "SOUTH", "EAST", "WEST")
 GATED_GATE_KINDS = ("color_first", "no_not", "question")
+GATED_SEMANTIC_GATE_KINDS = ("semantic_tool", "semantic_place", "semantic_material")
+GATED_GATE_KIND_CHOICES = GATED_GATE_KINDS + GATED_SEMANTIC_GATE_KINDS
+GATED_TOOLS_TRAIN = ("hammer", "wrench", "chisel", "drill", "pliers", "level")
+GATED_TOOLS_EVAL = ("saw", "trowel", "clamp", "awl", "plane", "vise")
+GATED_PLACES_TRAIN = ("library", "station", "garden", "kitchen", "market", "studio")
+GATED_PLACES_EVAL = ("harbor", "theater", "courtyard", "workshop", "gallery", "depot")
+GATED_MATERIALS_TRAIN = ("copper", "granite", "silk", "glass", "paper", "wax")
+GATED_MATERIALS_EVAL = ("bronze", "marble", "linen", "ceramic", "rubber", "steel")
 
 
 def parse_roles(text: str) -> list[int]:
@@ -455,6 +463,9 @@ def _gated_clues(
         raise ValueError("gate_kinds must not be empty")
     colors = GATED_COLORS_EVAL if heldout else GATED_COLORS_TRAIN
     objects = GATED_OBJECTS_EVAL if heldout else GATED_OBJECTS_TRAIN
+    tools = GATED_TOOLS_EVAL if heldout else GATED_TOOLS_TRAIN
+    places = GATED_PLACES_EVAL if heldout else GATED_PLACES_TRAIN
+    materials = GATED_MATERIALS_EVAL if heldout else GATED_MATERIALS_TRAIN
     gate_kind = gate_kinds[(i * 5) % len(gate_kinds)]
     color = colors[(i * 7) % len(colors)]
     other_color = colors[(i * 11 + 1) % len(colors)]
@@ -468,10 +479,24 @@ def _gated_clues(
         rule = "Use the trusted candidate whose clue does not contain the word not."
         valid = f"clue {color} {obj}"
         invalid = f"clue not {other_color} {other_obj}"
-    else:
+    elif gate_kind == "question":
         rule = "Use the trusted candidate whose clue is written as a question."
         valid = f"clue is {color} {obj}?"
         invalid = f"clue is {other_color} {other_obj}."
+    elif gate_kind == "semantic_tool":
+        rule = "Use the trusted candidate whose clue names a hand tool."
+        valid = f"clue {tools[(i * 19) % len(tools)]}"
+        invalid = f"clue {places[(i * 23 + 1) % len(places)]}"
+    elif gate_kind == "semantic_place":
+        rule = "Use the trusted candidate whose clue names a place."
+        valid = f"clue {places[(i * 29) % len(places)]}"
+        invalid = f"clue {materials[(i * 31 + 1) % len(materials)]}"
+    elif gate_kind == "semantic_material":
+        rule = "Use the trusted candidate whose clue names a material."
+        valid = f"clue {materials[(i * 37) % len(materials)]}"
+        invalid = f"clue {tools[(i * 41 + 1) % len(tools)]}"
+    else:
+        raise ValueError(f"unknown gate_kind={gate_kind!r}")
     return rule, valid, invalid
 
 
@@ -973,8 +998,8 @@ def main() -> None:
     parser.add_argument(
         "--gate-kinds",
         nargs="+",
-        choices=GATED_GATE_KINDS,
-        default=list(GATED_GATE_KINDS),
+        choices=GATED_GATE_KIND_CHOICES,
+        default=list(GATED_GATE_KIND_CHOICES),
         help="Gate predicates sampled by gated/gate_pretrain templates.",
     )
     parser.add_argument(
