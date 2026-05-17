@@ -17,3 +17,4 @@ results/toy/*.partial.json
 results/toy/calibrate_*.json
 results/toy/smoke_*.json
 results/toy/role_embedding_toy.json
+results/toy/*.pt

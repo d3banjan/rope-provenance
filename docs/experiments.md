@@ -1,6 +1,6 @@
 # Experiment Tracker
 
-Last updated: 2026-05-17T06:12:00+02:00.
+Last updated: 2026-05-17T10:35:12+02:00.
 
 This file is the active tracker. Every run gets one row. Do not encode active
 state in README, ad hoc notes, or generated logs.
@@ -49,8 +49,13 @@ transient progress here only if it affects an operational decision.
 | `toy-add-role-hidden-swapped-s0` | planned | CLI: same toy script with `--hide-tags --role-control swap_instr_data --answer-loss-weight 4 --batch-size 1024` | `results/toy/role_embedding_hidden_tags_swapped_bs1024_s0.json` | planned | result JSON only | Directionality control for the simple-template generator. Lower priority after constant-role shortcut was observed. |
 | `toy-add-role-hidden-diverse-correct-s0` | completed | CLI: same toy script with `--template-mode diverse --hide-tags --role-control correct --answer-loss-weight 4 --batch-size 1024` | `results/toy/role_embedding_hidden_tags_diverse_bs1024_s0.json` | `8itmpe7b` | result JSON only | Harder positive-control target with varied templates, field labels, field order, and heldout template families. Final SEP 0.836. |
 | `toy-add-role-hidden-diverse-constant-s0` | completed | CLI: same toy script with `--template-mode diverse --hide-tags --role-control constant --answer-loss-weight 4 --batch-size 1024` | `results/toy/role_embedding_hidden_tags_diverse_constant_bs1024_s0.json` | `ub86g90v` | result JSON only | Main shortcut control for the diverse generator. Final SEP 0.680. Correct roles beat this by +0.156 final SEP and +0.328 at step 500. |
-| `toy-add-role-hidden-diverse-swapped-s0` | planned | CLI: same toy script with `--template-mode diverse --hide-tags --role-control swap_instr_data --answer-loss-weight 4 --batch-size 1024` | `results/toy/role_embedding_hidden_tags_diverse_swapped_bs1024_s0.json` | planned | result JSON only | Directionality control for the diverse generator. |
-| `toy-add-role-hidden-ambiguous-pairs-s0` | planned | pending generator option | `results/toy/role_embedding_hidden_tags_ambiguous_pairs_bs1024_s0.json` | planned | result JSON only | Strongest toy test: paired examples keep visible text identical or near-identical and vary only hidden role assignment, minimizing quote/field/placement shortcuts. |
+| `toy-add-role-hidden-diverse-evalswap-s0` | stopped | CLI: `--template-mode diverse --role-control correct --eval-role-control swap_instr_data` | `results/toy/role_embedding_hidden_tags_diverse_traincorrect_evalswap_bs1024_s0.partial.json` | `jq4g488w` | partial JSON only | Correct directionality control: train on correct hidden roles, evaluate with instruction/DATA roles swapped. Stopped after step 1000 because eval-swapped SEP stayed ~0, enough to show the diverse positive result is role-direction sensitive. |
+| `toy-gate-pretrain-block512-bs512-s0` | completed | CLI: `--template-mode gate_pretrain --vocab-template-modes gated --hide-tags --role-control correct --block-size 512 --batch-size 512 --answer-loss-weight 4 --fail-on-truncation` | `results/toy/toy_gate_pretrain_block512_bs512_s0.json` | `nl3dkyrm` | result JSON only | Corrected gated prerequisite run after discovering `block_size=256` truncated answer regions. 731,656-param scratch char model fit training loss but finished with heldout exact-match SEP 0.000, with only transient tiny hits. |
+| `toy-add-role-hidden-gated-correct-s0` | blocked | CLI: `--template-mode gated --hide-tags --role-control correct --answer-loss-weight 4 --block-size 512` | `results/toy/role_embedding_hidden_tags_gated_bs512_s0.json` | planned | result JSON only | Stronger toy test: paired examples keep visible text identical or near-identical and vary only hidden role assignment; blocked until the model has a reliable linguistic-gate prior. |
+| `toy-add-role-hidden-gated-constant-s0` | planned | CLI: `--template-mode gated --hide-tags --role-control constant --answer-loss-weight 4 --batch-size 1024` | `results/toy/role_embedding_hidden_tags_gated_constant_bs1024_s0.json` | planned | result JSON only | Text-only contradiction control for the gated generator. |
+| `toy-add-role-hidden-gated-evalswap-s0` | planned | CLI: `--template-mode gated --hide-tags --role-control correct --eval-role-control swap_instr_data --answer-loss-weight 4 --batch-size 1024` | `results/toy/role_embedding_hidden_tags_gated_traincorrect_evalswap_bs1024_s0.json` | planned | result JSON only | Directionality control for the gated generator. |
+| `slm-qwen25-0.5b-base-gated-role-s0` | planned | pending script/config | pending | planned | LoRA/full-adapter output plus SEP JSON | Next main experiment. Start from `Qwen/Qwen2.5-0.5B` base so semantic priors exist without chat/instruction post-training confounds. |
+| `slm-qwen25-0.5b-instruct-gated-probe-s0` | planned | pending script/config | pending | planned | SEP JSON | Confounded sanity probe only. If it works, it shows the task is within reach of an instruction-tuned SLM, not that the provenance channel caused the behavior. |
 | `toy-rope-pos-add-role-s0` | planned | pending script option | `results/toy/rope_pos_add_role_s0.json` | planned | result JSON only | RoPE-native toy bridge: replace learned absolute positions with RoPE while keeping additive role embeddings. |
 | `toy-rope-role-rotation-s0` | planned | pending script option | `results/toy/rope_role_rotation_s0.json` | planned | result JSON only | From-scratch rotational test: checks whether RoPE-style role rotation fails only as adaptation to pretrained SmolLM2 or also fails when present from initialization. |
 
@@ -72,6 +77,17 @@ W&B URLs:
 - `toy-add-role-hidden-constant-s0`: `https://wandb.ai/d3banjan/rope-provenance/runs/2l445kb2`
 - `toy-add-role-hidden-diverse-correct-s0`: `https://wandb.ai/d3banjan/rope-provenance/runs/8itmpe7b`
 - `toy-add-role-hidden-diverse-constant-s0`: `https://wandb.ai/d3banjan/rope-provenance/runs/ub86g90v`
+- `toy-add-role-hidden-diverse-evalswap-s0`: `https://wandb.ai/d3banjan/rope-provenance/runs/jq4g488w`
+- `toy-gate-pretrain-block512-bs512-s0`: `https://wandb.ai/d3banjan/rope-provenance/runs/nl3dkyrm`
+
+Cached model queue on `/mnt/expansion/huggingface/hub`:
+
+- `Qwen/Qwen2.5-0.5B`: `models--Qwen--Qwen2.5-0.5B/snapshots/060db6499f32faf8b98477b0a26969ef7d8b9987`
+- `Qwen/Qwen2.5-0.5B-Instruct`: `models--Qwen--Qwen2.5-0.5B-Instruct/snapshots/7ae557604adf67be50417f59c2c2f167def9a775`
+- `HuggingFaceTB/SmolLM2-360M`: `models--HuggingFaceTB--SmolLM2-360M/snapshots/f8027fd0eaeea54caa13c31d31b9fdc459c38b49`
+- `HuggingFaceTB/SmolLM2-360M-Instruct`: `models--HuggingFaceTB--SmolLM2-360M-Instruct/snapshots/a10cc1512eabd3dde888204e902eca88bddb4951`
+- `microsoft/Phi-3.5-mini-instruct`: `models--microsoft--Phi-3.5-mini-instruct/snapshots/2fe192450127e6a83f7441aef6e3ca586c338b77`
+- `microsoft/Phi-4-mini-instruct`: `models--microsoft--Phi-4-mini-instruct/snapshots/cfbefacb99257ffa30c83adab238a50856ac3083`
 
 Completed state for `cfv2-vanilla-s0`:
 

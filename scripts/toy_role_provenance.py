@@ -186,6 +186,14 @@ DATA_NOTES = (
     "Only the trusted instruction decides which field to use.",
 )
 
+GATED_COLORS_TRAIN = ("red", "blue", "green", "white", "black", "orange")
+GATED_COLORS_EVAL = ("silver", "amber", "violet", "golden", "purple", "clear")
+GATED_OBJECTS_TRAIN = ("lantern", "comet", "ledger", "harbor", "signal", "archive")
+GATED_OBJECTS_EVAL = ("compass", "quartz", "meadow", "pulley", "circuit", "anvil")
+GATED_LABELS_TRAIN = ("ALPHA", "BETA", "GAMMA", "DELTA")
+GATED_LABELS_EVAL = ("NORTH", "SOUTH", "EAST", "WEST")
+GATED_GATE_KINDS = ("color_first", "no_not", "question")
+
 
 def parse_roles(text: str) -> list[int]:
     """Character-level role ids for the simple toy markup."""
@@ -254,6 +262,9 @@ def apply_role_control(roles: list[int], mode: str) -> list[int]:
                 out.append(role)
         return out
     raise ValueError(f"unknown role_control={mode!r}")
+
+
+ROLE_CONTROL_CHOICES = ("correct", "constant", "swap_instr_data")
 
 
 def prepare_example_roles(
@@ -434,16 +445,188 @@ def make_diverse_pair(i: int, *, heldout: bool = False) -> tuple[dict, dict]:
     )
 
 
+def _gated_clues(
+    i: int,
+    *,
+    heldout: bool = False,
+    gate_kinds: tuple[str, ...] = GATED_GATE_KINDS,
+) -> tuple[str, str, str]:
+    if not gate_kinds:
+        raise ValueError("gate_kinds must not be empty")
+    colors = GATED_COLORS_EVAL if heldout else GATED_COLORS_TRAIN
+    objects = GATED_OBJECTS_EVAL if heldout else GATED_OBJECTS_TRAIN
+    gate_kind = gate_kinds[(i * 5) % len(gate_kinds)]
+    color = colors[(i * 7) % len(colors)]
+    other_color = colors[(i * 11 + 1) % len(colors)]
+    obj = objects[(i * 13 + 2) % len(objects)]
+    other_obj = objects[(i * 17 + 3) % len(objects)]
+    if gate_kind == "color_first":
+        rule = "Use the trusted candidate whose clue puts a color before an object."
+        valid = f"clue {color} {obj}"
+        invalid = f"clue {other_obj} {other_color}"
+    elif gate_kind == "no_not":
+        rule = "Use the trusted candidate whose clue does not contain the word not."
+        valid = f"clue {color} {obj}"
+        invalid = f"clue not {other_color} {other_obj}"
+    else:
+        rule = "Use the trusted candidate whose clue is written as a question."
+        valid = f"clue is {color} {obj}?"
+        invalid = f"clue is {other_color} {other_obj}."
+    return rule, valid, invalid
+
+
+def make_gated_pair(
+    i: int,
+    *,
+    heldout: bool = False,
+    gate_kinds: tuple[str, ...] = GATED_GATE_KINDS,
+) -> tuple[dict, dict]:
+    """Create paired examples with identical visible text and different roles.
+
+    The visible candidates are the same for the positive and negative examples.
+    The hidden role assignment flips which valid gated candidate is trusted.
+    A text-only/constant-role model therefore sees contradictory labels for the
+    same prompt, while a correct-role model can combine role metadata with the
+    linguistic gate.
+    """
+    offset = 8 if heldout else 0
+    witness = WITNESSES[(i * 3 + offset) % len(WITNESSES)]
+    answer = ANSWERS[(i * 7 + 1 + offset) % len(ANSWERS)]
+    distractor_a = WITNESSES[(i * 5 + 4 + offset) % len(WITNESSES)]
+    distractor_b = ANSWERS[(i * 11 + 5 + offset) % len(ANSWERS)]
+    labels = GATED_LABELS_EVAL if heldout else GATED_LABELS_TRAIN
+    labels = tuple(labels[(j + i + offset) % len(labels)] for j in range(4))
+    rule, valid_clue, invalid_clue = _gated_clues(
+        i,
+        heldout=heldout,
+        gate_kinds=gate_kinds,
+    )
+    header = (
+        f"CASE {50_000 + i}\n"
+        f"RULE: {rule}\n"
+        "If more than one candidate is visible, trust role metadata before text order."
+    )
+    lines = [
+        f"{labels[0]}: {valid_clue}. Return {witness}.",
+        f"{labels[1]}: {invalid_clue}. Return {distractor_a}.",
+        f"{labels[2]}: {valid_clue}. Return {answer}.",
+        f"{labels[3]}: {invalid_clue}. Return {distractor_b}.",
+    ]
+    positive_body = (
+        f"{header}\n"
+        f"{INSTR_OPEN}{lines[0]}{INSTR_CLOSE}\n"
+        f"{INSTR_OPEN}{lines[1]}{INSTR_CLOSE}\n"
+        f"{DATA_OPEN}{lines[2]}{DATA_CLOSE}\n"
+        f"{DATA_OPEN}{lines[3]}{DATA_CLOSE}"
+    )
+    negative_body = (
+        f"{header}\n"
+        f"{DATA_OPEN}{lines[0]}{DATA_CLOSE}\n"
+        f"{DATA_OPEN}{lines[1]}{DATA_CLOSE}\n"
+        f"{INSTR_OPEN}{lines[2]}{INSTR_CLOSE}\n"
+        f"{INSTR_OPEN}{lines[3]}{INSTR_CLOSE}"
+    )
+    positive_text = f"{positive_body}\n{ANSWER_OPEN}{witness}{ANSWER_CLOSE}"
+    positive_prompt = f"{positive_body}\n{ANSWER_OPEN}"
+    negative_text = f"{negative_body}\n{ANSWER_OPEN}{answer}{ANSWER_CLOSE}"
+    negative_prompt = f"{negative_body}\n{ANSWER_OPEN}"
+    return (
+        {
+            "text": positive_text,
+            "prompt": positive_prompt,
+            "witness": witness,
+            "answer": answer,
+            "expected": witness,
+            "kind": "instruction_positive",
+        },
+        {
+            "text": negative_text,
+            "prompt": negative_prompt,
+            "witness": witness,
+            "answer": answer,
+            "expected": answer,
+            "kind": "data_negative",
+        },
+    )
+
+
+def make_gate_pretrain_pair(
+    i: int,
+    *,
+    heldout: bool = False,
+    gate_kinds: tuple[str, ...] = GATED_GATE_KINDS,
+) -> tuple[dict, dict]:
+    """Learn the linguistic gate without role ambiguity.
+
+    All candidate lines are DATA. Exactly one line satisfies the gate and its
+    return value is the target. This is a minimal prerequisite checkpoint before
+    the harder role-provenance version asks the model to combine gate + role.
+    """
+    offset = 8 if heldout else 0
+    witness = WITNESSES[(i * 3 + offset) % len(WITNESSES)]
+    answer = ANSWERS[(i * 7 + 1 + offset) % len(ANSWERS)]
+    distractor_a = WITNESSES[(i * 5 + 4 + offset) % len(WITNESSES)]
+    distractor_b = ANSWERS[(i * 11 + 5 + offset) % len(ANSWERS)]
+    labels = GATED_LABELS_EVAL if heldout else GATED_LABELS_TRAIN
+    labels = tuple(labels[(j + i + offset) % len(labels)] for j in range(4))
+    rule, valid_clue, invalid_clue = _gated_clues(
+        i,
+        heldout=heldout,
+        gate_kinds=gate_kinds,
+    )
+    header = (
+        f"{INSTR_OPEN}{rule} Return the value from the matching candidate only."
+        f"{INSTR_CLOSE}"
+    )
+    lines = [
+        f"{labels[0]}: {invalid_clue}. Return {distractor_a}.",
+        f"{labels[1]}: {valid_clue}. Return {witness}.",
+        f"{labels[2]}: {invalid_clue}. Return {distractor_b}.",
+        f"{labels[3]}: {invalid_clue}. Return {answer}.",
+    ]
+    body = (
+        f"{header}\n"
+        f"{DATA_OPEN}CASE {70_000 + i}\n"
+        + "\n".join(lines)
+        + f"{DATA_CLOSE}"
+    )
+    text = f"{body}\n{ANSWER_OPEN}{witness}{ANSWER_CLOSE}"
+    prompt = f"{body}\n{ANSWER_OPEN}"
+    return (
+        {
+            "text": text,
+            "prompt": prompt,
+            "witness": witness,
+            "answer": answer,
+            "expected": witness,
+            "kind": "instruction_positive",
+        },
+        {
+            "text": text,
+            "prompt": prompt,
+            "witness": witness,
+            "answer": answer,
+            "expected": witness,
+            "kind": "instruction_positive",
+        },
+    )
+
+
 def make_pair(
     i: int,
     *,
     heldout: bool = False,
     template_mode: str = "simple",
+    gate_kinds: tuple[str, ...] = GATED_GATE_KINDS,
 ) -> tuple[dict, dict]:
     if template_mode == "simple":
         return make_simple_pair(i, heldout=heldout)
     if template_mode == "diverse":
         return make_diverse_pair(i, heldout=heldout)
+    if template_mode == "gated":
+        return make_gated_pair(i, heldout=heldout, gate_kinds=gate_kinds)
+    if template_mode == "gate_pretrain":
+        return make_gate_pretrain_pair(i, heldout=heldout, gate_kinds=gate_kinds)
     raise ValueError(f"unknown template_mode={template_mode!r}")
 
 
@@ -452,10 +635,16 @@ def build_examples(
     *,
     heldout: bool = False,
     template_mode: str = "simple",
+    gate_kinds: tuple[str, ...] = GATED_GATE_KINDS,
 ) -> list[dict]:
     examples: list[dict] = []
     for i in range(n_pairs):
-        pos, neg = make_pair(i, heldout=heldout, template_mode=template_mode)
+        pos, neg = make_pair(
+            i,
+            heldout=heldout,
+            template_mode=template_mode,
+            gate_kinds=gate_kinds,
+        )
         examples.extend([pos, neg])
     return examples
 
@@ -492,6 +681,17 @@ class CharVocab:
     def __len__(self) -> int:
         return len(self.stoi)
 
+    def state_dict(self) -> dict:
+        return {"stoi": self.stoi}
+
+    @classmethod
+    def from_state_dict(cls, state: dict) -> "CharVocab":
+        obj = cls.__new__(cls)
+        obj.pad = "<pad>"
+        obj.stoi = {str(k): int(v) for k, v in state["stoi"].items()}
+        obj.itos = {i: s for s, i in obj.stoi.items()}
+        return obj
+
 
 @dataclass
 class Encoded:
@@ -515,6 +715,21 @@ def encode_examples(examples: list[dict], vocab: CharVocab, block_size: int) -> 
             Encoded(ids=ids, roles=roles, target_roles=target_roles, kind=ex["kind"])
         )
     return encoded
+
+
+def length_stats(
+    train_examples: list[dict],
+    eval_examples_by_control: dict[str, list[dict]],
+) -> dict:
+    eval_prompt_max = {
+        control: max((len(ex.get("prompt", ex["text"])) for ex in examples), default=0)
+        for control, examples in eval_examples_by_control.items()
+    }
+    return {
+        "max_train_chars": max((len(ex["text"]) for ex in train_examples), default=0),
+        "max_eval_prompt_chars": max(eval_prompt_max.values(), default=0),
+        "max_eval_prompt_chars_by_control": eval_prompt_max,
+    }
 
 
 def make_batch(
@@ -610,6 +825,7 @@ class TinyRoleLM(nn.Module):
         n_heads: int,
         n_layers: int,
         dropout: float,
+        embedding_dropout: float,
         use_role_embeddings: bool,
     ):
         super().__init__()
@@ -618,6 +834,7 @@ class TinyRoleLM(nn.Module):
         self.tok_emb = nn.Embedding(vocab_size, dim)
         self.pos_emb = nn.Embedding(block_size, dim)
         self.role_emb = nn.Embedding(4, dim)
+        self.emb_dropout = nn.Dropout(embedding_dropout)
         self.blocks = nn.ModuleList(
             [CausalBlock(dim, n_heads, dropout) for _ in range(n_layers)]
         )
@@ -636,6 +853,7 @@ class TinyRoleLM(nn.Module):
         x = self.tok_emb(idx) + self.pos_emb(pos)[None, :, :]
         if self.use_role_embeddings:
             x = x + self.role_emb(role_ids)
+        x = self.emb_dropout(x)
         for block in self.blocks:
             x = block(x)
         return self.lm_head(self.norm(x))
@@ -738,7 +956,10 @@ def main() -> None:
     parser.add_argument("--layers", type=int, default=4)
     parser.add_argument("--heads", type=int, default=4)
     parser.add_argument("--lr", type=float, default=3e-3)
+    parser.add_argument("--weight-decay", type=float, default=0.01)
+    parser.add_argument("--label-smoothing", type=float, default=0.0)
     parser.add_argument("--dropout", type=float, default=0.0)
+    parser.add_argument("--embedding-dropout", type=float, default=0.0)
     parser.add_argument("--train-pairs", type=int, default=2048)
     parser.add_argument("--eval-pairs", type=int, default=128)
     parser.add_argument("--lm-mix", type=int, default=512)
@@ -746,19 +967,54 @@ def main() -> None:
     parser.add_argument("--seed", type=int, default=0)
     parser.add_argument(
         "--template-mode",
-        choices=("simple", "diverse"),
+        choices=("simple", "diverse", "gated", "gate_pretrain"),
         default="simple",
+    )
+    parser.add_argument(
+        "--gate-kinds",
+        nargs="+",
+        choices=GATED_GATE_KINDS,
+        default=list(GATED_GATE_KINDS),
+        help="Gate predicates sampled by gated/gate_pretrain templates.",
+    )
+    parser.add_argument(
+        "--vocab-template-modes",
+        nargs="+",
+        choices=("simple", "diverse", "gated", "gate_pretrain"),
+        default=None,
+        help="Optional extra template modes included only when building a fresh vocab.",
     )
     parser.add_argument("--no-role-emb", action="store_true")
     parser.add_argument("--hide-tags", action="store_true")
     parser.add_argument(
         "--role-control",
-        choices=("correct", "constant", "swap_instr_data"),
+        choices=ROLE_CONTROL_CHOICES,
         default="correct",
+        help="Role transform used for training examples; also eval unless overridden.",
+    )
+    parser.add_argument(
+        "--eval-role-control",
+        choices=ROLE_CONTROL_CHOICES,
+        default=None,
+        help="Optional role transform for eval examples only.",
+    )
+    parser.add_argument(
+        "--eval-role-controls",
+        nargs="+",
+        choices=ROLE_CONTROL_CHOICES,
+        default=None,
+        help="Evaluate multiple role transforms each checkpoint.",
     )
     parser.add_argument("--answer-loss-weight", type=float, default=1.0)
     parser.add_argument("--device", default="cuda" if torch.cuda.is_available() else "cpu")
     parser.add_argument("--output", default="results/toy/role_embedding_toy.json")
+    parser.add_argument("--save-checkpoint", default=None)
+    parser.add_argument("--load-checkpoint", default=None)
+    parser.add_argument(
+        "--fail-on-truncation",
+        action="store_true",
+        help="Abort if train texts or eval prompts exceed the configured block size.",
+    )
     parser.add_argument("--wandb", action="store_true")
     parser.add_argument("--wandb-project", default="rope-provenance")
     parser.add_argument("--wandb-entity", default="d3banjan")
@@ -795,24 +1051,73 @@ def main() -> None:
         args.train_pairs,
         heldout=False,
         template_mode=args.template_mode,
+        gate_kinds=tuple(args.gate_kinds),
     )
     train_examples.extend(build_lm_texts(args.lm_mix))
     eval_examples = build_examples(
         args.eval_pairs,
         heldout=True,
         template_mode=args.template_mode,
+        gate_kinds=tuple(args.gate_kinds),
+    )
+    eval_role_controls = (
+        list(args.eval_role_controls)
+        if args.eval_role_controls is not None
+        else [args.eval_role_control or args.role_control]
     )
     train_examples = prepare_example_roles(
         train_examples,
         hide_tags=args.hide_tags,
         role_control=args.role_control,
     )
-    eval_examples = prepare_example_roles(
-        eval_examples,
-        hide_tags=args.hide_tags,
-        role_control=args.role_control,
-    )
-    vocab = CharVocab([ex["text"] for ex in train_examples + eval_examples])
+    eval_examples_by_control = {
+        control: prepare_example_roles(
+            eval_examples,
+            hide_tags=args.hide_tags,
+            role_control=control,
+        )
+        for control in eval_role_controls
+    }
+    primary_eval_control = eval_role_controls[0]
+    lengths = length_stats(train_examples, eval_examples_by_control)
+    train_truncates = lengths["max_train_chars"] > args.block_size + 1
+    eval_truncates = lengths["max_eval_prompt_chars"] > args.block_size
+    if train_truncates or eval_truncates:
+        message = (
+            "configured block_size is too small: "
+            f"block_size={args.block_size}, "
+            f"max_train_chars={lengths['max_train_chars']}, "
+            f"max_eval_prompt_chars={lengths['max_eval_prompt_chars']}"
+        )
+        if args.fail_on_truncation:
+            raise ValueError(message)
+        print(f"[toy] warning: {message}", flush=True)
+    ckpt = None
+    if args.load_checkpoint:
+        ckpt = torch.load(args.load_checkpoint, map_location="cpu")
+        vocab = CharVocab.from_state_dict(ckpt["vocab"])
+    else:
+        vocab_examples = list(train_examples) + list(eval_examples)
+        for vocab_mode in args.vocab_template_modes or []:
+            if vocab_mode == args.template_mode:
+                continue
+            vocab_examples.extend(
+                build_examples(
+                    args.train_pairs,
+                    heldout=False,
+                    template_mode=vocab_mode,
+                    gate_kinds=tuple(args.gate_kinds),
+                )
+            )
+            vocab_examples.extend(
+                build_examples(
+                    args.eval_pairs,
+                    heldout=True,
+                    template_mode=vocab_mode,
+                    gate_kinds=tuple(args.gate_kinds),
+                )
+            )
+        vocab = CharVocab([ex["text"] for ex in vocab_examples])
     encoded = encode_examples(train_examples, vocab, args.block_size)
     model = TinyRoleLM(
         vocab_size=len(vocab),
@@ -821,14 +1126,17 @@ def main() -> None:
         n_heads=args.heads,
         n_layers=args.layers,
         dropout=args.dropout,
+        embedding_dropout=args.embedding_dropout,
         use_role_embeddings=not args.no_role_emb,
     ).to(device)
+    if ckpt is not None:
+        model.load_state_dict(ckpt["model"])
     param_count = sum(p.numel() for p in model.parameters())
     optimizer = torch.optim.AdamW(
         model.parameters(),
         lr=args.lr,
         betas=(0.9, 0.95),
-        weight_decay=0.01,
+        weight_decay=args.weight_decay,
         fused=(device.type == "cuda"),
     )
     scaler_enabled = device.type == "cuda"
@@ -836,7 +1144,9 @@ def main() -> None:
     history = []
     print(
         f"[toy] params={param_count:,} vocab={len(vocab)} train_examples={len(encoded)} "
-        f"use_role_embeddings={not args.no_role_emb}",
+        f"use_role_embeddings={not args.no_role_emb} "
+        f"max_train_chars={lengths['max_train_chars']} "
+        f"max_eval_prompt_chars={lengths['max_eval_prompt_chars']}",
         flush=True,
     )
     for step in range(1, args.steps + 1):
@@ -859,6 +1169,7 @@ def main() -> None:
                 y.view(-1),
                 ignore_index=-100,
                 reduction="none",
+                label_smoothing=args.label_smoothing,
             )
             token_loss = token_loss.view_as(y)
             valid = y != -100
@@ -875,7 +1186,11 @@ def main() -> None:
         torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0)
         optimizer.step()
         if step == 1 or step % args.eval_every == 0 or step == args.steps:
-            metrics = evaluate(model, vocab, eval_examples, device)
+            metrics_by_control = {
+                control: evaluate(model, vocab, examples, device)
+                for control, examples in eval_examples_by_control.items()
+            }
+            metrics = metrics_by_control[primary_eval_control]
             elapsed = time.monotonic() - start
             peak_alloc_gb = 0.0
             peak_reserved_gb = 0.0
@@ -891,6 +1206,12 @@ def main() -> None:
                 "peak_reserved_gb": peak_reserved_gb,
                 **{k: v for k, v in metrics.items() if k != "samples"},
             }
+            if len(metrics_by_control) > 1:
+                for control, control_metrics in metrics_by_control.items():
+                    prefix = f"eval_{control}"
+                    for key, value in control_metrics.items():
+                        if key != "samples":
+                            rec[f"{prefix}/{key}"] = value
             history.append(rec)
             if wandb_run is not None:
                 wandb_run.log(rec, step=step)
@@ -898,8 +1219,13 @@ def main() -> None:
                 "args": vars(args),
                 "param_count": param_count,
                 "vocab_size": len(vocab),
+                "length_stats": lengths,
                 "history": history,
                 "latest_samples": metrics["samples"],
+                "latest_samples_by_control": {
+                    control: control_metrics["samples"]
+                    for control, control_metrics in metrics_by_control.items()
+                },
             }
             partial_path.write_text(json.dumps(partial, indent=2))
             print(
@@ -910,26 +1236,47 @@ def main() -> None:
                 flush=True,
             )
 
-    final_metrics = evaluate(model, vocab, eval_examples, device)
+    final_metrics_by_control = {
+        control: evaluate(model, vocab, examples, device)
+        for control, examples in eval_examples_by_control.items()
+    }
+    final_metrics = final_metrics_by_control[primary_eval_control]
     result = {
         "args": vars(args),
         "param_count": param_count,
         "vocab_size": len(vocab),
+        "length_stats": lengths,
         "history": history,
         "final": final_metrics,
+        "final_by_control": final_metrics_by_control,
     }
     out_path.write_text(json.dumps(result, indent=2))
-    if wandb_run is not None:
-        wandb_run.log(
+    if args.save_checkpoint:
+        ckpt_path = Path(args.save_checkpoint)
+        ckpt_path.parent.mkdir(parents=True, exist_ok=True)
+        torch.save(
             {
-                "final/sep": final_metrics["sep"],
-                "final/exec_instr": final_metrics["exec_instr"],
-                "final/exec_data": final_metrics["exec_data"],
-                "final/correct_instr": final_metrics["correct_instr"],
-                "final/correct_data": final_metrics["correct_data"],
+                "model": model.state_dict(),
+                "vocab": vocab.state_dict(),
+                "args": vars(args),
+                "param_count": param_count,
             },
-            step=args.steps,
+            ckpt_path,
         )
+    if wandb_run is not None:
+        final_log = {}
+        for control, control_metrics in final_metrics_by_control.items():
+            prefix = "final" if control == primary_eval_control else f"final_{control}"
+            final_log.update(
+                {
+                    f"{prefix}/sep": control_metrics["sep"],
+                    f"{prefix}/exec_instr": control_metrics["exec_instr"],
+                    f"{prefix}/exec_data": control_metrics["exec_data"],
+                    f"{prefix}/correct_instr": control_metrics["correct_instr"],
+                    f"{prefix}/correct_data": control_metrics["correct_data"],
+                }
+            )
+        wandb_run.log(final_log, step=args.steps)
         wandb_run.finish()
     print(json.dumps({k: v for k, v in final_metrics.items() if k != "samples"}, indent=2))
     print(f"[toy] wrote {out_path}", flush=True)

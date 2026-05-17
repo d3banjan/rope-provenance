@@ -1,0 +1,310 @@
+{
+  "args": {
+    "steps": 2000,
+    "batch_size": 512,
+    "block_size": 512,
+    "dim": 128,
+    "layers": 4,
+    "heads": 4,
+    "lr": 0.003,
+    "dropout": 0.0,
+    "train_pairs": 2048,
+    "eval_pairs": 128,
+    "lm_mix": 512,
+    "eval_every": 250,
+    "seed": 0,
+    "template_mode": "gate_pretrain",
+    "vocab_template_modes": [
+      "gated"
+    ],
+    "no_role_emb": false,
+    "hide_tags": true,
+    "role_control": "correct",
+    "eval_role_control": null,
+    "eval_role_controls": null,
+    "answer_loss_weight": 4.0,
+    "device": "cuda",
+    "output": "results/toy/toy_gate_pretrain_block512_bs512_s0.json",
+    "save_checkpoint": "results/toy/toy_gate_pretrain_block512_bs512_s0.pt",
+    "load_checkpoint": null,
+    "fail_on_truncation": true,
+    "wandb": true,
+    "wandb_project": "rope-provenance",
+    "wandb_entity": "d3banjan",
+    "wandb_group": "toy-role-provenance-gate-pretrain",
+    "wandb_name": "toy_gate_pretrain_block512_bs512_s0"
+  },
+  "param_count": 731656,
+  "vocab_size": 69,
+  "length_stats": {
+    "max_train_chars": 338,
+    "max_eval_prompt_chars": 326,
+    "max_eval_prompt_chars_by_control": {
+      "correct": 326
+    }
+  },
+  "history": [
+    {
+      "step": 1,
+      "loss": 4.286950588226318,
+      "elapsed_sec": 28.460126786027104,
+      "peak_alloc_gb": 9.368252754211426,
+      "peak_reserved_gb": 9.513671875,
+      "sep": 0.0,
+      "exec_instr": 0.0,
+      "exec_data": 0.0,
+      "correct_instr": 0.0,
+      "correct_data": 0.0,
+      "instr_n": 256,
+      "data_n": 0
+    },
+    {
+      "step": 250,
+      "loss": 0.15678203105926514,
+      "elapsed_sec": 161.00364834000356,
+      "peak_alloc_gb": 9.374714851379395,
+      "peak_reserved_gb": 9.5234375,
+      "sep": 0.0,
+      "exec_instr": 0.0,
+      "exec_data": 0.0,
+      "correct_instr": 0.0,
+      "correct_data": 0.0,
+      "instr_n": 256,
+      "data_n": 0
+    },
+    {
+      "step": 500,
+      "loss": 0.07195629924535751,
+      "elapsed_sec": 293.95819373999257,
+      "peak_alloc_gb": 9.374714851379395,
+      "peak_reserved_gb": 9.5234375,
+      "sep": 0.0,
+      "exec_instr": 0.0,
+      "exec_data": 0.0,
+      "correct_instr": 0.0,
+      "correct_data": 0.0,
+      "instr_n": 256,
+      "data_n": 0
+    },
+    {
+      "step": 750,
+      "loss": 0.030292626470327377,
+      "elapsed_sec": 427.4967412780388,
+      "peak_alloc_gb": 9.374714851379395,
+      "peak_reserved_gb": 9.5234375,
+      "sep": 0.0,
+      "exec_instr": 0.0,
+      "exec_data": 0.0,
+      "correct_instr": 0.0,
+      "correct_data": 0.0,
+      "instr_n": 256,
+      "data_n": 0
+    },
+    {
+      "step": 1000,
+      "loss": 0.027621440589427948,
+      "elapsed_sec": 560.8386491500423,
+      "peak_alloc_gb": 9.374714851379395,
+      "peak_reserved_gb": 9.5234375,
+      "sep": 0.0,
+      "exec_instr": 0.0,
+      "exec_data": 0.0,
+      "correct_instr": 0.0,
+      "correct_data": 0.0,
+      "instr_n": 256,
+      "data_n": 0
+    },
+    {
+      "step": 1250,
+      "loss": 0.05758381634950638,
+      "elapsed_sec": 693.8852536950144,
+      "peak_alloc_gb": 9.374714851379395,
+      "peak_reserved_gb": 9.5234375,
+      "sep": 0.0234375,
+      "exec_instr": 0.0234375,
+      "exec_data": 0.0,
+      "correct_instr": 0.0234375,
+      "correct_data": 0.0,
+      "instr_n": 256,
+      "data_n": 0
+    },
+    {
+      "step": 1500,
+      "loss": 0.05814610794186592,
+      "elapsed_sec": 827.3882388900383,
+      "peak_alloc_gb": 9.374714851379395,
+      "peak_reserved_gb": 9.5234375,
+      "sep": 0.0,
+      "exec_instr": 0.0,
+      "exec_data": 0.0,
+      "correct_instr": 0.0,
+      "correct_data": 0.0,
+      "instr_n": 256,
+      "data_n": 0
+    },
+    {
+      "step": 1750,
+      "loss": 0.02728261612355709,
+      "elapsed_sec": 960.680989509041,
+      "peak_alloc_gb": 9.374714851379395,
+      "peak_reserved_gb": 9.5234375,
+      "sep": 0.015625,
+      "exec_instr": 0.015625,
+      "exec_data": 0.0,
+      "correct_instr": 0.015625,
+      "correct_data": 0.0,
+      "instr_n": 256,
+      "data_n": 0
+    },
+    {
+      "step": 2000,
+      "loss": 0.027323726564645767,
+      "elapsed_sec": 1093.990090302017,
+      "peak_alloc_gb": 9.374714851379395,
+      "peak_reserved_gb": 9.5234375,
+      "sep": 0.0,
+      "exec_instr": 0.0,
+      "exec_data": 0.0,
+      "correct_instr": 0.0,
+      "correct_data": 0.0,
+      "instr_n": 256,
+      "data_n": 0
+    }
+  ],
+  "final": {
+    "sep": 0.0,
+    "exec_instr": 0.0,
+    "exec_data": 0.0,
+    "correct_instr": 0.0,
+    "correct_data": 0.0,
+    "instr_n": 256,
+    "data_n": 0,
+    "samples": [
+      {
+        "kind": "instruction_positive",
+        "expected": "black meadow",
+        "witness": "black meadow",
+        "answer": "juniper",
+        "output": "ck ad me me.\name signallledcuit sigigigi"
+      },
+      {
+        "kind": "instruction_positive",
+        "expected": "black meadow",
+        "witness": "black meadow",
+        "answer": "juniper",
+        "output": "ck ad me me.\name signallledcuit sigigigi"
+      },
+      {
+        "kind": "instruction_positive",
+        "expected": "clear anvil",
+        "witness": "clear anvil",
+        "answer": "atlas",
+        "output": "gire ed metey. pulley. it arbluerbluerbl"
+      },
+      {
+        "kind": "instruction_positive",
+        "expected": "clear anvil",
+        "witness": "clear anvil",
+        "answer": "atlas",
+        "output": "gire ed metey. pulley. it arbluerbluerbl"
+      },
+      {
+        "kind": "instruction_positive",
+        "expected": "quiet orbit",
+        "witness": "quiet orbit",
+        "answer": "harbor",
+        "output": "gret cortz. quchit harcort siggggggggggg"
+      },
+      {
+        "kind": "instruction_positive",
+        "expected": "quiet orbit",
+        "witness": "quiet orbit",
+        "answer": "harbor",
+        "output": "gret cortz. quchit harcort siggggggggggg"
+      },
+      {
+        "kind": "instruction_positive",
+        "expected": "silver comet",
+        "witness": "silver comet",
+        "answer": "opal",
+        "output": "blvernvomet orn metet signal.\nBEcoret ar"
+      },
+      {
+        "kind": "instruction_positive",
+        "expected": "silver comet",
+        "witness": "silver comet",
+        "answer": "opal",
+        "output": "blvernvomet orn metet signal.\nBEcoret ar"
+      }
+    ]
+  },
+  "final_by_control": {
+    "correct": {
+      "sep": 0.0,
+      "exec_instr": 0.0,
+      "exec_data": 0.0,
+      "correct_instr": 0.0,
+      "correct_data": 0.0,
+      "instr_n": 256,
+      "data_n": 0,
+      "samples": [
+        {
+          "kind": "instruction_positive",
+          "expected": "black meadow",
+          "witness": "black meadow",
+          "answer": "juniper",
+          "output": "ck ad me me.\name signallledcuit sigigigi"
+        },
+        {
+          "kind": "instruction_positive",
+          "expected": "black meadow",
+          "witness": "black meadow",
+          "answer": "juniper",
+          "output": "ck ad me me.\name signallledcuit sigigigi"
+        },
+        {
+          "kind": "instruction_positive",
+          "expected": "clear anvil",
+          "witness": "clear anvil",
+          "answer": "atlas",
+          "output": "gire ed metey. pulley. it arbluerbluerbl"
+        },
+        {
+          "kind": "instruction_positive",
+          "expected": "clear anvil",
+          "witness": "clear anvil",
+          "answer": "atlas",
+          "output": "gire ed metey. pulley. it arbluerbluerbl"
+        },
+        {
+          "kind": "instruction_positive",
+          "expected": "quiet orbit",
+          "witness": "quiet orbit",
+          "answer": "harbor",
+          "output": "gret cortz. quchit harcort siggggggggggg"
+        },
+        {
+          "kind": "instruction_positive",
+          "expected": "quiet orbit",
+          "witness": "quiet orbit",
+          "answer": "harbor",
+          "output": "gret cortz. quchit harcort siggggggggggg"
+        },
+        {
+          "kind": "instruction_positive",
+          "expected": "silver comet",
+          "witness": "silver comet",
+          "answer": "opal",
+          "output": "blvernvomet orn metet signal.\nBEcoret ar"
+        },
+        {
+          "kind": "instruction_positive",
+          "expected": "silver comet",
+          "witness": "silver comet",
+          "answer": "opal",
+          "output": "blvernvomet orn metet signal.\nBEcoret ar"
+        }
+      ]
+    }
+  }
+}

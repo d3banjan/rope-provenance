@@ -228,6 +228,7 @@ learned absolute position embeddings plus additive role embeddings. Hidden-tag
 evals strip visible `<instr>`/`<data>` markers from text and pass role ids
 separately. This makes the run a positive control for out-of-band role
 conditioning, not evidence that a pretrained SLM can cheaply adopt the channel.
+The current configuration has 731,656 trainable parameters.
 
 The early hidden-tag result is suspiciously strong: near-perfect SEP appears
 within a few hundred steps. Treat that as a confound warning. The synthetic
@@ -280,8 +281,9 @@ Predictions:
   SEP at step 500 or at least +0.10 final SEP at step 2000.
 - If diverse constant roles reaches within 0.05 final SEP of diverse correct
   roles, template shortcuts are still too strong for this generator.
-- Swapped roles should degrade or reverse the correct-role policy. If swapped
-  performs like correct, the role ids are not the causal feature.
+- Directionality should be tested by training with correct roles and evaluating
+  with swapped roles. A train-and-eval-swapped run is only a reversed-codebook
+  test and can succeed even when role ids are causal.
 - The ambiguous-pair generator is the first toy design that can support a
   stronger scientific claim. Expected outcome: correct roles should exceed
   constant roles by at least +0.20 SEP, because text-only cues are matched by
@@ -312,3 +314,24 @@ RoPE-specific toy bridge:
 If RoPE-role rotation works from scratch but fails under SmolLM2 SFT/CPT, the
 binding constraint is adaptation path. If it fails from scratch too, the
 rotational primitive itself is weak even before scale and pretraining effects.
+
+### Pretrained SLM Pivot
+
+The gated toy exposed a capability floor. After fixing the silent truncation
+bug with `block_size=512`, the scratch 731,656-param char model still fit the
+training loss while failing heldout exact-match gate selection. This does not
+show that hidden provenance is wrong; it shows that semantic and compositional
+selection gates are too hard for this scratch substrate.
+
+The next low-effort SLM experiment should start from `Qwen/Qwen2.5-0.5B` base.
+This keeps the scientific target cleaner than an instruct checkpoint: the model
+has language and semantic priors for colors, objects, negation, questions, and
+copying, but it has fewer chat-role and instruction-hierarchy confounds. The
+Qwen instruct checkpoint is still useful as a sanity probe: if instruct works
+and base does not, the task is reachable but depends on post-training priors.
+
+`HuggingFaceTB/SmolLM2-360M` base/instruct are cached as a continuity check
+against the earlier SmolLM2 family. Phi mini instruct checkpoints are cached as
+stronger capability probes only; they do not form the same clean base/instruct
+pair, and their instruction tuning makes them less diagnostic for the paper's
+main causal claim.

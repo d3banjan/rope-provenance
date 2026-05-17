@@ -214,6 +214,7 @@ cheaply adopt the same channel.
 | additive hidden roles constant | `2l445kb2` | simple | constant | 0.953 | 0.953 | 0.000 | 1.000 |
 | additive hidden roles diverse | `8itmpe7b` | diverse | correct | 0.836 | 0.836 | 0.000 | 0.859 |
 | additive hidden roles diverse constant | `ub86g90v` | diverse | constant | 0.680 | 0.727 | 0.047 | 0.906 |
+| gate pretrain corrected | `nl3dkyrm` | gate_pretrain | correct | 0.000 | 0.000 | 0.000 | 0.000 |
 
 Interpretation: the simple generator is too easy. A constant-role model, with no
 usable instruction/DATA distinction, reaches SEP 0.953, so the simple result is
@@ -230,3 +231,13 @@ where visible text is identical or near-identical across role assignments and a
 small linguistic gate determines the relevant candidate. That is the first toy
 setup that can support a stronger scientific claim about out-of-band substring
 provenance.
+
+Corrected gated pretraining result: the first `gate_pretrain` attempt used
+`block_size=256`, while gated examples were up to 338-371 characters; that run
+was invalid because answer regions could be truncated. The corrected
+`block_size=512`, batch-512 run used a 731,656-parameter scratch char model and
+peaked at 9.52 GB VRAM. It drove training loss to 0.027 but finished heldout
+exact-match SEP 0.000, with only transient tiny hits at intermediate evals.
+This is a capability-floor result for the scratch toy, not a provenance
+negative. The next test should use a pretrained base SLM, starting with
+`Qwen/Qwen2.5-0.5B` base.
