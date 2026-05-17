@@ -1,0 +1,20 @@
+# Variant: vanilla SmolLM2 on the v3 role-contrast counterfactual curriculum.
+# This is a 600-step data sanity smoke, not a final architecture comparison.
+extends: base.yaml
+
+attention_variant: vanilla
+provenance_dims: 0
+role_angles: [0.0]
+
+counterfactual_variant: role_contrast_v3
+counterfactual_train_size: 12000
+counterfactual_eval_size: 400
+counterfactual_positive_fraction: 0.5
+
+max_steps: 600
+eval_steps: 200
+save_steps: 200
+save_total_limit: 2
+
+wandb_group: smollm2-135m-counterfactual-v3
+wandb_run_name: vanilla_counterfactual_v3_role_contrast_smoke
