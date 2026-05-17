@@ -496,3 +496,13 @@ weighted cosine is near zero and right/left capture is near random-baseline
 scale. Current interpretation: the learned provenance adapter is a low-rank
 control, but the stronger claim that it aligns with the raw base-to-instruct
 delta is not supported by this first-pass metric.
+
+Role-only result: the strongest falsification run so far disables LoRA entirely
+and trains only the 4 x 896 input role embedding. On the all-gate mix, including
+semantic tool/place/material gates with disjoint train/eval clue vocabularies,
+it reaches strict exact 0.996. Eval-swapping the same checkpoint gives 0.000.
+Training with constant roles gives 0.438, and removing roles at eval gives
+0.102. This kills the "LoRA adapter is necessary" thesis for the instruct
+model. The surviving interpretation is simpler and stronger: instruction tuning
+has already built an authority-routing surface that can be steered by a tiny
+software-supplied additive role vector.

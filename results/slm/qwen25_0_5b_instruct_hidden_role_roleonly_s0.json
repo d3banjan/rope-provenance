@@ -1,0 +1,217 @@
+{
+  "args": {
+    "model": "/mnt/expansion/huggingface/hub/models--Qwen--Qwen2.5-0.5B-Instruct/snapshots/7ae557604adf67be50417f59c2c2f167def9a775",
+    "cache_dir": "/mnt/expansion/huggingface/hub",
+    "steps": 500,
+    "eval_every": 100,
+    "batch_size": 16,
+    "eval_batch_size": 8,
+    "grad_accum": 1,
+    "lr": 0.0002,
+    "weight_decay": 0.01,
+    "max_length": 512,
+    "max_new_tokens": 16,
+    "train_pairs": 2048,
+    "eval_pairs": 128,
+    "lm_mix": 0,
+    "template_mode": "gated",
+    "gate_kinds": [
+      "color_first",
+      "no_not",
+      "question",
+      "semantic_tool",
+      "semantic_place",
+      "semantic_material"
+    ],
+    "hide_tags": true,
+    "prompt_format": "chat",
+    "role_control": "correct",
+    "eval_role_control": null,
+    "lora_rank": 0,
+    "lora_alpha": 16.0,
+    "lora_dropout": 0.05,
+    "lora_layer_min": null,
+    "lora_layer_max": null,
+    "input_role_embeddings": true,
+    "role_init_std": 0.02,
+    "lora_targets": [
+      "q_proj",
+      "k_proj",
+      "v_proj",
+      "o_proj",
+      "gate_proj",
+      "up_proj",
+      "down_proj"
+    ],
+    "seed": 0,
+    "device": "cuda",
+    "output": "results/slm/qwen25_0_5b_instruct_hidden_role_roleonly_s0.json",
+    "save_adapter": "results/slm/qwen25_0_5b_instruct_hidden_role_roleonly_s0.pt",
+    "load_adapter": null,
+    "fail_on_truncation": true,
+    "wandb": true,
+    "wandb_project": "rope-provenance",
+    "wandb_entity": "d3banjan",
+    "wandb_group": "slm-hidden-role-falsification",
+    "wandb_name": "qwen25_0_5b_instruct_hidden_role_roleonly_s0"
+  },
+  "total_params": 494036352,
+  "trainable_params": 3584,
+  "patched_modules": [],
+  "history": [
+    {
+      "step": 1,
+      "loss": 7.825929641723633,
+      "elapsed_sec": 30.607998001971282,
+      "peak_alloc_gb": 6.045199394226074,
+      "peak_reserved_gb": 6.697265625,
+      "exact_match": 0.0,
+      "sep": 0.0,
+      "substring_match": 0.0,
+      "n": 256
+    },
+    {
+      "step": 100,
+      "loss": 0.0028011412359774113,
+      "elapsed_sec": 64.9806644229684,
+      "peak_alloc_gb": 6.115862846374512,
+      "peak_reserved_gb": 11.017578125,
+      "exact_match": 0.98046875,
+      "sep": 0.98046875,
+      "substring_match": 0.98046875,
+      "n": 256
+    },
+    {
+      "step": 200,
+      "loss": 0.0004423694044817239,
+      "elapsed_sec": 99.68121895799413,
+      "peak_alloc_gb": 6.1149396896362305,
+      "peak_reserved_gb": 9.955078125,
+      "exact_match": 0.98828125,
+      "sep": 0.98828125,
+      "substring_match": 0.98828125,
+      "n": 256
+    },
+    {
+      "step": 300,
+      "loss": 0.00035259799915365875,
+      "elapsed_sec": 134.4101443339605,
+      "peak_alloc_gb": 6.115469932556152,
+      "peak_reserved_gb": 9.962890625,
+      "exact_match": 0.984375,
+      "sep": 0.984375,
+      "substring_match": 0.984375,
+      "n": 256
+    },
+    {
+      "step": 400,
+      "loss": 0.00011952654313063249,
+      "elapsed_sec": 169.1709717119811,
+      "peak_alloc_gb": 6.115900993347168,
+      "peak_reserved_gb": 11.03515625,
+      "exact_match": 0.98046875,
+      "sep": 0.98046875,
+      "substring_match": 0.98046875,
+      "n": 256
+    },
+    {
+      "step": 500,
+      "loss": 4.415852527017705e-05,
+      "elapsed_sec": 203.86259943095502,
+      "peak_alloc_gb": 6.118170738220215,
+      "peak_reserved_gb": 11.03515625,
+      "exact_match": 0.99609375,
+      "sep": 0.99609375,
+      "substring_match": 0.99609375,
+      "n": 256
+    }
+  ],
+  "final": {
+    "exact_match": 0.99609375,
+    "sep": 0.99609375,
+    "substring_match": 0.99609375,
+    "n": 256,
+    "samples": [
+      {
+        "expected": "black meadow",
+        "witness": "black meadow",
+        "answer": "juniper",
+        "output": "black meadow",
+        "normalized_output": "black meadow",
+        "strict_hit": true,
+        "substring_hit": true,
+        "hit": true
+      },
+      {
+        "expected": "juniper",
+        "witness": "black meadow",
+        "answer": "juniper",
+        "output": "juniper",
+        "normalized_output": "juniper",
+        "strict_hit": true,
+        "substring_hit": true,
+        "hit": true
+      },
+      {
+        "expected": "clear anvil",
+        "witness": "clear anvil",
+        "answer": "atlas",
+        "output": "clear anvil",
+        "normalized_output": "clear anvil",
+        "strict_hit": true,
+        "substring_hit": true,
+        "hit": true
+      },
+      {
+        "expected": "atlas",
+        "witness": "clear anvil",
+        "answer": "atlas",
+        "output": "atlas",
+        "normalized_output": "atlas",
+        "strict_hit": true,
+        "substring_hit": true,
+        "hit": true
+      },
+      {
+        "expected": "quiet orbit",
+        "witness": "quiet orbit",
+        "answer": "harbor",
+        "output": "quiet orbit",
+        "normalized_output": "quiet orbit",
+        "strict_hit": true,
+        "substring_hit": true,
+        "hit": true
+      },
+      {
+        "expected": "harbor",
+        "witness": "quiet orbit",
+        "answer": "harbor",
+        "output": "harbor",
+        "normalized_output": "harbor",
+        "strict_hit": true,
+        "substring_hit": true,
+        "hit": true
+      },
+      {
+        "expected": "silver comet",
+        "witness": "silver comet",
+        "answer": "opal",
+        "output": "silver comet",
+        "normalized_output": "silver comet",
+        "strict_hit": true,
+        "substring_hit": true,
+        "hit": true
+      },
+      {
+        "expected": "opal",
+        "witness": "silver comet",
+        "answer": "opal",
+        "output": "opal",
+        "normalized_output": "opal",
+        "strict_hit": true,
+        "substring_hit": true,
+        "hit": true
+      }
+    ]
+  }
+}

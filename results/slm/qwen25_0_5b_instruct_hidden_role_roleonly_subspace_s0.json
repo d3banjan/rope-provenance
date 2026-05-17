@@ -1,0 +1,27 @@
+{
+  "adapter": "results/slm/qwen25_0_5b_instruct_hidden_role_roleonly_s0.pt",
+  "base_model": "/mnt/expansion/huggingface/hub/models--Qwen--Qwen2.5-0.5B/snapshots/060db6499f32faf8b98477b0a26969ef7d8b9987",
+  "instruct_model": "/mnt/expansion/huggingface/hub/models--Qwen--Qwen2.5-0.5B-Instruct/snapshots/7ae557604adf67be50417f59c2c2f167def9a775",
+  "summary": {
+    "modules": 0,
+    "mean_lora_stable_rank": 0.0,
+    "mean_lora_sft_cosine": 0.0,
+    "mean_right_capture": 0.0,
+    "mean_left_capture": 0.0,
+    "mean_both_capture": 0.0,
+    "layers": {},
+    "role_embedding": {
+      "shape": [
+        4,
+        896
+      ],
+      "active_shape": [
+        3,
+        896
+      ],
+      "stable_rank": 2.8854265233729466,
+      "frob": 1.0551843643188477
+    }
+  },
+  "modules": []
+}

@@ -297,3 +297,14 @@ global SFT-delta alignment: weighted LoRA/SFT cosine is approximately 0, and
 right/left capture is near random-baseline scale. Interpretation: the adapter
 is low-rank, but the naive base-to-instruct delta overlap thesis is not yet
 supported by this metric.
+
+Role-only kill test: on the harder all-gate mix, including semantic
+tool/place/material gates with disjoint train/eval vocabularies, Qwen2.5-0.5B-
+Instruct reaches strict exact 0.996 with only the 4 x 896 input role embedding
+trainable (3,584 parameters) and no LoRA. Eval-swap of the same checkpoint is
+0.000. Training the role-only model with constant prompt roles reaches only
+0.438, and evaluating the correct checkpoint with roles removed reaches 0.102.
+This kills the claim that LoRA/adapters are necessary for the positive hidden
+role result in the instruct model. The stronger surviving claim is that the
+instruction-tuned model already exposes a small input-control surface for
+authority routing.
