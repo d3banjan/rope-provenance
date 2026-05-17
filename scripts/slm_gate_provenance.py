@@ -236,6 +236,17 @@ def make_batch(
     }
 
 
+def causal_loss(logits: torch.Tensor, labels: torch.Tensor) -> torch.Tensor:
+    """Next-token loss with labels marking target token positions."""
+    shift_logits = logits[:, :-1, :].contiguous()
+    shift_labels = labels[:, 1:].contiguous()
+    return F.cross_entropy(
+        shift_logits.view(-1, shift_logits.size(-1)),
+        shift_labels.view(-1),
+        ignore_index=-100,
+    )
+
+
 @torch.no_grad()
 def evaluate(
     model,
@@ -537,11 +548,7 @@ def main() -> None:
                     input_ids=batch["input_ids"],
                     attention_mask=batch["attention_mask"],
                 )
-                loss = F.cross_entropy(
-                    outputs.logits.view(-1, outputs.logits.size(-1)),
-                    batch["labels"].view(-1),
-                    ignore_index=-100,
-                )
+                loss = causal_loss(outputs.logits, batch["labels"])
                 loss = loss / args.grad_accum
             loss.backward()
             total_loss += float(loss.detach().cpu()) * args.grad_accum

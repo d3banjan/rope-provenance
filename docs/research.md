@@ -361,24 +361,15 @@ scratch model, but below the >=0.50 pass gate. Do not spend more paper-critical
 GPU on scratch gated-role variants unless a specific toy-only question is being
 answered. The Qwen base capability run is now the next unblocked experiment.
 
-Qwen base raw-prompt result: the first LoRA capability run fit the train set
-but fell to heldout exact-match 0.000 and generated degenerate repeated tokens.
-This kills raw hidden-tag-stripped prompt framing for a base CausalLM. It does
-not yet kill Qwen base capability because the prompt had no explicit response
-boundary. The next pre-registered fix is the same run with `--prompt-format
-answer`; only if that fails should the queue move to the confounded Qwen
-instruct chat probe.
-
-Qwen base answer-cue result: explicit `Answer:` formatting also finished at
-heldout exact-match 0.000 after train loss saturation. This kills the current
-finite gate-pretrain protocol for Qwen base LoRA. Hidden-role Qwen runs stay
-blocked. Next cheap probe: Qwen2.5-0.5B-Instruct with chat formatting and
-`steps=0`; if that is also near zero, run one short instruct LoRA chat
-fine-tune before redesigning the generator around on-the-fly examples or
-candidate-ranking losses.
+Qwen LoRA harness correction: the first SLM fine-tune runs used unshifted
+labels, accidentally training same-token reconstruction instead of next-token
+prediction. Treat Qwen base raw, Qwen base answer-cue, and Qwen instruct
+fine-tune results before this correction as invalid. The Qwen instruct
+zero-shot result is still valid because it did not train. Next valid run:
+Qwen2.5-0.5B base with `--prompt-format answer` and corrected next-token loss.
 
 Qwen instruct zero-shot result: chat-formatted Qwen2.5-0.5B-Instruct reaches
 exact-match 0.172. This is not enough for the hidden-role branch, but it shows
 the task is partially reachable with instruction post-training. Next
-pre-registered run: one short instruct LoRA chat fine-tune. If it fails to reach
->=0.50 exact-match, stop SLM hidden-role runs and redesign the generator/loss.
+pre-registered run after the corrected Qwen base rerun: one short instruct LoRA
+chat fine-tune only if Qwen base remains below the >=0.50 capability threshold.

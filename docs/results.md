@@ -255,14 +255,11 @@ moves to pretrained Qwen2.5-0.5B base.
 
 | Run | W&B | Prompt format | Adapter | exact_match | Interpretation |
 |---|---|---|---|---:|---|
-| Qwen2.5-0.5B base gate pretrain raw | `yx5fus24` | raw hidden-tag-stripped prompt | LoRA r=8 | 0.000 | Failed. Train loss saturated, but heldout outputs became degenerate repetitions such as `ClCl...` and `total...`. This kills raw prompt framing for base CausalLM capability tests, not Qwen capability itself. |
-| Qwen2.5-0.5B base gate pretrain answer cue | `g1ewvphj` | explicit `Answer:` cue | LoRA r=8 | 0.000 | Failed. The response cue did not fix generalization; train loss saturated and heldout generations became numbered/repeated strings. |
+| Qwen2.5-0.5B base gate pretrain raw | `yx5fus24` | raw hidden-tag-stripped prompt | LoRA r=8 | invalid | Invalidated by unshifted-label bug in the first SLM harness. |
+| Qwen2.5-0.5B base gate pretrain answer cue | `g1ewvphj` | explicit `Answer:` cue | LoRA r=8 | invalid | Invalidated by unshifted-label bug in the first SLM harness. |
 | Qwen2.5-0.5B-Instruct chat zero-shot | `kcawfngi` | chat | none/eval only | 0.172 | Nontrivial but not solved. The model sometimes reasons about the clue and sometimes selects a distractor. |
 
-Interpretation: the Qwen base LoRA runs show a data/protocol failure before the
-provenance question. The model can fit the finite training split, but it does
-not learn the heldout gate/copy rule. Hidden-role additive Qwen runs remain
-blocked. Qwen2.5-0.5B-Instruct with chat formatting reaches 0.172 zero-shot,
-so the task is partially reachable through instruction post-training. One short
-instruct LoRA chat fine-tune is justified as a reachability check before
-redesigning the data generator or loss.
+Interpretation: the Qwen zero-shot instruct result remains valid, but the LoRA
+fine-tunes before 2026-05-17T13:40+02:00 are invalid because the harness used
+unshifted labels. Rerun Qwen base with corrected next-token loss before making
+claims about SLM capability or blocking hidden-role additive Qwen runs.
