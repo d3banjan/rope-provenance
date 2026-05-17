@@ -403,3 +403,11 @@ input role channels can carry hidden provenance on a capable instruct model, but
 the result is confounded by instruction post-training and does not rescue the
 RoPE-rotation cell. Interpretation if it fails: even with a model that solves
 the visible gate task, this low-effort additive SLM harness is not enough.
+
+Correct-role hidden result: `slm-qwen25-0.5b-instruct-hidden-role-gated-correct-s0`
+reaches exact-match 1.000 from step 100 onward. Manual sample inspection shows
+the desired paired behavior: for the same visible prompt family, the model emits
+the witness when that valid line is instruction-role and emits the answer when
+that valid line is instruction-role. This passes the correct-role threshold, but
+do not interpret it without the constant-role control because the instruct
+checkpoint and chat framing remain confounds.

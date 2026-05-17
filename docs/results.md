@@ -269,3 +269,9 @@ fine-tune reaches 1.000, establishing that the finite gate/copy task is
 reachable with instruction-posttraining priors. The base/instruct split is now
 the key diagnostic: capability exists, but not in the clean base model under the
 current short LoRA protocol.
+
+## Qwen2.5-0.5B-Instruct Hidden Role Probe
+
+| Run | W&B | Role control | exact_match | Interpretation |
+|---|---|---|---:|---|
+| Qwen2.5-0.5B-Instruct hidden-role gated correct | `hdjhcz4q` | correct out-of-band roles | 1.000 | Passed the pre-registered correct-role threshold. Paired visible prompts are identical, and samples alternate correctly between witness and answer based on the hidden role map. Constant-role control is still required before claiming role-channel causality. |
