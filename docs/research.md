@@ -391,3 +391,15 @@ the clean base model remains below threshold, so base hidden-role runs are still
 blocked under this short LoRA protocol. The next scientific choice is either to
 make the base capability protocol stronger before adding hidden roles, or to run
 a clearly labeled confounded hidden-role proof-of-concept on the instruct model.
+
+Pre-registered hidden-role instruct proof-of-concept: add a learned 4-way input
+role embedding to the Qwen2.5-0.5B-Instruct LoRA harness and run the `gated`
+template with tags hidden. In this template, paired examples have identical
+visible prompts and opposite labels; only the out-of-band role map says which
+valid gated candidate is trusted. Run correct roles first. Pass threshold:
+heldout exact-match >=0.80, followed by a constant-role control at <=0.55 and a
+correct-minus-constant margin >=+0.30. Interpretation if it passes: additive
+input role channels can carry hidden provenance on a capable instruct model, but
+the result is confounded by instruction post-training and does not rescue the
+RoPE-rotation cell. Interpretation if it fails: even with a model that solves
+the visible gate task, this low-effort additive SLM harness is not enough.

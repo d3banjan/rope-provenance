@@ -28,6 +28,10 @@ if str(REPO_ROOT) not in sys.path:
 
 from scripts.toy_role_provenance import (  # noqa: E402
     ROLE_CONTROL_CHOICES,
+    ROLE_ANSWER,
+    ROLE_DATA,
+    ROLE_DEFAULT,
+    ROLE_INSTR,
     build_examples,
     build_lm_texts,
     prepare_example_roles,
@@ -44,6 +48,7 @@ DEFAULT_QWEN05_BASE = (
 class EncodedExample:
     input_ids: list[int]
     labels: list[int]
+    role_ids: list[int]
 
 
 class LoRALinear(nn.Module):
@@ -146,6 +151,7 @@ def apply_prompt_format(examples: list[dict], tokenizer, prompt_format: str) -> 
     for ex in examples:
         item = dict(ex)
         prompt = ex["prompt"].rstrip()
+        prompt_roles = list(ex.get("prompt_roles") or [ROLE_DEFAULT] * len(prompt))
         answer = ex["expected"]
         if prompt_format == "answer":
             item["prompt"] = f"{prompt}\nAnswer: "
@@ -168,8 +174,55 @@ def apply_prompt_format(examples: list[dict], tokenizer, prompt_format: str) -> 
             )
         else:
             raise ValueError(f"unknown prompt_format={prompt_format!r}")
+        item["prompt_roles"] = format_char_roles(
+            item["prompt"],
+            prompt=prompt,
+            prompt_roles=prompt_roles,
+            answer="",
+        )
+        item["roles"] = format_char_roles(
+            item["text"],
+            prompt=prompt,
+            prompt_roles=prompt_roles,
+            answer=answer,
+        )
         formatted.append(item)
     return formatted
+
+
+def format_char_roles(
+    text: str,
+    *,
+    prompt: str,
+    prompt_roles: list[int],
+    answer: str,
+) -> list[int]:
+    roles = [ROLE_DEFAULT] * len(text)
+    prompt_start = text.find(prompt)
+    if prompt_start < 0:
+        raise ValueError("formatted prompt content not found in formatted text")
+    for offset, role in enumerate(prompt_roles[: len(prompt)]):
+        roles[prompt_start + offset] = role
+    if answer:
+        answer_start = text.find(answer, prompt_start + len(prompt))
+        if answer_start < 0:
+            raise ValueError("formatted answer content not found in formatted text")
+        for offset in range(len(answer)):
+            roles[answer_start + offset] = ROLE_ANSWER
+    return roles
+
+
+def token_role_ids(offsets: list[tuple[int, int]], char_roles: list[int]) -> list[int]:
+    token_roles = []
+    for start, end in offsets:
+        span = char_roles[start:end]
+        role = ROLE_DEFAULT
+        for candidate in (ROLE_INSTR, ROLE_DATA, ROLE_ANSWER):
+            if candidate in span:
+                role = candidate
+                break
+        token_roles.append(role)
+    return token_roles
 
 
 def encode_examples(
@@ -194,6 +247,11 @@ def encode_examples(
         )
         input_ids = list(enc["input_ids"])
         offsets = list(enc["offset_mapping"])
+        roles = list(ex.get("roles") or [ROLE_DEFAULT] * len(text))
+        if len(roles) != len(text):
+            raise ValueError(
+                f"role/text length mismatch: roles={len(roles)} text={len(text)}"
+            )
         if offsets and offsets[-1][1] < len(text):
             truncated += 1
         labels = list(input_ids)
@@ -202,7 +260,13 @@ def encode_examples(
                 labels[idx] = -100
         if not any(label != -100 for label in labels):
             lost_answer += 1
-        encoded.append(EncodedExample(input_ids=input_ids, labels=labels))
+        encoded.append(
+            EncodedExample(
+                input_ids=input_ids,
+                labels=labels,
+                role_ids=token_role_ids(offsets, roles),
+            )
+        )
     if fail_on_truncation and (truncated or lost_answer):
         raise ValueError(
             "encoding lost supervision: "
@@ -223,15 +287,18 @@ def make_batch(
     pad_id = tokenizer.pad_token_id
     input_ids = []
     labels = []
+    role_ids = []
     attention_mask = []
     for ex in batch:
         pad = max_len - len(ex.input_ids)
         input_ids.append(ex.input_ids + [pad_id] * pad)
         labels.append(ex.labels + [-100] * pad)
+        role_ids.append(ex.role_ids + [ROLE_DEFAULT] * pad)
         attention_mask.append([1] * len(ex.input_ids) + [0] * pad)
     return {
         "input_ids": torch.tensor(input_ids, dtype=torch.long, device=device),
         "labels": torch.tensor(labels, dtype=torch.long, device=device),
+        "role_ids": torch.tensor(role_ids, dtype=torch.long, device=device),
         "attention_mask": torch.tensor(attention_mask, dtype=torch.long, device=device),
     }
 
@@ -247,6 +314,105 @@ def causal_loss(logits: torch.Tensor, labels: torch.Tensor) -> torch.Tensor:
     )
 
 
+def forward_model(
+    model,
+    *,
+    input_ids: torch.Tensor,
+    attention_mask: torch.Tensor,
+    role_ids: torch.Tensor | None,
+    use_input_role_embeddings: bool,
+):
+    if not use_input_role_embeddings:
+        return model(input_ids=input_ids, attention_mask=attention_mask)
+    inputs_embeds = model.get_input_embeddings()(input_ids)
+    role_delta = model.input_role_emb(role_ids).to(inputs_embeds.dtype)
+    return model(
+        inputs_embeds=inputs_embeds + role_delta,
+        attention_mask=attention_mask,
+    )
+
+
+def encode_prompt(
+    tokenizer,
+    prompt: str,
+    prompt_roles: list[int] | None,
+) -> tuple[list[int], list[int]]:
+    enc = tokenizer(
+        prompt,
+        add_special_tokens=False,
+        return_offsets_mapping=True,
+    )
+    input_ids = list(enc["input_ids"])
+    offsets = list(enc["offset_mapping"])
+    char_roles = list(prompt_roles or [ROLE_DEFAULT] * len(prompt))
+    if len(char_roles) != len(prompt):
+        raise ValueError(
+            f"prompt role/text length mismatch: roles={len(char_roles)} text={len(prompt)}"
+        )
+    return input_ids, token_role_ids(offsets, char_roles)
+
+
+@torch.no_grad()
+def generate_with_role_embeddings(
+    model,
+    tokenizer,
+    examples: list[dict],
+    *,
+    device: torch.device,
+    max_new_tokens: int,
+) -> list[str]:
+    sequences = []
+    role_sequences = []
+    prompt_widths = []
+    done = []
+    for ex in examples:
+        input_ids, role_ids = encode_prompt(
+            tokenizer,
+            ex["prompt"],
+            ex.get("prompt_roles"),
+        )
+        sequences.append(input_ids)
+        role_sequences.append(role_ids)
+        prompt_widths.append(len(input_ids))
+        done.append(False)
+
+    for _ in range(max_new_tokens):
+        max_len = max(len(seq) for seq in sequences)
+        input_ids = []
+        role_ids = []
+        attention_mask = []
+        for seq, roles in zip(sequences, role_sequences):
+            pad = max_len - len(seq)
+            input_ids.append(seq + [tokenizer.pad_token_id] * pad)
+            role_ids.append(roles + [ROLE_DEFAULT] * pad)
+            attention_mask.append([1] * len(seq) + [0] * pad)
+        ids_tensor = torch.tensor(input_ids, dtype=torch.long, device=device)
+        roles_tensor = torch.tensor(role_ids, dtype=torch.long, device=device)
+        mask_tensor = torch.tensor(attention_mask, dtype=torch.long, device=device)
+        outputs = forward_model(
+            model,
+            input_ids=ids_tensor,
+            attention_mask=mask_tensor,
+            role_ids=roles_tensor,
+            use_input_role_embeddings=True,
+        )
+        for row, seq in enumerate(sequences):
+            if done[row]:
+                continue
+            next_id = int(outputs.logits[row, len(seq) - 1].argmax(dim=-1).item())
+            sequences[row].append(next_id)
+            role_sequences[row].append(ROLE_ANSWER)
+            if tokenizer.eos_token_id is not None and next_id == tokenizer.eos_token_id:
+                done[row] = True
+        if all(done):
+            break
+
+    return [
+        tokenizer.decode(seq[prompt_width:], skip_special_tokens=True)
+        for seq, prompt_width in zip(sequences, prompt_widths)
+    ]
+
+
 @torch.no_grad()
 def evaluate(
     model,
@@ -256,6 +422,7 @@ def evaluate(
     device: torch.device,
     batch_size: int,
     max_new_tokens: int,
+    use_input_role_embeddings: bool,
 ) -> dict:
     model.eval()
     old_padding_side = tokenizer.padding_side
@@ -265,26 +432,35 @@ def evaluate(
     try:
         for start in range(0, len(examples), batch_size):
             chunk = examples[start : start + batch_size]
-            prompts = [ex["prompt"] for ex in chunk]
-            enc = tokenizer(
-                prompts,
-                add_special_tokens=False,
-                padding=True,
-                return_tensors="pt",
-            )
-            enc = {key: value.to(device) for key, value in enc.items()}
-            generated = model.generate(
-                **enc,
-                do_sample=False,
-                max_new_tokens=max_new_tokens,
-                pad_token_id=tokenizer.pad_token_id,
-                eos_token_id=tokenizer.eos_token_id,
-            )
-            prompt_width = enc["input_ids"].shape[1]
-            decoded = tokenizer.batch_decode(
-                generated[:, prompt_width:],
-                skip_special_tokens=True,
-            )
+            if use_input_role_embeddings:
+                decoded = generate_with_role_embeddings(
+                    model,
+                    tokenizer,
+                    chunk,
+                    device=device,
+                    max_new_tokens=max_new_tokens,
+                )
+            else:
+                prompts = [ex["prompt"] for ex in chunk]
+                enc = tokenizer(
+                    prompts,
+                    add_special_tokens=False,
+                    padding=True,
+                    return_tensors="pt",
+                )
+                enc = {key: value.to(device) for key, value in enc.items()}
+                generated = model.generate(
+                    **enc,
+                    do_sample=False,
+                    max_new_tokens=max_new_tokens,
+                    pad_token_id=tokenizer.pad_token_id,
+                    eos_token_id=tokenizer.eos_token_id,
+                )
+                prompt_width = enc["input_ids"].shape[1]
+                decoded = tokenizer.batch_decode(
+                    generated[:, prompt_width:],
+                    skip_special_tokens=True,
+                )
             for ex, out in zip(chunk, decoded):
                 hit = ex["expected"].lower() in out.lower()
                 correct += int(hit)
@@ -359,6 +535,8 @@ def main() -> None:
     parser.add_argument("--lora-rank", type=int, default=8)
     parser.add_argument("--lora-alpha", type=float, default=16.0)
     parser.add_argument("--lora-dropout", type=float, default=0.05)
+    parser.add_argument("--input-role-embeddings", action="store_true")
+    parser.add_argument("--role-init-std", type=float, default=0.02)
     parser.add_argument(
         "--lora-targets",
         nargs="+",
@@ -442,6 +620,16 @@ def main() -> None:
         dropout=args.lora_dropout,
         target_suffixes=tuple(args.lora_targets),
     )
+    if args.input_role_embeddings:
+        model.input_role_emb = nn.Embedding(
+            4,
+            model.config.hidden_size,
+            device=device,
+            dtype=torch.float32,
+        )
+        nn.init.normal_(model.input_role_emb.weight, mean=0.0, std=args.role_init_std)
+        with torch.no_grad():
+            model.input_role_emb.weight[ROLE_DEFAULT].zero_()
     trainable_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
     total_params = sum(p.numel() for p in model.parameters())
     optimizer = torch.optim.AdamW(
@@ -487,6 +675,7 @@ def main() -> None:
             device=device,
             batch_size=args.eval_batch_size,
             max_new_tokens=args.max_new_tokens,
+            use_input_role_embeddings=args.input_role_embeddings,
         )
         peak_alloc_gb = 0.0
         peak_reserved_gb = 0.0
@@ -544,9 +733,12 @@ def main() -> None:
                 dtype=torch.bfloat16,
                 enabled=scaler_enabled,
             ):
-                outputs = model(
+                outputs = forward_model(
+                    model,
                     input_ids=batch["input_ids"],
                     attention_mask=batch["attention_mask"],
+                    role_ids=batch["role_ids"],
+                    use_input_role_embeddings=args.input_role_embeddings,
                 )
                 loss = causal_loss(outputs.logits, batch["labels"])
                 loss = loss / args.grad_accum
@@ -567,6 +759,7 @@ def main() -> None:
         device=device,
         batch_size=args.eval_batch_size,
         max_new_tokens=args.max_new_tokens,
+        use_input_role_embeddings=args.input_role_embeddings,
     )
     result = {
         "args": vars(args),
