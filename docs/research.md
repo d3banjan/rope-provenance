@@ -474,3 +474,25 @@ possible before spending on larger models.
 6. Scale test last. Only after the 0.5B strict/semantic controls survive should
    a larger instruct model be used. Larger models are for checking whether extra
    dimension helps or hinders, not for covering up an eval or generator flaw.
+
+Qwen sliding-window warning note: Transformers prints "Sliding Window Attention
+is enabled but not implemented for sdpa" when loading/evaluating Qwen2.5. Local
+config inspection on 2026-05-17 found `use_sliding_window=False`,
+`sliding_window=32768`, and hidden-role prompt lengths around 101-118 tokens.
+So the warning is not expected to affect the current short-context experiments:
+even if a sliding window were active, the full prompt is far below the window.
+Treat this as unresolved only for future long-context Qwen runs.
+
+Strict-eval audit result: reloading the saved hidden-role adapters and scoring
+only normalized first-answer equality gives correct=1.000, constant=0.500, and
+eval-swap=0.000. This kills the concern that the positive was caused by the
+old substring detector.
+
+Subspace audit result: the saved correct-role LoRA adapter is low-rank in the
+ordinary lazy-rudder sense (weighted mean stable-rank 1.91 under rank cap 8;
+role embedding active-row stable-rank 2.89). However, the simple comparison
+against Qwen base-to-instruct deltas does not show direct global overlap:
+weighted cosine is near zero and right/left capture is near random-baseline
+scale. Current interpretation: the learned provenance adapter is a low-rank
+control, but the stronger claim that it aligns with the raw base-to-instruct
+delta is not supported by this first-pass metric.

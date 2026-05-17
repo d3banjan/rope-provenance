@@ -277,6 +277,7 @@ current short LoRA protocol.
 | Qwen2.5-0.5B-Instruct hidden-role gated correct | `hdjhcz4q` | correct out-of-band roles | 1.000 | Passed the pre-registered correct-role threshold. Paired visible prompts are identical, and samples alternate correctly between witness and answer based on the hidden role map. Constant-role control is still required before claiming role-channel causality. |
 | Qwen2.5-0.5B-Instruct hidden-role gated constant | `rldphw35` | all-default roles | 0.500 | Passed the required control. With role information removed, the model selects one side of each contradictory pair, so one duplicate is right and the other is wrong. |
 | Qwen2.5-0.5B-Instruct hidden-role gated eval-swap | `u9uht6a8` | train correct, eval instruction/DATA swapped | 0.000 | Passed the directionality check. The model flips to the opposite valid candidate when eval roles are swapped while labels stay fixed. |
+| Strict eval reload: correct / constant / eval-swap | `qu1d8i4g`, `e54lk3vo`, `1w49y3cg` | saved adapters, strict normalized answer equality | 1.000 / 0.500 / 0.000 | Passed the eval-artifact kill test. The previous 1.000 was not an artifact of substring matching. |
 
 Interpretation: the confounded instruct hidden-role proof-of-concept is
 positive. Correct roles reach 1.000, constant roles cap at 0.500, and the
@@ -287,3 +288,12 @@ can carry software-supplied substring provenance when the model already has
 instruction-following priors. It does not rescue the RoPE-rotation experiments
 and does not yet show that a clean base SLM can learn the same behavior under
 the short LoRA protocol.
+
+Subspace audit on the saved correct-role adapter: learned LoRA deltas are low
+stable-rank, with weighted mean stable-rank 1.91 under rank cap 8. The learned
+role embedding's three active rows have stable-rank 2.89. A first-pass overlap
+test against cached Qwen base-to-instruct weight deltas does not show a simple
+global SFT-delta alignment: weighted LoRA/SFT cosine is approximately 0, and
+right/left capture is near random-baseline scale. Interpretation: the adapter
+is low-rank, but the naive base-to-instruct delta overlap thesis is not yet
+supported by this metric.
