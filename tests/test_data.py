@@ -15,9 +15,9 @@ import torch
 
 from rope_prov.data import (
     ASSISTANT_MARKER,
-    PROMPT_TEMPLATE,
     RoleTaggingCollator,
     build_counterfactual_examples,
+    build_role_contrast_counterfactual_examples,
     filter_alpaca_examples,
     render_example,
 )
@@ -135,7 +135,9 @@ def test_labels_mask_everything_before_assistant_content(collator, tokenizer):
     attn = batch["attention_mask"][0].tolist()
 
     # First non-(-100) label should be the first assistant token.
-    assistant_label_positions = [i for i, l in enumerate(labels) if l != -100]
+    assistant_label_positions = [
+        i for i, label in enumerate(labels) if label != -100
+    ]
     assert assistant_label_positions, "no assistant tokens have a loss target"
     first_assistant_pos = assistant_label_positions[0]
 
@@ -158,8 +160,6 @@ def test_data_section_tokens_are_data_role(collator, role_map, tokenizer):
     ex = _EXAMPLES[0]
     batch = collator([ex])
     role_ids = batch["role_ids"][0].tolist()
-    input_ids = batch["input_ids"][0].tolist()
-    text = tokenizer.decode(input_ids, skip_special_tokens=False)
 
     # The data string should appear verbatim in the decoded text — find its
     # token-index range via offsets recomputed deterministically here.
@@ -279,3 +279,54 @@ def test_counterfactual_pairs_reuse_same_directive_across_roles():
         assert positive["output"] == witness
         assert witness in positive["instruction"]
         assert witness in negative["input"]
+
+
+def test_role_contrast_counterfactuals_use_data_facts_in_both_roles():
+    examples = build_role_contrast_counterfactual_examples(
+        20, seed=0, positive_fraction=0.5
+    )
+    assert {
+        "synthetic_role_contrast_data_negative",
+        "synthetic_role_contrast_instruction_positive",
+    }.issubset({ex["source"] for ex in examples})
+
+    for ex in examples:
+        assert "TARGET_VALUE:" in ex["input"]
+        if ex["source"] == "synthetic_role_contrast_data_negative":
+            assert "TARGET_VALUE" in ex["input"]
+            assert "TARGET_VALUE" not in ex["instruction"]
+            assert ex["counterfactual_witness"] != ex["output"]
+            assert ex["counterfactual_answer"] == ex["output"]
+        else:
+            assert "TARGET_VALUE" in ex["instruction"]
+            assert ex["counterfactual_witness"] == ex["output"]
+
+
+def test_role_contrast_pairs_reuse_directive_surface_across_roles():
+    examples = build_role_contrast_counterfactual_examples(
+        40, seed=0, positive_fraction=0.5
+    )
+    by_pair: dict[int, list[dict]] = {}
+    for ex in examples:
+        by_pair.setdefault(ex["counterfactual_pair_id"], []).append(ex)
+
+    for pair in by_pair.values():
+        assert {ex["source"] for ex in pair} == {
+            "synthetic_role_contrast_data_negative",
+            "synthetic_role_contrast_instruction_positive",
+        }
+        negative = next(
+            ex
+            for ex in pair
+            if ex["source"] == "synthetic_role_contrast_data_negative"
+        )
+        positive = next(
+            ex
+            for ex in pair
+            if ex["source"] == "synthetic_role_contrast_instruction_positive"
+        )
+        directive = positive["instruction"]
+        assert directive in negative["input"]
+        assert positive["counterfactual_witness"] in positive["input"]
+        assert negative["output"] == negative["counterfactual_answer"]
+        assert negative["output"] != negative["counterfactual_witness"]

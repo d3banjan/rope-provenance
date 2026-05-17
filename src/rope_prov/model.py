@@ -242,6 +242,114 @@ class PreWRoleAwareLlamaAttention(LlamaAttention):
         return attn_output, attn_weights
 
 
+class PreWReZeroRoleAwareLlamaAttention(LlamaAttention):
+    """Pre-W role rotation with a learnable ReZero gate per layer.
+
+    The query/key stream starts exactly vanilla because ``role_gate`` is
+    initialized at zero:
+
+        qk_hidden = hidden + role_gate * (RoleRotate(hidden) - hidden)
+
+    This tests whether SGD can open the role channel where it is useful instead
+    of being forced to absorb a nonzero rotation in every layer from step 0.
+    """
+
+    def __init__(
+        self,
+        config,
+        layer_idx: int,
+        prov_dim: int = 0,
+        role_angles: Optional[Sequence[float]] = None,
+        gate_init: float = 0.0,
+    ):
+        super().__init__(config, layer_idx)
+        if prov_dim < 0:
+            raise ValueError(f"prov_dim must be >= 0, got {prov_dim}")
+        if prov_dim > config.hidden_size:
+            raise ValueError(
+                f"prov_dim={prov_dim} exceeds hidden_size={config.hidden_size}"
+            )
+        if prov_dim % 2 != 0:
+            raise ValueError(
+                f"prov_dim must be even (paired rotation), got {prov_dim}"
+            )
+        self.prov_dim = prov_dim
+        if role_angles is None:
+            role_angles = [0.0]
+        angles = torch.as_tensor(list(role_angles), dtype=torch.float32)
+        self.register_buffer("role_angles", angles, persistent=False)
+        self.role_gate = nn.Parameter(torch.tensor(float(gate_init), dtype=torch.float32))
+
+    def forward(
+        self,
+        hidden_states: torch.Tensor,
+        position_embeddings: Tuple[torch.Tensor, torch.Tensor],
+        attention_mask: Optional[torch.Tensor],
+        past_key_value: Optional[Cache] = None,
+        cache_position: Optional[torch.LongTensor] = None,
+        role_ids: Optional[torch.Tensor] = None,
+        **kwargs,
+    ) -> Tuple[torch.Tensor, Optional[torch.Tensor]]:
+        input_shape = hidden_states.shape[:-1]
+        hidden_shape = (*input_shape, -1, self.head_dim)
+
+        if self.prov_dim == 0 or role_ids is None:
+            qk_hidden_states = hidden_states
+        else:
+            rotated_hidden_states = apply_hidden_role_rotation_paired(
+                hidden_states,
+                role_ids,
+                self.prov_dim,
+                self.role_angles,
+            )
+            gate = self.role_gate.to(device=hidden_states.device, dtype=hidden_states.dtype)
+            qk_hidden_states = hidden_states + gate * (
+                rotated_hidden_states - hidden_states
+            )
+
+        query_states = self.q_proj(qk_hidden_states).view(hidden_shape).transpose(1, 2)
+        key_states = self.k_proj(qk_hidden_states).view(hidden_shape).transpose(1, 2)
+        value_states = self.v_proj(hidden_states).view(hidden_shape).transpose(1, 2)
+
+        cos, sin = position_embeddings
+        query_states, key_states = apply_rotary_pos_emb(
+            query_states, key_states, cos, sin
+        )
+
+        if past_key_value is not None:
+            cache_kwargs = {"sin": sin, "cos": cos, "cache_position": cache_position}
+            key_states, value_states = past_key_value.update(
+                key_states, value_states, self.layer_idx, cache_kwargs
+            )
+
+        attention_interface = eager_attention_forward
+        if self.config._attn_implementation != "eager":
+            if (
+                self.config._attn_implementation == "sdpa"
+                and kwargs.get("output_attentions", False)
+            ):
+                pass
+            else:
+                attention_interface = ALL_ATTENTION_FUNCTIONS[
+                    self.config._attn_implementation
+                ]
+
+        attn_output, attn_weights = attention_interface(
+            self,
+            query_states,
+            key_states,
+            value_states,
+            attention_mask,
+            dropout=0.0 if not self.training else self.attention_dropout,
+            scaling=self.scaling,
+            **kwargs,
+        )
+
+        attn_output = attn_output.reshape(*input_shape, -1).contiguous()
+        attn_output = self.o_proj(attn_output)
+        return attn_output, attn_weights
+
+
 # ---------------------------------------------------------------------- #
 def _rebuild_attention_module(
     src: LlamaAttention,
@@ -275,6 +383,37 @@ def _rebuild_pre_w_attention_module(
     if example_param is not None:
         new.to(device=example_param.device, dtype=example_param.dtype)
     missing, unexpected = new.load_state_dict(src.state_dict(), strict=True)
+    assert not missing and not unexpected, (missing, unexpected)
+    return new
+
+
+def _rebuild_pre_w_rezero_attention_module(
+    src: LlamaAttention,
+    prov_dim: int = 0,
+    role_angles: Optional[Sequence[float]] = None,
+    gate_init: float = 0.0,
+) -> PreWReZeroRoleAwareLlamaAttention:
+    """Construct a gated pre-W attention module initialized from ``src``."""
+    new = PreWReZeroRoleAwareLlamaAttention(
+        src.config,
+        src.layer_idx,
+        prov_dim=prov_dim,
+        role_angles=role_angles,
+        gate_init=gate_init,
+    )
+    example_param = next(src.parameters(), None)
+    if example_param is not None:
+        new.to(device=example_param.device, dtype=example_param.dtype)
+        new.role_gate = nn.Parameter(
+            new.role_gate.detach().to(device=example_param.device, dtype=torch.float32)
+        )
+    src_state = {
+        key: value
+        for key, value in src.state_dict().items()
+        if key != "role_gate"
+    }
+    missing, unexpected = new.load_state_dict(src_state, strict=False)
+    missing = [key for key in missing if key != "role_gate"]
     assert not missing and not unexpected, (missing, unexpected)
     return new
 
@@ -356,6 +495,23 @@ def patch_model_with_pre_w_role_aware_attention(
             layer.self_attn = _rebuild_pre_w_attention_module(
                 layer.self_attn, prov_dim=prov_dim, role_angles=role_angles
             )
+    return model
+
+
+def patch_model_with_pre_w_rezero_role_aware_attention(
+    model: nn.Module,
+    prov_dim: int = 0,
+    role_angles: Optional[Sequence[float]] = None,
+    gate_init: float = 0.0,
+) -> nn.Module:
+    """Replace every attention module with the gated pre-W role variant."""
+    for layer in model.model.layers:
+        layer.self_attn = _rebuild_pre_w_rezero_attention_module(
+            layer.self_attn,
+            prov_dim=prov_dim,
+            role_angles=role_angles,
+            gate_init=gate_init,
+        )
     return model
 
 

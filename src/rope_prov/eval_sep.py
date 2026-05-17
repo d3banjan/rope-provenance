@@ -32,9 +32,10 @@ from typing import Iterable, Optional
 import torch
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
-from .data import ASSISTANT_MARKER, PROMPT_TEMPLATE, SYSTEM_PROMPT
+from .data import PROMPT_TEMPLATE, SYSTEM_PROMPT
 from .model import (
     patch_model_with_pre_w_role_aware_attention,
+    patch_model_with_pre_w_rezero_role_aware_attention,
     patch_model_with_role_aware_attention,
     patch_model_with_zeroed_prov_pairs,
 )
@@ -416,6 +417,31 @@ def _load_variant(
                     flush=True,
                 )
 
+    def _load_rezero_gate_params(model):
+        import os
+        from safetensors.torch import load_file
+
+        sf = os.path.join(model_path, "model.safetensors")
+        if not os.path.exists(sf):
+            print(
+                "[load] WARN: model.safetensors missing; using init ReZero gates",
+                flush=True,
+            )
+            return
+        ckpt = load_file(sf)
+        loaded = 0
+        with torch.no_grad():
+            for layer_idx, layer in enumerate(model.model.layers):
+                gate = getattr(layer.self_attn, "role_gate", None)
+                if gate is None:
+                    continue
+                key = f"model.layers.{layer_idx}.self_attn.role_gate"
+                if key not in ckpt:
+                    continue
+                gate.copy_(ckpt[key].to(gate.device, gate.dtype))
+                loaded += 1
+        print(f"[load] loaded {loaded} ReZero role_gate parameters", flush=True)
+
     model = AutoModelForCausalLM.from_pretrained(
         model_path, torch_dtype=torch.bfloat16
     )
@@ -437,6 +463,14 @@ def _load_variant(
         )
         if learnable_angles:
             _load_role_angles_param(model)
+    elif variant == "rope_prov_pre_w_rezero":
+        patch_model_with_pre_w_rezero_role_aware_attention(
+            model,
+            prov_dim=prov_dim,
+            role_angles=role_angles,
+            gate_init=0.0,
+        )
+        _load_rezero_gate_params(model)
     elif variant == "vanilla":
         patch_model_with_role_aware_attention(model, prov_dim=0)
     elif variant == "vanilla_zeroed":
@@ -458,7 +492,13 @@ def main():
     ap.add_argument(
         "--variant",
         required=True,
-        choices=["vanilla", "vanilla_zeroed", "rope_prov", "rope_prov_pre_w"],
+        choices=[
+            "vanilla",
+            "vanilla_zeroed",
+            "rope_prov",
+            "rope_prov_pre_w",
+            "rope_prov_pre_w_rezero",
+        ],
     )
     ap.add_argument("--prov-dim", type=int, default=8)
     ap.add_argument("--role-angles", type=float, nargs="+", default=[0.0, 1.5708])

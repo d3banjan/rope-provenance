@@ -48,10 +48,12 @@ from transformers.trainer_utils import get_last_checkpoint
 from .data import (
     RoleTaggingCollator,
     build_counterfactual_examples,
+    build_role_contrast_counterfactual_examples,
     filter_alpaca_examples,
 )
 from .model import (
     patch_model_with_pre_w_role_aware_attention,
+    patch_model_with_pre_w_rezero_role_aware_attention,
     patch_model_with_role_aware_attention,
     patch_model_with_zeroed_prov_pairs,
 )
@@ -277,6 +279,155 @@ class LearnableAngleFreezeCallback(TrainerCallback):
         self._set_trainable(state.global_step)
 
 
+def _iter_rezero_gates(model_ref):
+    layers = getattr(getattr(model_ref, "model", None), "layers", [])
+    for layer_idx, layer in enumerate(layers):
+        gate = getattr(getattr(layer, "self_attn", None), "role_gate", None)
+        if gate is not None:
+            yield layer_idx, gate
+
+
+class ReZeroGateScheduleCallback(TrainerCallback):
+    """Log ReZero gates and optionally stage which layers can update."""
+
+    def __init__(
+        self,
+        model_ref,
+        stage_steps: list[int] | None = None,
+        stage_layer_maxes: list[int | None] | None = None,
+        log_every: int = 10,
+    ):
+        self.model_ref = model_ref
+        self.gates = list(_iter_rezero_gates(model_ref))
+        self.stage_steps = stage_steps or []
+        self.stage_layer_maxes = stage_layer_maxes or [None]
+        if len(self.stage_layer_maxes) != len(self.stage_steps) + 1:
+            raise ValueError(
+                "rezero_stage_layer_maxes must have one more entry than "
+                "rezero_stage_steps"
+            )
+        self.log_every = log_every
+        self.active_layer_max = self._active_max_for_step(0)
+        self._last_active_layer_max: int | None | object = object()
+        for layer_idx, gate in self.gates:
+            gate.register_hook(self._make_gate_hook(layer_idx))
+
+    def _active_max_for_step(self, step: int) -> int | None:
+        for cutoff, layer_max in zip(self.stage_steps, self.stage_layer_maxes):
+            if step < cutoff:
+                return layer_max
+        return self.stage_layer_maxes[-1]
+
+    def _is_active(self, layer_idx: int) -> bool:
+        return self.active_layer_max is None or layer_idx < self.active_layer_max
+
+    def _make_gate_hook(self, layer_idx: int):
+        def hook(grad):
+            if self._is_active(layer_idx):
+                return grad
+            return torch.zeros_like(grad)
+
+        return hook
+
+    def _update_active_layers(self, step: int) -> None:
+        self.active_layer_max = self._active_max_for_step(step)
+        if self.active_layer_max == self._last_active_layer_max:
+            return
+        self._last_active_layer_max = self.active_layer_max
+        label = "all" if self.active_layer_max is None else str(self.active_layer_max)
+        print(
+            f"[rezero-gates step={step}] active layers: 0..{label}",
+            flush=True,
+        )
+
+    def on_train_begin(self, args, state, control, **kwargs):
+        self._update_active_layers(state.global_step)
+
+    def on_step_begin(self, args, state, control, **kwargs):
+        self._update_active_layers(state.global_step)
+
+    def on_step_end(self, args, state, control, **kwargs):
+        if state.global_step == 0 or state.global_step % self.log_every != 0:
+            return
+        if not self.gates:
+            return
+        values = torch.tensor(
+            [gate.detach().float().cpu().item() for _, gate in self.gates],
+            dtype=torch.float32,
+        )
+        active_count = sum(1 for layer_idx, _ in self.gates if self._is_active(layer_idx))
+        log = {
+            "rezero_gate/mean": float(values.mean()),
+            "rezero_gate/max_abs": float(values.abs().max()),
+            "rezero_gate/min": float(values.min()),
+            "rezero_gate/max": float(values.max()),
+            "rezero_gate/active_layers": active_count,
+        }
+        for layer_idx, gate in self.gates:
+            log[f"rezero_gate/layer_{layer_idx:02d}"] = float(
+                gate.detach().float().cpu()
+            )
+        try:
+            import wandb
+            if wandb.run is not None:
+                wandb.log(log, step=state.global_step)
+        except Exception:
+            pass
+        print(f"[rezero-gates step={state.global_step}] {log}", flush=True)
+
+
+class RoleGateTrainer(Trainer):
+    """Trainer with a separate LR for ReZero role gates."""
+
+    def __init__(self, *args, role_gate_lr: float | None = None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.role_gate_lr = role_gate_lr
+
+    def create_optimizer(self):
+        if self.optimizer is not None:
+            return self.optimizer
+        if self.role_gate_lr is None:
+            return super().create_optimizer()
+
+        base_params = []
+        gate_params = []
+        for name, param in self.model.named_parameters():
+            if not param.requires_grad:
+                continue
+            if name.endswith("role_gate") or ".role_gate" in name:
+                gate_params.append(param)
+            else:
+                base_params.append(param)
+
+        if not gate_params:
+            return super().create_optimizer()
+
+        self.optimizer = torch.optim.AdamW(
+            [
+                {
+                    "params": base_params,
+                    "lr": self.args.learning_rate,
+                    "weight_decay": self.args.weight_decay,
+                },
+                {
+                    "params": gate_params,
+                    "lr": self.role_gate_lr,
+                    "weight_decay": 0.0,
+                },
+            ],
+            betas=(self.args.adam_beta1, self.args.adam_beta2),
+            eps=self.args.adam_epsilon,
+        )
+        print(
+            f"[optimizer] base_lr={self.args.learning_rate} "
+            f"role_gate_lr={self.role_gate_lr} "
+            f"base_params={sum(p.numel() for p in base_params)} "
+            f"gate_params={sum(p.numel() for p in gate_params)}",
+            flush=True,
+        )
+        return self.optimizer
+
+
 class PreEvalCacheFlushCallback(TrainerCallback):
     """Flush the CUDA allocator cache right before an eval step. Cheap
     defense against fragmentation-induced OOM at eval time — the
@@ -379,7 +530,11 @@ def main():
     role_map = RoleMap.from_yaml(cfg["role_map"])
     # Only the rope_prov variant actually consumes role_angles; vanilla and
     # vanilla_zeroed carry placeholders that we don't want to police.
-    if cfg.get("attention_variant", "rope_prov") in {"rope_prov", "rope_prov_pre_w"}:
+    if cfg.get("attention_variant", "rope_prov") in {
+        "rope_prov",
+        "rope_prov_pre_w",
+        "rope_prov_pre_w_rezero",
+    }:
         cfg["role_angles"] = normalize_role_angles(
             cfg["role_angles"],
             num_roles=len(role_map.roles),
@@ -406,9 +561,16 @@ def main():
     cf_positive_fraction = cfg.get("counterfactual_positive_fraction", 0.5)
     cf_train_n = int(cfg.get("counterfactual_train_size") or 0)
     cf_eval_n = int(cfg.get("counterfactual_eval_size") or 0)
+    cf_variant = cfg.get("counterfactual_variant", "v2")
+    if cf_variant == "v2":
+        cf_builder = build_counterfactual_examples
+    elif cf_variant == "role_contrast_v3":
+        cf_builder = build_role_contrast_counterfactual_examples
+    else:
+        raise ValueError(f"unknown counterfactual_variant: {cf_variant!r}")
     if cf_train_n:
         train_examples.extend(
-            build_counterfactual_examples(
+            cf_builder(
                 cf_train_n,
                 seed=cf_seed,
                 positive_fraction=cf_positive_fraction,
@@ -416,7 +578,7 @@ def main():
         )
     if cf_eval_n:
         eval_examples.extend(
-            build_counterfactual_examples(
+            cf_builder(
                 cf_eval_n,
                 seed=cf_seed + 10_000,
                 positive_fraction=cf_positive_fraction,
@@ -424,8 +586,8 @@ def main():
         )
     print(
         f"[data] train={len(train_examples)} eval={len(eval_examples)} "
-        f"(filtered from {len(ds)} raw; counterfactual train={cf_train_n} "
-        f"eval={cf_eval_n})",
+        f"(filtered from {len(ds)} raw; counterfactual variant={cf_variant} "
+        f"train={cf_train_n} eval={cf_eval_n})",
         flush=True,
     )
 
@@ -446,6 +608,13 @@ def main():
             prov_dim=cfg["provenance_dims"],
             role_angles=cfg["role_angles"],
             learnable_angles=cfg.get("learnable_angles", False),
+        )
+    elif variant == "rope_prov_pre_w_rezero":
+        patch_model_with_pre_w_rezero_role_aware_attention(
+            model,
+            prov_dim=cfg["provenance_dims"],
+            role_angles=cfg["role_angles"],
+            gate_init=cfg.get("rezero_gate_init", 0.0),
         )
     elif variant == "vanilla":
         # prov_dim=0 makes the subclass a no-op kwarg sink.
@@ -498,14 +667,29 @@ def main():
         if freeze_steps:
             callbacks.append(LearnableAngleFreezeCallback(model, freeze_steps))
         callbacks.append(LearnableAnglesCallback(model, log_every=10))
+    if variant == "rope_prov_pre_w_rezero":
+        callbacks.append(
+            ReZeroGateScheduleCallback(
+                model,
+                stage_steps=list(cfg.get("rezero_stage_steps") or []),
+                stage_layer_maxes=list(cfg.get("rezero_stage_layer_maxes") or [None]),
+                log_every=int(cfg.get("rezero_log_every") or 10),
+            )
+        )
 
-    trainer = Trainer(
+    trainer_cls = RoleGateTrainer if cfg.get("role_gate_lr") is not None else Trainer
+    trainer = trainer_cls(
         model=model,
         args=targs,
         train_dataset=train_examples,
         eval_dataset=eval_examples if not args.dry_run else None,
         data_collator=collator,
         callbacks=callbacks,
+        **(
+            {"role_gate_lr": float(cfg["role_gate_lr"])}
+            if cfg.get("role_gate_lr") is not None
+            else {}
+        ),
     )
     resume_from_checkpoint = args.resume_from_checkpoint
     if resume_from_checkpoint == "latest":

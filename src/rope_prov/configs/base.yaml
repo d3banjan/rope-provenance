@@ -17,6 +17,7 @@ counterfactual_train_size: 0
 counterfactual_eval_size: 0
 counterfactual_seed: 0
 counterfactual_positive_fraction: 0.5
+counterfactual_variant: v2
 
 # --- Optimizer ---
 batch_size: 4
