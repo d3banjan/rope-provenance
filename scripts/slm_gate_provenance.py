@@ -532,6 +532,12 @@ def main() -> None:
         choices=ROLE_CONTROL_CHOICES,
         default="correct",
     )
+    parser.add_argument(
+        "--eval-role-control",
+        choices=ROLE_CONTROL_CHOICES,
+        default=None,
+        help="Optional role transform for eval examples only.",
+    )
     parser.add_argument("--lora-rank", type=int, default=8)
     parser.add_argument("--lora-alpha", type=float, default=16.0)
     parser.add_argument("--lora-dropout", type=float, default=0.05)
@@ -594,7 +600,7 @@ def main() -> None:
         template_mode=args.template_mode,
         gate_kinds=tuple(args.gate_kinds),
         hide_tags=args.hide_tags,
-        role_control=args.role_control,
+        role_control=args.eval_role_control or args.role_control,
     )
     train_examples = apply_prompt_format(train_examples, tokenizer, args.prompt_format)
     eval_examples = apply_prompt_format(eval_examples, tokenizer, args.prompt_format)

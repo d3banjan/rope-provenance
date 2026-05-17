@@ -420,3 +420,11 @@ correct-minus-constant margin is therefore +0.500, above the pre-registered
 +0.30 threshold. This is a positive additive-channel proof-of-concept on the
 instruct checkpoint, with the base-model and chat-posttraining confounds still
 explicitly in force.
+
+Post-result directionality check, pre-registered before running: train the same
+hidden-role instruct setup with correct roles but evaluate with instruction and
+DATA roles swapped. Because the visible prompt is unchanged and the expected
+labels stay fixed, a directional role channel should now point to the opposite
+valid candidate. Expected exact-match <=0.10. If it stays high, the previous
+positive would need a more cautious interpretation; if it collapses, the role
+channel is not merely adding capacity but carrying the direction of authority.
