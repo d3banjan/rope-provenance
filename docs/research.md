@@ -428,3 +428,12 @@ labels stay fixed, a directional role channel should now point to the opposite
 valid candidate. Expected exact-match <=0.10. If it stays high, the previous
 positive would need a more cautious interpretation; if it collapses, the role
 channel is not merely adding capacity but carrying the direction of authority.
+
+Eval-swap hidden result: `slm-qwen25-0.5b-instruct-hidden-role-gated-evalswap-s0`
+finishes at exact-match 0.000. Samples show a clean flip: expected witness
+outputs become answer outputs, and expected answer outputs become witness
+outputs. Together with correct=1.000 and constant=0.500, this closes the
+confounded instruct proof-of-concept: additive input roles can carry
+software-supplied substring provenance direction on a capable chat-tuned SLM.
+The remaining blocker is moving the effect into a clean base model or a less
+post-training-confounded setup.
