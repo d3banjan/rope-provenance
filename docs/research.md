@@ -368,8 +368,17 @@ fine-tune results before this correction as invalid. The Qwen instruct
 zero-shot result is still valid because it did not train. Next valid run:
 Qwen2.5-0.5B base with `--prompt-format answer` and corrected next-token loss.
 
+Corrected Qwen base result: `slm-qwen25-0.5b-base-gate-pretrain-answer-shift-s0`
+reaches heldout exact-match 0.188 after the train loss saturates. This is
+slightly above the Qwen instruct zero-shot probe but below the >=0.50 pass gate.
+Sample outputs show partial copies, wrong-field copies, and repetitions, so the
+base model is not yet a reliable substrate for hidden-role provenance tests
+under this finite generator. Hidden-role Qwen base runs remain blocked.
+
 Qwen instruct zero-shot result: chat-formatted Qwen2.5-0.5B-Instruct reaches
 exact-match 0.172. This is not enough for the hidden-role branch, but it shows
 the task is partially reachable with instruction post-training. Next
-pre-registered run after the corrected Qwen base rerun: one short instruct LoRA
-chat fine-tune only if Qwen base remains below the >=0.50 capability threshold.
+pre-registered run: one short corrected-loss instruct LoRA chat fine-tune. This
+is a confounded reachability check only; a pass shows the task can be learned
+with instruction-posttraining priors, while a fail points to generator/loss
+redesign before any hidden-role SLM work.
