@@ -5,10 +5,24 @@ earlier survey without keeping raw search notes as active docs.
 
 ## Load-Bearing Sources
 
+Wallace et al. 2024, Instruction Hierarchy: establishes the core training
+framing for privileged instructions. Modern chat models can be trained to
+prefer higher-priority sources, but this is primarily coarse message/source
+priority rather than arbitrary substring-level provenance.
+
 Hines et al. 2024, Spotlighting: motivates the out-of-band channel. The key
 idea is that control text and data text should be supplied to the model through
 separate channels rather than through only in-band prompt strings. This project
 is an architectural attempt at that premise.
+
+Chen et al. 2024/2025, StruQ: the closest training-data predecessor for the v2
+counterfactual curriculum. StruQ separates prompt and data portions of a query
+and fine-tunes models to follow instructions only from the prompt portion while
+ignoring instruction-like text inside the data portion.
+
+Yi et al. 2023/2024, BIPIA: supplies the indirect-prompt-injection benchmark
+setting and shows that external content can carry malicious instructions that
+models execute unless the source boundary is represented and trained.
 
 Ye, Cui, and Hadfield-Menell 2026, Role Confusion: supplies the mechanistic
 motivation. Role and authority are assigned in latent space, where style can
@@ -60,8 +74,15 @@ candidate as the gate before spending architecture work.
 
 ## Framing Guidance
 
-Do not overclaim "first." The precise claim is "first per-layer rotational"
+Do not overclaim "first." Prior work already trains or prompts role-aware
+instruction/data separation. The precise claim is "first per-layer rotational"
 within the instruction/data separation design space.
+
+Do not frame additive role embeddings as a new conceptual defense by
+themselves. They are a sanity bridge and an input/additive foil: if a clean
+hidden role channel works in a tiny from-scratch model, the objective is
+learnable; if the per-layer RoPE variant still fails, the failure is about the
+rotational carrier or adaptation path, not about the objective being impossible.
 
 Do not treat AIR as incidental. It is the additive analog that makes the
 rotational failure interpretable.
@@ -73,4 +94,3 @@ curriculum-bound or placement-bound.
 Do not use SEP alone below the capability floor. Negative vanilla SEP means the
 base model may not have a role-discrimination substrate for an intervention to
 selectively modulate.
-

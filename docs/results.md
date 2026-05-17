@@ -92,6 +92,9 @@ data in the DATA span.
 | rope_prov learnable pi/8 unfreeze | `kkrlei1m` | 1.7438 | 1.5296 | -0.290 | 0.025 | 0.315 |
 | rope_prov independent angles | `i4dwm9tf` | 1.7686 | 1.5546 | -0.240 | 0.010 | 0.250 |
 | rope_prov pre-W learnable | `zqfwyd7o` | 1.6653 | 1.1822 | -0.115 | 0.160 | 0.275 |
+| rope_prov pre-W ReZero pi/8 smoke | `j38ih52f` | 1.7668 | 2.3369 | -0.155 | 0.085 | 0.240 |
+| rope_prov pre-W ReZero independent smoke | `q8l31kt7` | 1.7668 | 2.4485 | -0.170 | 0.075 | 0.245 |
+| vanilla role-contrast v3 smoke | `17yp3vws` | 1.7664 | 2.2472 | -0.160 | 0.065 | 0.225 |
 
 Training gate: passed. The vanilla v2 run completed cleanly in 46.4 minutes at
 33.35 examples/sec, and the zeroed control completed in 47.4 minutes at 32.67
@@ -170,14 +173,60 @@ the vanilla/zeroed/pre-W band rather than above it. The optimizer uses the
 available freedom to close the rotational channel, not to turn it into a
 substring-provenance feature.
 
+Pre-W ReZero smoke interpretation: staged gates do not rescue the pre-W
+rotational channel at smoke scale. The shared pi/8 ReZero smoke opened gates to
+max_abs 0.125 and landed at SEP -0.155. The independent-angle ReZero smoke used
+fp32 gates and fixed per-pair target angles, opened gates to max_abs 0.1505, and
+landed at SEP -0.170. This was not expected to be cheaper than shared pi/8; it
+was a route-finding test for whether extra fixed phase bandwidth plus gradual
+gate opening gives SGD a usable channel. It did not.
+
+Role-contrast v3 smoke interpretation: the stricter generator makes both roles
+use DATA facts and moves the same field-referenced directive surface between
+INSTRUCTION and DATA. This did not transfer to better external SEP at 600 steps:
+DATA-slot execution dropped from v2 vanilla's 0.290 to 0.225, but
+INSTRUCTION-slot execution also dropped from 0.155 to 0.065. The curriculum is
+trainable, but it appears to teach caution or field-format behavior rather than
+the desired authority separation on SEP.
+
 Rotational-cell conclusion: the counterfactual curriculum was necessary and
 worked as a data intervention, but no per-layer rotational arm produced positive
 role separation. Post-projection nonzero rotations preferentially damage the
 focused instruction-compliance pathway. Learnable post-projection angles avoid
 damage by closing the channel. Pre-W placement restores utility and compliance
 but lands in the same SEP band as zeroed, even when the role angle is learnable.
-This closes the v1/v2 rotational matrix as a negative result, with pre-W as the
+ReZero staging opens gates but still does not produce role separation. This
+closes the v1/v2 rotational matrix as a negative result, with pre-W as the
 strongest null and post-W nonzero rotations as the informative failure mode.
 
 See [experiments.md](experiments.md) for the live run tracker and
 pre-registered gates.
+
+## Tiny Additive Role-Embedding Toy
+
+These runs train a fresh char-level decoder-only Transformer from random init.
+They are sanity checks for the objective, not evidence that pretrained SLMs can
+cheaply adopt the same channel.
+
+| Run | W&B | Template mode | Role control | SEP | exec_instr | exec_data | correct_data |
+|---|---|---|---|---:|---:|---:|---:|
+| additive hidden roles | `10oi0jn4` | simple | correct | 1.000 | 1.000 | 0.000 | 1.000 |
+| additive hidden roles constant | `2l445kb2` | simple | constant | 0.953 | 0.953 | 0.000 | 1.000 |
+| additive hidden roles diverse | `8itmpe7b` | diverse | correct | 0.836 | 0.836 | 0.000 | 0.859 |
+| additive hidden roles diverse constant | `ub86g90v` | diverse | constant | 0.680 | 0.727 | 0.047 | 0.906 |
+
+Interpretation: the simple generator is too easy. A constant-role model, with no
+usable instruction/DATA distinction, reaches SEP 0.953, so the simple result is
+a tooling smoke and positive control only.
+
+The diverse generator is a better calibration. Correct hidden roles beat
+constant roles by +0.328 SEP at step 500 and +0.156 final SEP at step 2000,
+passing the toy pre-registration thresholds. This supports the narrower claim
+that software-supplied hidden role metadata gives a useful inductive bias in a
+tiny Transformer. It does not yet rule out all finite-template shortcuts.
+
+Next required toy escalation: ambiguous paired or gated multi-return examples,
+where visible text is identical or near-identical across role assignments and a
+small linguistic gate determines the relevant candidate. That is the first toy
+setup that can support a stronger scientific claim about out-of-band substring
+provenance.

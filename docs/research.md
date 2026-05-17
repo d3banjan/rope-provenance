@@ -1,6 +1,6 @@
 # Research Brief
 
-Last updated: 2026-05-15T05:41:50+02:00.
+Last updated: 2026-05-17T06:12:00+02:00.
 
 ## One-Sentence Objective
 
@@ -162,6 +162,15 @@ two runs can share the same macro SEP while using different microscopic
 allocations. Keep reporting `exec_instr`, `exec_data`, utility loss, angle
 movement, and seed variance before making a mechanism claim.
 
+The ReZero-gated pre-W smokes test a narrower optimizer hypothesis: maybe the
+full-feature fine-tunes failed because the role rotation was introduced too
+abruptly, so early layers never got a low-loss route into the channel. Staged
+gates did open under both shared pi/8 and independent fixed-angle targets, but
+SEP stayed negative and below the vanilla/pre-W band. This weakens the
+"schedule/LR alone can rescue rotational provenance under SFT" interpretation,
+while leaving higher-budget continued-pretraining as a separate, more expensive
+future test.
+
 ## Decision Rule
 
 Primary metric:
@@ -206,3 +215,100 @@ loss tying generated statements to supporting source spans. If RoPE is the
 wrong substrate, RWKV/SSM models are a plausible next architecture family:
 inject provenance through state-update gates or additive state channels, gated
 on whether the unmodified model has a usable SEP floor.
+
+## Tiny-Model Sanity Track
+
+The tiny role-provenance script is not a replacement for the SmolLM2
+rotational matrix. It is a low-effort sanity track for the underlying objective:
+can a small decoder learn to route identical directive-like substrings
+differently when role/provenance is supplied out of band?
+
+The current additive toy trains a fresh char-level decoder from scratch with
+learned absolute position embeddings plus additive role embeddings. Hidden-tag
+evals strip visible `<instr>`/`<data>` markers from text and pass role ids
+separately. This makes the run a positive control for out-of-band role
+conditioning, not evidence that a pretrained SLM can cheaply adopt the channel.
+
+The early hidden-tag result is suspiciously strong: near-perfect SEP appears
+within a few hundred steps. Treat that as a confound warning. The synthetic
+grammar may be too regular, the train/eval split is not yet a hard distribution
+shift, and the model may learn field/template structure plus role ids rather
+than general substring provenance. The next toy decisions must therefore come
+from controls, not from the headline score.
+
+Required controls:
+
+- hidden tags with correct roles: positive-control target.
+- hidden tags with constant roles: tests whether prompt grammar alone solves
+  the task.
+- hidden tags with instruction/DATA roles swapped: tests whether the out-of-band
+  role channel is causal and direction-sensitive.
+- no role embeddings: tests whether any remaining visible or lexical structure
+  is enough.
+- hard heldout split: disjoint directive surfaces, witnesses, answers, field
+  order, and prompt templates.
+
+The simple-template constant-role control is expected to overstate performance
+because the model can learn two-point correlations between local substrings and
+labels. The diverse-template generator is the minimum fix: vary instruction
+surface forms, field labels, embedded directive prefixes, field order, and
+train/eval template families so the stable feature is role/boundary assignment
+rather than substring placement.
+
+This still does not remove all shortcuts. Any finite natural-language template
+set exposes non-role signals such as quotes, label names, line order, and
+punctuation. The stricter toy target is an ambiguous-pair generator: keep the
+visible text distribution identical or near-identical across paired examples
+and change only the hidden role assignment. In that setup, a constant-role
+control should be unable to choose the right source systematically, while a
+correct-role model can use the out-of-band signal.
+
+### Toy Pre-Registration
+
+Written 2026-05-17 during the first diverse-template correct-role run, after
+observing simple-template correct and constant results and after observing
+diverse correct through step 1500. It is not a pre-registration for those
+already-seen points; it is a decision rule for the remaining toy controls and
+next generators.
+
+Predictions:
+
+- Simple-template constant roles will finish high (already observed), so the
+  simple generator is not evidence of robust hidden-role provenance.
+- Diverse-template correct roles should outperform diverse-template constant
+  roles in sample efficiency and final SEP. A meaningful gap is at least +0.20
+  SEP at step 500 or at least +0.10 final SEP at step 2000.
+- If diverse constant roles reaches within 0.05 final SEP of diverse correct
+  roles, template shortcuts are still too strong for this generator.
+- Swapped roles should degrade or reverse the correct-role policy. If swapped
+  performs like correct, the role ids are not the causal feature.
+- The ambiguous-pair generator is the first toy design that can support a
+  stronger scientific claim. Expected outcome: correct roles should exceed
+  constant roles by at least +0.20 SEP, because text-only cues are matched by
+  construction.
+- Gated multi-return examples should be harder than diverse templates. The
+  expected positive result is not perfect SEP, but a clear correct-vs-constant
+  gap showing that role provenance composes with a learned linguistic gate.
+
+Interpretation:
+
+- Positive toy result: correct roles beat constant/no-role/swap controls on
+  ambiguous or gated paired data. This supports out-of-band role provenance as
+  a useful inductive bias in a tiny Transformer.
+- Weak toy result: correct roles beat controls only on simple/diverse finite
+  templates. This is a blog-post or intuition result, not a scientific claim.
+- Negative toy result: controls match correct roles even on ambiguous/gated
+  data. The generator still leaks the answer or the toy metric is not isolating
+  provenance.
+
+RoPE-specific toy bridge:
+
+- RoPE positions plus additive role embeddings: checks whether the positive
+  toy survives when the tiny model is RoPE-native.
+- RoPE-style role rotation from scratch: checks whether rotational provenance
+  fails only as a pretrained-model adaptation problem or also fails when present
+  from initialization.
+
+If RoPE-role rotation works from scratch but fails under SmolLM2 SFT/CPT, the
+binding constraint is adaptation path. If it fails from scratch too, the
+rotational primitive itself is weak even before scale and pretraining effects.

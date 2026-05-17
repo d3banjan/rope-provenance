@@ -1,6 +1,6 @@
 # Experiment Tracker
 
-Last updated: 2026-05-15T12:28:38+02:00.
+Last updated: 2026-05-17T06:12:00+02:00.
 
 This file is the active tracker. Every run gets one row. Do not encode active
 state in README, ad hoc notes, or generated logs.
@@ -41,6 +41,18 @@ transient progress here only if it affects an operational decision.
 | `cfv2-rope-learnable-pi8-unfreeze-s0` | completed | `src/rope_prov/configs/rope_prov_learnable_pi8_unfreeze_counterfactual_v2.yaml` | `runs/rope_prov_P8_learnable_pi8_unfreeze_counterfactual_v2_online-seed0` | `kkrlei1m` | every 500 steps, keep 3 | Completed cleanly. Final artifacts in `final/`; retained checkpoints: `checkpoint-2000`, `checkpoint-2500`, `checkpoint-2901`. SEP completed. |
 | `cfv2-rope-independent-angles-s0` | completed | `src/rope_prov/configs/rope_prov_independent_angles_counterfactual_v2.yaml` | `runs/rope_prov_P8_independent_angles_counterfactual_v2_online-seed0` | `i4dwm9tf` | every 500 steps, keep 3 | Completed cleanly. Final artifacts in `final/`; retained checkpoints: `checkpoint-2000`, `checkpoint-2500`, `checkpoint-2901`. SEP completed. |
 | `cfv2-rope-prew-learnable-s0` | completed | `src/rope_prov/configs/rope_prov_pre_w_learnable_counterfactual_v2.yaml` | `runs/rope_prov_pre_w_P8_learnable_counterfactual_v2_online-seed0` | `zqfwyd7o` | every 500 steps, keep 3 | Completed cleanly. Final artifacts in `final/`; retained checkpoints: `checkpoint-2000`, `checkpoint-2500`, `checkpoint-2901`. SEP completed. |
+| `cfv2-rope-prew-rezero-pi8-smoke-s0` | completed | `src/rope_prov/configs/rope_prov_pre_w_rezero_counterfactual_v2_smoke.yaml` | `runs/rope_prov_pre_w_P8_rezero_counterfactual_v2_smoke-seed0` | `j38ih52f` | every 200 steps, keep 2 | Completed cleanly. 600-step staged-gate smoke. SEP completed. Note: gates were converted to bf16 in this first smoke; fixed for later runs. |
+| `cfv2-rope-prew-rezero-independent-smoke-s0` | completed | `src/rope_prov/configs/rope_prov_pre_w_rezero_independent_angles_counterfactual_v2_smoke.yaml` | `runs/rope_prov_pre_w_P8_rezero_independent_angles_counterfactual_v2_smoke-seed0` | `q8l31kt7` | every 200 steps, keep 2 | Completed cleanly. 600-step staged-gate smoke with fixed independent per-pair target angles and fp32 gates. SEP completed. |
+| `cfv3-vanilla-role-contrast-smoke-s0` | completed | `src/rope_prov/configs/vanilla_counterfactual_v3_role_contrast_smoke.yaml` | `runs/vanilla_counterfactual_v3_role_contrast_smoke-seed0` | `17yp3vws` | every 200 steps, keep 2 | Completed cleanly. 600-step curriculum smoke. SEP completed. |
+| `toy-add-role-hidden-correct-s0` | completed | CLI: `scripts/toy_role_provenance.py --hide-tags --role-control correct --answer-loss-weight 4 --batch-size 1024` | `results/toy/role_embedding_hidden_tags_bs1024_s0.json` | `10oi0jn4` | result JSON only | Simple-template positive control. Final SEP 1.000. Useful tooling smoke, but not strong evidence because the constant-role control also learns the generator. |
+| `toy-add-role-hidden-constant-s0` | completed | CLI: same toy script with `--hide-tags --role-control constant --answer-loss-weight 4 --batch-size 1024` | `results/toy/role_embedding_hidden_tags_constant_bs1024_s0.json` | `2l445kb2` | result JSON only | Simple-template causal control. Final SEP 0.953, confirming that the initial generator is too shortcutable without role variation. |
+| `toy-add-role-hidden-swapped-s0` | planned | CLI: same toy script with `--hide-tags --role-control swap_instr_data --answer-loss-weight 4 --batch-size 1024` | `results/toy/role_embedding_hidden_tags_swapped_bs1024_s0.json` | planned | result JSON only | Directionality control for the simple-template generator. Lower priority after constant-role shortcut was observed. |
+| `toy-add-role-hidden-diverse-correct-s0` | completed | CLI: same toy script with `--template-mode diverse --hide-tags --role-control correct --answer-loss-weight 4 --batch-size 1024` | `results/toy/role_embedding_hidden_tags_diverse_bs1024_s0.json` | `8itmpe7b` | result JSON only | Harder positive-control target with varied templates, field labels, field order, and heldout template families. Final SEP 0.836. |
+| `toy-add-role-hidden-diverse-constant-s0` | completed | CLI: same toy script with `--template-mode diverse --hide-tags --role-control constant --answer-loss-weight 4 --batch-size 1024` | `results/toy/role_embedding_hidden_tags_diverse_constant_bs1024_s0.json` | `ub86g90v` | result JSON only | Main shortcut control for the diverse generator. Final SEP 0.680. Correct roles beat this by +0.156 final SEP and +0.328 at step 500. |
+| `toy-add-role-hidden-diverse-swapped-s0` | planned | CLI: same toy script with `--template-mode diverse --hide-tags --role-control swap_instr_data --answer-loss-weight 4 --batch-size 1024` | `results/toy/role_embedding_hidden_tags_diverse_swapped_bs1024_s0.json` | planned | result JSON only | Directionality control for the diverse generator. |
+| `toy-add-role-hidden-ambiguous-pairs-s0` | planned | pending generator option | `results/toy/role_embedding_hidden_tags_ambiguous_pairs_bs1024_s0.json` | planned | result JSON only | Strongest toy test: paired examples keep visible text identical or near-identical and vary only hidden role assignment, minimizing quote/field/placement shortcuts. |
+| `toy-rope-pos-add-role-s0` | planned | pending script option | `results/toy/rope_pos_add_role_s0.json` | planned | result JSON only | RoPE-native toy bridge: replace learned absolute positions with RoPE while keeping additive role embeddings. |
+| `toy-rope-role-rotation-s0` | planned | pending script option | `results/toy/rope_role_rotation_s0.json` | planned | result JSON only | From-scratch rotational test: checks whether RoPE-style role rotation fails only as adaptation to pretrained SmolLM2 or also fails when present from initialization. |
 
 W&B URLs:
 
@@ -53,6 +65,13 @@ W&B URLs:
 - `cfv2-rope-learnable-pi8-unfreeze-s0`: `https://wandb.ai/d3banjan/rope-provenance/runs/kkrlei1m`
 - `cfv2-rope-independent-angles-s0`: `https://wandb.ai/d3banjan/rope-provenance/runs/i4dwm9tf`
 - `cfv2-rope-prew-learnable-s0`: `https://wandb.ai/d3banjan/rope-provenance/runs/zqfwyd7o`
+- `cfv2-rope-prew-rezero-pi8-smoke-s0`: `https://wandb.ai/d3banjan/rope-provenance/runs/j38ih52f`
+- `cfv2-rope-prew-rezero-independent-smoke-s0`: `https://wandb.ai/d3banjan/rope-provenance/runs/q8l31kt7`
+- `cfv3-vanilla-role-contrast-smoke-s0`: `https://wandb.ai/d3banjan/rope-provenance/runs/17yp3vws`
+- `toy-add-role-hidden-correct-s0`: `https://wandb.ai/d3banjan/rope-provenance/runs/10oi0jn4`
+- `toy-add-role-hidden-constant-s0`: `https://wandb.ai/d3banjan/rope-provenance/runs/2l445kb2`
+- `toy-add-role-hidden-diverse-correct-s0`: `https://wandb.ai/d3banjan/rope-provenance/runs/8itmpe7b`
+- `toy-add-role-hidden-diverse-constant-s0`: `https://wandb.ai/d3banjan/rope-provenance/runs/ub86g90v`
 
 Completed state for `cfv2-vanilla-s0`:
 
@@ -206,6 +225,60 @@ zero and does not produce positive role separation. This is the cleanest
 pre-W null: when given both upstream placement and angle freedom, the optimizer
 closes the rotational channel rather than using it.
 
+Completed state for `cfv2-rope-prew-rezero-pi8-smoke-s0`:
+
+- dataset: train 30957, eval 600, counterfactual train 12000, eval 400.
+- role sanity: both role ids present in train/eval batches.
+- eval loss: step 200 = 2.6605, step 400 = 2.3726,
+  step 600 = 2.3369.
+- final train loss over the 600-step smoke: 1.7668.
+- runtime: 11.1 min.
+- throughput: 29.04 examples/sec overall.
+- final gate max_abs: 0.1250.
+- SEP: -0.155, with instruction execution 0.085 and data execution 0.240.
+
+Gate read: failed smoke threshold. ReZero staging opens the pi/8 pre-W channel,
+but it does not improve role separation over vanilla or fixed pre-W. DATA-slot
+execution remains higher than INSTRUCTION-slot execution. This first smoke used
+gates that were converted with the attention module to bf16, so treat it as an
+operational result rather than a clean precision-controlled ablation.
+
+Completed state for `cfv2-rope-prew-rezero-independent-smoke-s0`:
+
+- dataset: train 30957, eval 600, counterfactual train 12000, eval 400.
+- role sanity: both role ids present in train/eval batches.
+- eval loss: step 200 = 2.7760, step 400 = 2.4834,
+  step 600 = 2.4485.
+- final train loss over the 600-step smoke: 1.7668.
+- runtime: 11.7 min.
+- throughput: 27.47 examples/sec overall.
+- final gate max_abs: 0.1505.
+- SEP: -0.170, with instruction execution 0.075 and data execution 0.245.
+
+Gate read: failed. This is not a cheaper-perturbation test: the independent
+per-pair target angles are being opened from scratch through learned ReZero
+gates. It tests whether extra fixed phase bandwidth plus staged gates gives SGD
+a route to a usable channel. The answer at smoke scale is no: utility is worse
+than the shared-angle ReZero smoke, gates open, and SEP remains below vanilla.
+
+Completed state for `cfv3-vanilla-role-contrast-smoke-s0`:
+
+- dataset: train 30957, eval 600, counterfactual train 12000, eval 400.
+- counterfactual variant: `role_contrast_v3`.
+- role sanity: both role ids present in train/eval batches.
+- eval loss: step 200 = 2.5865, step 400 = 2.2839,
+  step 600 = 2.2472.
+- final train loss over the 600-step smoke: 1.7664.
+- runtime: 9.7 min.
+- throughput: 33.12 examples/sec overall.
+- SEP: -0.160, with instruction execution 0.065 and data execution 0.225.
+
+Gate read: failed. The stricter curriculum is trainable and suppresses external
+SEP DATA-slot execution relative to v2 vanilla, but it suppresses
+INSTRUCTION-slot execution too. It does not fix the baseline role-confusion
+problem at smoke scale, so ReZero or another rope arm is not yet justified on
+this curriculum.
+
 ## Counterfactual v2 Matrix
 
 | Run id | Status | Hypothesis | Config | Output dir |
@@ -219,6 +292,8 @@ closes the rotational channel rather than using it.
 | `cfv2-rope-learnable-pi8-unfreeze-s0` | completed | nonzero learnable gap tests whether optimizer drives angle back to zero | `src/rope_prov/configs/rope_prov_learnable_pi8_unfreeze_counterfactual_v2.yaml` | `runs/rope_prov_P8_learnable_pi8_unfreeze_counterfactual_v2_online-seed0` |
 | `cfv2-rope-independent-angles-s0` | completed | rotational steelman against equal-frequency collapse | `src/rope_prov/configs/rope_prov_independent_angles_counterfactual_v2.yaml` | `runs/rope_prov_P8_independent_angles_counterfactual_v2_online-seed0` |
 | `cfv2-rope-prew-learnable-s0` | completed | upstream placement plus learned gap tests whether pre-W freedom creates a usable channel | `src/rope_prov/configs/rope_prov_pre_w_learnable_counterfactual_v2.yaml` | `runs/rope_prov_pre_w_P8_learnable_counterfactual_v2_online-seed0` |
+| `cfv2-rope-prew-rezero-pi8-smoke-s0` | completed | staged gate opens fixed pre-W pi/8 channel after early-layer adaptation | `src/rope_prov/configs/rope_prov_pre_w_rezero_counterfactual_v2_smoke.yaml` | `runs/rope_prov_pre_w_P8_rezero_counterfactual_v2_smoke-seed0` |
+| `cfv2-rope-prew-rezero-independent-smoke-s0` | completed | staged gate opens fixed independent pre-W angle channels after early-layer adaptation | `src/rope_prov/configs/rope_prov_pre_w_rezero_independent_angles_counterfactual_v2_smoke.yaml` | `runs/rope_prov_pre_w_P8_rezero_independent_angles_counterfactual_v2_smoke-seed0` |
 | `cfv2-best-rope-s1` | conditional | seed variance calibration | duplicate best rope config with seed 1 | TBD |
 
 Run vanilla first. If vanilla final eval loss is unstable or above 2.0, revise
@@ -241,6 +316,13 @@ pi8-initialized freeze/unfreeze arm keeps a large nonzero gap and reproduces the
 damage. Independent per-pair fixed angles do not rescue the rotational channel.
 Pre-W learnable also keeps its angle gap near zero, showing that upstream
 placement plus angle freedom still does not make the channel useful.
+
+ReZero-gated pre-W smokes were added on 2026-05-17 to test the hypothesis that
+the full-feature SFT runs failed because the rotational channel was introduced
+too abruptly. Both shared pi/8 and independent fixed-angle gates opened, but
+neither improved SEP. The independent-angle ReZero smoke was especially
+diagnostic because it used fp32 gates and a richer fixed angle pattern; it still
+landed below the vanilla/pre-W band.
 
 ## Commands
 
