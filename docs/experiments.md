@@ -1,6 +1,6 @@
 # Experiment Tracker
 
-Last updated: 2026-05-17T10:35:12+02:00.
+Last updated: 2026-05-17T13:09:27+02:00.
 
 This file is the active tracker. Every run gets one row. Do not encode active
 state in README, ad hoc notes, or generated logs.
@@ -55,7 +55,8 @@ transient progress here only if it affects an operational decision.
 | `toy-add-role-hidden-gated-correct-s0` | blocked | CLI: `--template-mode gated --hide-tags --role-control correct --answer-loss-weight 4 --block-size 512` | `results/toy/role_embedding_hidden_tags_gated_bs512_s0.json` | planned | result JSON only | Stronger toy test: paired examples keep visible text identical or near-identical and vary only hidden role assignment; blocked until the model has a reliable linguistic-gate prior. |
 | `toy-add-role-hidden-gated-constant-s0` | planned | CLI: `--template-mode gated --hide-tags --role-control constant --answer-loss-weight 4 --batch-size 1024` | `results/toy/role_embedding_hidden_tags_gated_constant_bs1024_s0.json` | planned | result JSON only | Text-only contradiction control for the gated generator. |
 | `toy-add-role-hidden-gated-evalswap-s0` | planned | CLI: `--template-mode gated --hide-tags --role-control correct --eval-role-control swap_instr_data --answer-loss-weight 4 --batch-size 1024` | `results/toy/role_embedding_hidden_tags_gated_traincorrect_evalswap_bs1024_s0.json` | planned | result JSON only | Directionality control for the gated generator. |
-| `slm-qwen25-0.5b-base-gate-pretrain-s0` | planned | CLI: `scripts/slm_gate_provenance.py --model /mnt/expansion/huggingface/hub/models--Qwen--Qwen2.5-0.5B/snapshots/060db6499f32faf8b98477b0a26969ef7d8b9987 --template-mode gate_pretrain --hide-tags --batch-size 32 --eval-batch-size 16 --lora-rank 8 --lr 2e-4` | `results/slm/qwen25_0_5b_base_gate_pretrain_s0.json` | planned | adapter checkpoint ignored, result JSON tracked | Capability prerequisite before hidden roles. Passing threshold: heldout exact-match >= 0.50 and coherent copied outputs; if it fails, hidden-role additive Qwen runs remain blocked. |
+| `slm-qwen25-0.5b-base-gate-pretrain-raw-s0` | completed | CLI: `scripts/slm_gate_provenance.py --model /mnt/expansion/huggingface/hub/models--Qwen--Qwen2.5-0.5B/snapshots/060db6499f32faf8b98477b0a26969ef7d8b9987 --template-mode gate_pretrain --hide-tags --batch-size 16 --eval-batch-size 16 --lora-rank 8 --lr 2e-4 --prompt-format raw` | `results/slm/qwen25_0_5b_base_gate_pretrain_s0.json` | `yx5fus24` | adapter checkpoint ignored, result JSON tracked | Failed capability prerequisite. Exact-match fell from 0.070 at step 1 to 0.000 after train loss saturated; samples show degenerate repetition, so this mainly kills raw prompt framing for base CausalLMs. Earlier batch-32 attempt `9i1k8sjr` OOMed after step 1. |
+| `slm-qwen25-0.5b-base-gate-pretrain-answer-s0` | planned | CLI: same script/model with `--prompt-format answer --batch-size 16 --eval-batch-size 16 --lora-rank 8 --lr 2e-4` | `results/slm/qwen25_0_5b_base_gate_pretrain_answer_s0.json` | planned | adapter checkpoint ignored, result JSON tracked | Protocol-fix rerun with explicit `Answer:` cue. Passing threshold remains heldout exact-match >= 0.50 with coherent copied outputs. If this fails with degenerate or memorized outputs, run the Qwen instruct chat probe before hidden-role work. |
 | `slm-qwen25-0.5b-base-gated-role-s0` | planned | pending script/config | pending | planned | LoRA/full-adapter output plus SEP JSON | Next main experiment. Start from `Qwen/Qwen2.5-0.5B` base so semantic priors exist without chat/instruction post-training confounds. |
 | `slm-qwen25-0.5b-instruct-gated-probe-s0` | planned | pending script/config | pending | planned | SEP JSON | Confounded sanity probe only. If it works, it shows the task is within reach of an instruction-tuned SLM, not that the provenance channel caused the behavior. |
 | `toy-rope-pos-add-role-s0` | planned | pending script option | `results/toy/rope_pos_add_role_s0.json` | planned | result JSON only | RoPE-native toy bridge: replace learned absolute positions with RoPE while keeping additive role embeddings. |
@@ -81,6 +82,9 @@ W&B URLs:
 - `toy-add-role-hidden-diverse-constant-s0`: `https://wandb.ai/d3banjan/rope-provenance/runs/ub86g90v`
 - `toy-add-role-hidden-diverse-evalswap-s0`: `https://wandb.ai/d3banjan/rope-provenance/runs/jq4g488w`
 - `toy-gate-pretrain-block512-bs512-s0`: `https://wandb.ai/d3banjan/rope-provenance/runs/nl3dkyrm`
+- `toy-gate-pretrain-syntax-reg-bs512-s0`: `https://wandb.ai/d3banjan/rope-provenance/runs/yy39ct44`
+- `slm-qwen25-0.5b-base-gate-pretrain-raw-s0`: `https://wandb.ai/d3banjan/rope-provenance/runs/yx5fus24`
+- `slm-qwen25-0.5b-base-gate-pretrain-raw-s0-batch32-oom`: `https://wandb.ai/d3banjan/rope-provenance/runs/9i1k8sjr`
 
 Cached model queue on `/mnt/expansion/huggingface/hub`:
 

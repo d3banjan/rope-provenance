@@ -360,3 +360,11 @@ above the hard-kill line, so syntactic structure is not impossible for the
 scratch model, but below the >=0.50 pass gate. Do not spend more paper-critical
 GPU on scratch gated-role variants unless a specific toy-only question is being
 answered. The Qwen base capability run is now the next unblocked experiment.
+
+Qwen base raw-prompt result: the first LoRA capability run fit the train set
+but fell to heldout exact-match 0.000 and generated degenerate repeated tokens.
+This kills raw hidden-tag-stripped prompt framing for a base CausalLM. It does
+not yet kill Qwen base capability because the prompt had no explicit response
+boundary. The next pre-registered fix is the same run with `--prompt-format
+answer`; only if that fails should the queue move to the confounded Qwen
+instruct chat probe.

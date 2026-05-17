@@ -139,6 +139,39 @@ def build_prepared_examples(
     )
 
 
+def apply_prompt_format(examples: list[dict], tokenizer, prompt_format: str) -> list[dict]:
+    if prompt_format == "raw":
+        return examples
+    formatted = []
+    for ex in examples:
+        item = dict(ex)
+        prompt = ex["prompt"].rstrip()
+        answer = ex["expected"]
+        if prompt_format == "answer":
+            item["prompt"] = f"{prompt}\nAnswer: "
+            item["text"] = f"{item['prompt']}{answer}{tokenizer.eos_token or ''}"
+        elif prompt_format == "chat":
+            if tokenizer.chat_template is None:
+                raise ValueError("tokenizer has no chat_template")
+            item["prompt"] = tokenizer.apply_chat_template(
+                [{"role": "user", "content": prompt}],
+                tokenize=False,
+                add_generation_prompt=True,
+            )
+            item["text"] = tokenizer.apply_chat_template(
+                [
+                    {"role": "user", "content": prompt},
+                    {"role": "assistant", "content": answer},
+                ],
+                tokenize=False,
+                add_generation_prompt=False,
+            )
+        else:
+            raise ValueError(f"unknown prompt_format={prompt_format!r}")
+        formatted.append(item)
+    return formatted
+
+
 def encode_examples(
     examples: Iterable[dict],
     tokenizer,
@@ -302,6 +335,12 @@ def main() -> None:
     )
     parser.add_argument("--hide-tags", action="store_true")
     parser.add_argument(
+        "--prompt-format",
+        choices=("raw", "answer", "chat"),
+        default="raw",
+        help="Response framing for SLM runs. Use answer for base models, chat for instruct.",
+    )
+    parser.add_argument(
         "--role-control",
         choices=ROLE_CONTROL_CHOICES,
         default="correct",
@@ -368,6 +407,8 @@ def main() -> None:
         hide_tags=args.hide_tags,
         role_control=args.role_control,
     )
+    train_examples = apply_prompt_format(train_examples, tokenizer, args.prompt_format)
+    eval_examples = apply_prompt_format(eval_examples, tokenizer, args.prompt_format)
     encoded = encode_examples(
         train_examples,
         tokenizer,
@@ -471,6 +512,8 @@ def main() -> None:
             f"peak={peak_reserved_gb:.2f}GB elapsed={rec['elapsed_sec']:.1f}s",
             flush=True,
         )
+        if device.type == "cuda":
+            torch.cuda.empty_cache()
 
     if args.steps == 0:
         run_eval(0, None)

@@ -250,3 +250,13 @@ intermediate SEP of 0.211 at step 1750. This shows the scratch model can learn
 some syntactic selection, but it fails the pre-registered >=0.50 pass gate.
 Scratch gated-role experiments remain blocked for paper evidence; the main path
 moves to pretrained Qwen2.5-0.5B base.
+
+## Qwen2.5-0.5B Gate Capability
+
+| Run | W&B | Prompt format | Adapter | exact_match | Interpretation |
+|---|---|---|---|---:|---|
+| Qwen2.5-0.5B base gate pretrain raw | `yx5fus24` | raw hidden-tag-stripped prompt | LoRA r=8 | 0.000 | Failed. Train loss saturated, but heldout outputs became degenerate repetitions such as `ClCl...` and `total...`. This kills raw prompt framing for base CausalLM capability tests, not Qwen capability itself. |
+
+Next protocol fix: rerun the same base model with an explicit `Answer:` cue so
+the base CausalLM has a stable response boundary. Keep the same >=0.50
+heldout exact-match pass gate before unblocking hidden-role additive Qwen runs.
