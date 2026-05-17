@@ -19,3 +19,5 @@ results/toy/smoke_*.json
 results/toy/role_embedding_toy.json
 results/toy/toy_gate_pretrain_bs1024_s0.json
 results/toy/*.pt
+results/slm/*.partial.json
+results/slm/*.pt
