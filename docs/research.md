@@ -368,3 +368,11 @@ not yet kill Qwen base capability because the prompt had no explicit response
 boundary. The next pre-registered fix is the same run with `--prompt-format
 answer`; only if that fails should the queue move to the confounded Qwen
 instruct chat probe.
+
+Qwen base answer-cue result: explicit `Answer:` formatting also finished at
+heldout exact-match 0.000 after train loss saturation. This kills the current
+finite gate-pretrain protocol for Qwen base LoRA. Hidden-role Qwen runs stay
+blocked. Next cheap probe: Qwen2.5-0.5B-Instruct with chat formatting and
+`steps=0`; if that is also near zero, run one short instruct LoRA chat
+fine-tune before redesigning the generator around on-the-fly examples or
+candidate-ranking losses.

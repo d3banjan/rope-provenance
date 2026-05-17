@@ -256,7 +256,10 @@ moves to pretrained Qwen2.5-0.5B base.
 | Run | W&B | Prompt format | Adapter | exact_match | Interpretation |
 |---|---|---|---|---:|---|
 | Qwen2.5-0.5B base gate pretrain raw | `yx5fus24` | raw hidden-tag-stripped prompt | LoRA r=8 | 0.000 | Failed. Train loss saturated, but heldout outputs became degenerate repetitions such as `ClCl...` and `total...`. This kills raw prompt framing for base CausalLM capability tests, not Qwen capability itself. |
+| Qwen2.5-0.5B base gate pretrain answer cue | `g1ewvphj` | explicit `Answer:` cue | LoRA r=8 | 0.000 | Failed. The response cue did not fix generalization; train loss saturated and heldout generations became numbered/repeated strings. |
 
-Next protocol fix: rerun the same base model with an explicit `Answer:` cue so
-the base CausalLM has a stable response boundary. Keep the same >=0.50
-heldout exact-match pass gate before unblocking hidden-role additive Qwen runs.
+Interpretation: the Qwen base LoRA runs show a data/protocol failure before the
+provenance question. The model can fit the finite training split, but it does
+not learn the heldout gate/copy rule. Hidden-role additive Qwen runs remain
+blocked. The next cheap check is Qwen2.5-0.5B-Instruct with chat formatting as
+a confounded capability probe.
