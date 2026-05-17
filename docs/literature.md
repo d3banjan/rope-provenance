@@ -44,6 +44,24 @@ Chiang and Yogatama 2025: RoPE dimension inefficiency. Their result concerns
 the high-frequency end for long-distance retrieval. Our short-context T2b
 finding concerns low-frequency pairs, so it is a complement, not a restatement.
 
+Qwen2.5 technical report and model cards: Qwen2.5 supplies a clean small-model
+bridge because the 0.5B release has both base and instruct checkpoints,
+transformer/RoPE architecture, 0.49B parameters, and enough pretraining to make
+semantic gates plausible. Use the base model for causal provenance experiments
+and the instruct model only as a capability probe.
+
+LoRA, Hu et al. 2021: freezes pretrained weights and inserts low-rank trainable
+updates. This is the right first adaptation method for Qwen-scale tests because
+it makes early kill-tests cheap and keeps the base model mostly intact.
+
+QLoRA, Dettmers et al. 2023: supports the same adapter-first strategy under
+4-bit quantization. Useful if 0.5B full/LoRA bf16 runs are too memory-heavy, but
+not required before the initial Qwen 0.5B tests.
+
+DoRA, Liu et al. 2024: improves LoRA by separating weight magnitude and
+direction. Keep as a later stabilization option if LoRA underfits while full
+fine-tuning is too expensive; do not add it to the first-pass harness.
+
 ## Design Space
 
 | | Input-layer | Per-layer |

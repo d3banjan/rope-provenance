@@ -335,3 +335,22 @@ against the earlier SmolLM2 family. Phi mini instruct checkpoints are cached as
 stronger capability probes only; they do not form the same clean base/instruct
 pair, and their instruction tuning makes them less diagnostic for the paper's
 main causal claim.
+
+Pre-registered SLM queue, written before any Qwen run:
+
+- First run the scratch syntactic-gate prerequisite with only `no_not` and
+  `question` gates plus regularization. If it reaches heldout exact-match SEP
+  >= 0.50, the scratch gated-role branch is unblocked. If it stays below 0.10,
+  kill the scratch semantic/gated branch for the paper and use it only as a
+  blog-style intuition track.
+- Then run `Qwen/Qwen2.5-0.5B` base on the gate-pretrain/capability task before
+  adding hidden roles. Passing threshold: heldout exact-match >= 0.50 after a
+  short adapter/full smoke, with coherent copied outputs. If base cannot learn
+  the gate, do not spend GPU on hidden role channels yet.
+- If Qwen base passes, run the hidden-role additive channel with correct,
+  constant, and eval-swapped controls. Positive threshold: correct roles exceed
+  constant roles by >= +0.20 SEP and eval-swapped collapses toward zero or
+  reverses.
+- Qwen instruct is a confounded probe. Use it only if base fails or is marginal:
+  a pass shows the task is reachable by an SLM, but not that the provenance
+  channel caused the behavior.
