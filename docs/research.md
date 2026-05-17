@@ -382,3 +382,12 @@ pre-registered run: one short corrected-loss instruct LoRA chat fine-tune. This
 is a confounded reachability check only; a pass shows the task can be learned
 with instruction-posttraining priors, while a fail points to generator/loss
 redesign before any hidden-role SLM work.
+
+Corrected Qwen instruct result: the chat LoRA probe reaches exact-match 1.000
+by step 100 and stays there through step 500. This passes the reachability
+check and validates the generator/evaluator when the model already has
+instruction-following priors. It does not validate a hidden provenance channel:
+the clean base model remains below threshold, so base hidden-role runs are still
+blocked under this short LoRA protocol. The next scientific choice is either to
+make the base capability protocol stronger before adding hidden roles, or to run
+a clearly labeled confounded hidden-role proof-of-concept on the instruct model.

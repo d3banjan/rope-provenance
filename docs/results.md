@@ -259,10 +259,13 @@ moves to pretrained Qwen2.5-0.5B base.
 | Qwen2.5-0.5B base gate pretrain answer cue | `g1ewvphj` | explicit `Answer:` cue | LoRA r=8 | invalid | Invalidated by unshifted-label bug in the first SLM harness. |
 | Qwen2.5-0.5B base gate pretrain answer cue, shifted loss | `fd4scfjm` | explicit `Answer:` cue | LoRA r=8 | 0.188 | Failed the >=0.50 capability gate. Corrected next-token loss trains cleanly, but heldout outputs are partial copies, wrong-field copies, and repetitions rather than robust gate/copy execution. |
 | Qwen2.5-0.5B-Instruct chat zero-shot | `kcawfngi` | chat | none/eval only | 0.172 | Nontrivial but not solved. The model sometimes reasons about the clue and sometimes selects a distractor. |
+| Qwen2.5-0.5B-Instruct chat fine-tune, shifted loss | `8vpjaili` | chat | LoRA r=8 | 1.000 | Passed the reachability check by step 100 and stayed perfect through step 500. Samples are exact witness copies. Confounded by instruction post-training, so this is not provenance-channel evidence. |
 
 Interpretation: the Qwen zero-shot instruct result remains valid, but the LoRA
 fine-tunes before 2026-05-17T13:40+02:00 are invalid because the harness used
 unshifted labels. The corrected Qwen base rerun reaches only 0.188 exact-match,
-so base hidden-role additive runs remain blocked. The next run is the corrected
-Qwen2.5-0.5B-Instruct chat LoRA probe as a confounded reachability check, not
-causal evidence for provenance.
+so base hidden-role additive runs remain blocked. The corrected Qwen instruct
+fine-tune reaches 1.000, establishing that the finite gate/copy task is
+reachable with instruction-posttraining priors. The base/instruct split is now
+the key diagnostic: capability exists, but not in the clean base model under the
+current short LoRA protocol.
