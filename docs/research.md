@@ -437,3 +437,11 @@ confounded instruct proof-of-concept: additive input roles can carry
 software-supplied substring provenance direction on a capable chat-tuned SLM.
 The remaining blocker is moving the effect into a clean base model or a less
 post-training-confounded setup.
+
+Queue state after the hidden-role triad: there are no live unblocked GPU
+experiments in the current tracker. Scratch gated-role controls stay blocked
+because the scratch linguistic gate prerequisite failed. Simple-template toy
+controls are deferred because the constant-role shortcut already made that
+generator non-diagnostic. RoPE-toy bridge rows are deferred until a script option
+exists; they are lower priority than writing up the SmolLM2 rotational negative
+and the Qwen instruct additive positive as separate cells in the design matrix.
