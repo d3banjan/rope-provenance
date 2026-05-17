@@ -376,3 +376,9 @@ blocked. Next cheap probe: Qwen2.5-0.5B-Instruct with chat formatting and
 `steps=0`; if that is also near zero, run one short instruct LoRA chat
 fine-tune before redesigning the generator around on-the-fly examples or
 candidate-ranking losses.
+
+Qwen instruct zero-shot result: chat-formatted Qwen2.5-0.5B-Instruct reaches
+exact-match 0.172. This is not enough for the hidden-role branch, but it shows
+the task is partially reachable with instruction post-training. Next
+pre-registered run: one short instruct LoRA chat fine-tune. If it fails to reach
+>=0.50 exact-match, stop SLM hidden-role runs and redesign the generator/loss.
