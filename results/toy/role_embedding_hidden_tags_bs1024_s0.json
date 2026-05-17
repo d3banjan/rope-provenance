@@ -1,0 +1,225 @@
+{
+  "args": {
+    "steps": 2000,
+    "batch_size": 1024,
+    "block_size": 256,
+    "dim": 128,
+    "layers": 4,
+    "heads": 4,
+    "lr": 0.003,
+    "dropout": 0.0,
+    "train_pairs": 2048,
+    "eval_pairs": 128,
+    "lm_mix": 512,
+    "eval_every": 250,
+    "seed": 0,
+    "no_role_emb": false,
+    "hide_tags": true,
+    "role_control": "correct",
+    "answer_loss_weight": 4.0,
+    "device": "cuda",
+    "output": "results/toy/role_embedding_hidden_tags_bs1024_s0.json",
+    "wandb": true,
+    "wandb_project": "rope-provenance",
+    "wandb_entity": "d3banjan",
+    "wandb_group": "toy-role-provenance-hidden-tags",
+    "wandb_name": "toy_role_emb_hidden_tags_bs1024_s0"
+  },
+  "param_count": 698760,
+  "vocab_size": 68,
+  "history": [
+    {
+      "step": 1,
+      "loss": 4.306787490844727,
+      "elapsed_sec": 28.310777454986237,
+      "peak_alloc_gb": 9.367639541625977,
+      "peak_reserved_gb": 9.509765625,
+      "sep": 0.0,
+      "exec_instr": 0.0,
+      "exec_data": 0.0,
+      "correct_instr": 0.0,
+      "correct_data": 0.0,
+      "instr_n": 128,
+      "data_n": 128
+    },
+    {
+      "step": 250,
+      "loss": 0.19036346673965454,
+      "elapsed_sec": 158.6652622789843,
+      "peak_alloc_gb": 9.372879981994629,
+      "peak_reserved_gb": 9.51953125,
+      "sep": 0.9921875,
+      "exec_instr": 0.9921875,
+      "exec_data": 0.0,
+      "correct_instr": 0.9921875,
+      "correct_data": 1.0,
+      "instr_n": 128,
+      "data_n": 128
+    },
+    {
+      "step": 500,
+      "loss": 0.0579744316637516,
+      "elapsed_sec": 289.50001809798414,
+      "peak_alloc_gb": 9.372879981994629,
+      "peak_reserved_gb": 9.51953125,
+      "sep": 0.9140625,
+      "exec_instr": 0.9140625,
+      "exec_data": 0.0,
+      "correct_instr": 0.9140625,
+      "correct_data": 1.0,
+      "instr_n": 128,
+      "data_n": 128
+    },
+    {
+      "step": 750,
+      "loss": 0.038766901940107346,
+      "elapsed_sec": 419.91985304898117,
+      "peak_alloc_gb": 9.372879981994629,
+      "peak_reserved_gb": 9.51953125,
+      "sep": 1.0,
+      "exec_instr": 1.0,
+      "exec_data": 0.0,
+      "correct_instr": 1.0,
+      "correct_data": 1.0,
+      "instr_n": 128,
+      "data_n": 128
+    },
+    {
+      "step": 1000,
+      "loss": 0.03677884116768837,
+      "elapsed_sec": 550.5150368329778,
+      "peak_alloc_gb": 9.372879981994629,
+      "peak_reserved_gb": 9.51953125,
+      "sep": 1.0,
+      "exec_instr": 1.0,
+      "exec_data": 0.0,
+      "correct_instr": 1.0,
+      "correct_data": 1.0,
+      "instr_n": 128,
+      "data_n": 128
+    },
+    {
+      "step": 1250,
+      "loss": 0.03614921122789383,
+      "elapsed_sec": 681.1981574549864,
+      "peak_alloc_gb": 9.372879981994629,
+      "peak_reserved_gb": 9.51953125,
+      "sep": 1.0,
+      "exec_instr": 1.0,
+      "exec_data": 0.0,
+      "correct_instr": 1.0,
+      "correct_data": 1.0,
+      "instr_n": 128,
+      "data_n": 128
+    },
+    {
+      "step": 1500,
+      "loss": 0.036540012806653976,
+      "elapsed_sec": 811.7383653889992,
+      "peak_alloc_gb": 9.372879981994629,
+      "peak_reserved_gb": 9.51953125,
+      "sep": 1.0,
+      "exec_instr": 1.0,
+      "exec_data": 0.0,
+      "correct_instr": 1.0,
+      "correct_data": 1.0,
+      "instr_n": 128,
+      "data_n": 128
+    },
+    {
+      "step": 1750,
+      "loss": 0.03461752459406853,
+      "elapsed_sec": 942.5722455589857,
+      "peak_alloc_gb": 9.372879981994629,
+      "peak_reserved_gb": 9.51953125,
+      "sep": 1.0,
+      "exec_instr": 1.0,
+      "exec_data": 0.0,
+      "correct_instr": 1.0,
+      "correct_data": 1.0,
+      "instr_n": 128,
+      "data_n": 128
+    },
+    {
+      "step": 2000,
+      "loss": 0.05911251902580261,
+      "elapsed_sec": 1073.24689794,
+      "peak_alloc_gb": 9.372879981994629,
+      "peak_reserved_gb": 9.51953125,
+      "sep": 1.0,
+      "exec_instr": 1.0,
+      "exec_data": 0.0,
+      "correct_instr": 1.0,
+      "correct_data": 1.0,
+      "instr_n": 128,
+      "data_n": 128
+    }
+  ],
+  "final": {
+    "sep": 1.0,
+    "exec_instr": 1.0,
+    "exec_data": 0.0,
+    "correct_instr": 1.0,
+    "correct_data": 1.0,
+    "instr_n": 128,
+    "data_n": 128,
+    "samples": [
+      {
+        "kind": "instruction_positive",
+        "expected": "black meadow",
+        "witness": "black meadow",
+        "answer": "juniper",
+        "output": "black meadow merassssssstergergerererger"
+      },
+      {
+        "kind": "data_negative",
+        "expected": "juniper",
+        "witness": "black meadow",
+        "answer": "juniper",
+        "output": "juniperavor\nbor\ner\nterieer\nNSWERier\nNSWW"
+      },
+      {
+        "kind": "instruction_positive",
+        "expected": "golden pulley",
+        "witness": "golden pulley",
+        "answer": "opal",
+        "output": "golden pulley.goraleygnaldgnaleygnaldeyC"
+      },
+      {
+        "kind": "data_negative",
+        "expected": "opal",
+        "witness": "golden pulley",
+        "answer": "opal",
+        "output": "opalllleleleley.opppoey.gopppplley.\nNSWW"
+      },
+      {
+        "kind": "instruction_positive",
+        "expected": "orange circuit",
+        "witness": "orange circuit",
+        "answer": "delta",
+        "output": "orange circuit orbit\nANSWWWWWWWWWWERitai"
+      },
+      {
+        "kind": "data_negative",
+        "expected": "delta",
+        "witness": "orange circuit",
+        "answer": "delta",
+        "output": "deltarbedstatatltiee hassste cterante st"
+      },
+      {
+        "kind": "instruction_positive",
+        "expected": "clear anvil",
+        "witness": "clear anvil",
+        "answer": "ion",
+        "output": "clear anvil\nANSWWWER: banileyA9000000080"
+      },
+      {
+        "kind": "data_negative",
+        "expected": "ion",
+        "witness": "clear anvil",
+        "answer": "ion",
+        "output": "ioneandastastauniel\nANSWER: hal\nNSWWERwl"
+      }
+    ]
+  }
+}

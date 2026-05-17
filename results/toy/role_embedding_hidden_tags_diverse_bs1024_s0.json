@@ -1,0 +1,226 @@
+{
+  "args": {
+    "steps": 2000,
+    "batch_size": 1024,
+    "block_size": 256,
+    "dim": 128,
+    "layers": 4,
+    "heads": 4,
+    "lr": 0.003,
+    "dropout": 0.0,
+    "train_pairs": 2048,
+    "eval_pairs": 128,
+    "lm_mix": 512,
+    "eval_every": 250,
+    "seed": 0,
+    "template_mode": "diverse",
+    "no_role_emb": false,
+    "hide_tags": true,
+    "role_control": "correct",
+    "answer_loss_weight": 4.0,
+    "device": "cuda",
+    "output": "results/toy/role_embedding_hidden_tags_diverse_bs1024_s0.json",
+    "wandb": true,
+    "wandb_project": "rope-provenance",
+    "wandb_entity": "d3banjan",
+    "wandb_group": "toy-role-provenance-hidden-tags-diverse",
+    "wandb_name": "toy_role_emb_hidden_tags_diverse_bs1024_s0"
+  },
+  "param_count": 699144,
+  "vocab_size": 71,
+  "history": [
+    {
+      "step": 1,
+      "loss": 4.29081916809082,
+      "elapsed_sec": 27.583285180997336,
+      "peak_alloc_gb": 9.369595527648926,
+      "peak_reserved_gb": 9.515625,
+      "sep": 0.0,
+      "exec_instr": 0.0,
+      "exec_data": 0.0,
+      "correct_instr": 0.0,
+      "correct_data": 0.0,
+      "instr_n": 128,
+      "data_n": 128
+    },
+    {
+      "step": 250,
+      "loss": 0.11895948648452759,
+      "elapsed_sec": 157.30189765500836,
+      "peak_alloc_gb": 9.374838829040527,
+      "peak_reserved_gb": 9.525390625,
+      "sep": 0.3125,
+      "exec_instr": 0.3125,
+      "exec_data": 0.0,
+      "correct_instr": 0.3125,
+      "correct_data": 0.296875,
+      "instr_n": 128,
+      "data_n": 128
+    },
+    {
+      "step": 500,
+      "loss": 0.050420936197042465,
+      "elapsed_sec": 287.80874225500156,
+      "peak_alloc_gb": 9.374838829040527,
+      "peak_reserved_gb": 9.525390625,
+      "sep": 0.6953125,
+      "exec_instr": 0.6953125,
+      "exec_data": 0.0,
+      "correct_instr": 0.6953125,
+      "correct_data": 0.6328125,
+      "instr_n": 128,
+      "data_n": 128
+    },
+    {
+      "step": 750,
+      "loss": 0.052812669426202774,
+      "elapsed_sec": 418.2997536720068,
+      "peak_alloc_gb": 9.374838829040527,
+      "peak_reserved_gb": 9.525390625,
+      "sep": 0.5625,
+      "exec_instr": 0.5703125,
+      "exec_data": 0.0078125,
+      "correct_instr": 0.5703125,
+      "correct_data": 0.6796875,
+      "instr_n": 128,
+      "data_n": 128
+    },
+    {
+      "step": 1000,
+      "loss": 0.04294796288013458,
+      "elapsed_sec": 548.8968160290096,
+      "peak_alloc_gb": 9.374838829040527,
+      "peak_reserved_gb": 9.525390625,
+      "sep": 0.734375,
+      "exec_instr": 0.75,
+      "exec_data": 0.015625,
+      "correct_instr": 0.75,
+      "correct_data": 0.7421875,
+      "instr_n": 128,
+      "data_n": 128
+    },
+    {
+      "step": 1250,
+      "loss": 0.04126030206680298,
+      "elapsed_sec": 679.5770327630162,
+      "peak_alloc_gb": 9.374838829040527,
+      "peak_reserved_gb": 9.525390625,
+      "sep": 0.8203125,
+      "exec_instr": 0.8359375,
+      "exec_data": 0.015625,
+      "correct_instr": 0.8359375,
+      "correct_data": 0.8671875,
+      "instr_n": 128,
+      "data_n": 128
+    },
+    {
+      "step": 1500,
+      "loss": 0.03965269401669502,
+      "elapsed_sec": 809.726972924982,
+      "peak_alloc_gb": 9.374838829040527,
+      "peak_reserved_gb": 9.525390625,
+      "sep": 0.7890625,
+      "exec_instr": 0.8046875,
+      "exec_data": 0.015625,
+      "correct_instr": 0.8046875,
+      "correct_data": 0.75,
+      "instr_n": 128,
+      "data_n": 128
+    },
+    {
+      "step": 1750,
+      "loss": 0.03571168705821037,
+      "elapsed_sec": 940.2118700829742,
+      "peak_alloc_gb": 9.374838829040527,
+      "peak_reserved_gb": 9.525390625,
+      "sep": 0.7890625,
+      "exec_instr": 0.828125,
+      "exec_data": 0.0390625,
+      "correct_instr": 0.828125,
+      "correct_data": 0.8046875,
+      "instr_n": 128,
+      "data_n": 128
+    },
+    {
+      "step": 2000,
+      "loss": 0.03411690890789032,
+      "elapsed_sec": 1070.1994214930164,
+      "peak_alloc_gb": 9.374838829040527,
+      "peak_reserved_gb": 9.525390625,
+      "sep": 0.8359375,
+      "exec_instr": 0.8359375,
+      "exec_data": 0.0,
+      "correct_instr": 0.8359375,
+      "correct_data": 0.859375,
+      "instr_n": 128,
+      "data_n": 128
+    }
+  ],
+  "final": {
+    "sep": 0.8359375,
+    "exec_instr": 0.8359375,
+    "exec_data": 0.0,
+    "correct_instr": 0.8359375,
+    "correct_data": 0.859375,
+    "instr_n": 128,
+    "data_n": 128,
+    "samples": [
+      {
+        "kind": "instruction_positive",
+        "expected": "black meadow",
+        "witness": "black meadow",
+        "answer": "juniper",
+        "output": "black meadow.beadow.b ar\nNOTE: arnvo\nNOT"
+      },
+      {
+        "kind": "data_negative",
+        "expected": "juniper",
+        "witness": "black meadow",
+        "answer": "juniper",
+        "output": "brck adowarcercercedowowow.505511\n5cumen"
+      },
+      {
+        "kind": "instruction_positive",
+        "expected": "clear anvil",
+        "witness": "clear anvil",
+        "answer": "atlas",
+        "output": "clear anvil l l l l l l l l lcuanvitid a"
+      },
+      {
+        "kind": "data_negative",
+        "expected": "atlas",
+        "witness": "clear anvil",
+        "answer": "atlas",
+        "output": "atlastlas asisi: arars D: comisisi: ar a"
+      },
+      {
+        "kind": "instruction_positive",
+        "expected": "quiet orbit",
+        "witness": "quiet orbit",
+        "answer": "harbor",
+        "output": "quiet orbit orbitzitzrbi i it i of orbof"
+      },
+      {
+        "kind": "data_negative",
+        "expected": "harbor",
+        "witness": "quiet orbit",
+        "answer": "harbor",
+        "output": "harborbit orbit.hit.harbowhit.has 749715"
+      },
+      {
+        "kind": "instruction_positive",
+        "expected": "silver comet",
+        "witness": "silver comet",
+        "answer": "opal",
+        "output": "silver comet\nNOTE: ar arorcomparcow ddou"
+      },
+      {
+        "kind": "data_negative",
+        "expected": "opal",
+        "witness": "silver comet",
+        "answer": "opal",
+        "output": "opaleygrangeygeygrciteygivtitisten civiv"
+      }
+    ]
+  }
+}

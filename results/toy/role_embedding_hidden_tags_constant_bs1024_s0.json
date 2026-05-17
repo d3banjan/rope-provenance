@@ -1,0 +1,225 @@
+{
+  "args": {
+    "steps": 2000,
+    "batch_size": 1024,
+    "block_size": 256,
+    "dim": 128,
+    "layers": 4,
+    "heads": 4,
+    "lr": 0.003,
+    "dropout": 0.0,
+    "train_pairs": 2048,
+    "eval_pairs": 128,
+    "lm_mix": 512,
+    "eval_every": 250,
+    "seed": 0,
+    "no_role_emb": false,
+    "hide_tags": true,
+    "role_control": "constant",
+    "answer_loss_weight": 4.0,
+    "device": "cuda",
+    "output": "results/toy/role_embedding_hidden_tags_constant_bs1024_s0.json",
+    "wandb": true,
+    "wandb_project": "rope-provenance",
+    "wandb_entity": "d3banjan",
+    "wandb_group": "toy-role-provenance-hidden-tags",
+    "wandb_name": "toy_role_emb_hidden_tags_constant_bs1024_s0"
+  },
+  "param_count": 698760,
+  "vocab_size": 68,
+  "history": [
+    {
+      "step": 1,
+      "loss": 4.30488920211792,
+      "elapsed_sec": 27.48042169600376,
+      "peak_alloc_gb": 9.367639541625977,
+      "peak_reserved_gb": 9.509765625,
+      "sep": 0.0,
+      "exec_instr": 0.0,
+      "exec_data": 0.0,
+      "correct_instr": 0.0,
+      "correct_data": 0.0,
+      "instr_n": 128,
+      "data_n": 128
+    },
+    {
+      "step": 250,
+      "loss": 0.17077335715293884,
+      "elapsed_sec": 156.87626114700106,
+      "peak_alloc_gb": 9.372879981994629,
+      "peak_reserved_gb": 9.51953125,
+      "sep": 0.25,
+      "exec_instr": 0.25,
+      "exec_data": 0.0,
+      "correct_instr": 0.25,
+      "correct_data": 0.4375,
+      "instr_n": 128,
+      "data_n": 128
+    },
+    {
+      "step": 500,
+      "loss": 0.05894561856985092,
+      "elapsed_sec": 286.67489423201187,
+      "peak_alloc_gb": 9.372879981994629,
+      "peak_reserved_gb": 9.51953125,
+      "sep": 0.7265625,
+      "exec_instr": 0.7265625,
+      "exec_data": 0.0,
+      "correct_instr": 0.7265625,
+      "correct_data": 0.8984375,
+      "instr_n": 128,
+      "data_n": 128
+    },
+    {
+      "step": 750,
+      "loss": 0.04239954426884651,
+      "elapsed_sec": 417.0220251599967,
+      "peak_alloc_gb": 9.372879981994629,
+      "peak_reserved_gb": 9.51953125,
+      "sep": 0.8984375,
+      "exec_instr": 0.8984375,
+      "exec_data": 0.0,
+      "correct_instr": 0.8984375,
+      "correct_data": 0.9921875,
+      "instr_n": 128,
+      "data_n": 128
+    },
+    {
+      "step": 1000,
+      "loss": 0.040906086564064026,
+      "elapsed_sec": 546.9867058559903,
+      "peak_alloc_gb": 9.372879981994629,
+      "peak_reserved_gb": 9.51953125,
+      "sep": 0.8125,
+      "exec_instr": 0.8125,
+      "exec_data": 0.0,
+      "correct_instr": 0.8125,
+      "correct_data": 0.9921875,
+      "instr_n": 128,
+      "data_n": 128
+    },
+    {
+      "step": 1250,
+      "loss": 0.04876966029405594,
+      "elapsed_sec": 677.1776624550112,
+      "peak_alloc_gb": 9.372879981994629,
+      "peak_reserved_gb": 9.51953125,
+      "sep": 0.7890625,
+      "exec_instr": 0.7890625,
+      "exec_data": 0.0,
+      "correct_instr": 0.7890625,
+      "correct_data": 0.96875,
+      "instr_n": 128,
+      "data_n": 128
+    },
+    {
+      "step": 1500,
+      "loss": 0.038312606513500214,
+      "elapsed_sec": 806.8916661039984,
+      "peak_alloc_gb": 9.372879981994629,
+      "peak_reserved_gb": 9.51953125,
+      "sep": 0.9375,
+      "exec_instr": 0.9375,
+      "exec_data": 0.0,
+      "correct_instr": 0.9375,
+      "correct_data": 1.0,
+      "instr_n": 128,
+      "data_n": 128
+    },
+    {
+      "step": 1750,
+      "loss": 0.038054533302783966,
+      "elapsed_sec": 937.3068038419879,
+      "peak_alloc_gb": 9.372879981994629,
+      "peak_reserved_gb": 9.51953125,
+      "sep": 0.96875,
+      "exec_instr": 0.96875,
+      "exec_data": 0.0,
+      "correct_instr": 0.96875,
+      "correct_data": 0.9921875,
+      "instr_n": 128,
+      "data_n": 128
+    },
+    {
+      "step": 2000,
+      "loss": 0.03758877143263817,
+      "elapsed_sec": 1067.5010904569936,
+      "peak_alloc_gb": 9.372879981994629,
+      "peak_reserved_gb": 9.51953125,
+      "sep": 0.953125,
+      "exec_instr": 0.953125,
+      "exec_data": 0.0,
+      "correct_instr": 0.953125,
+      "correct_data": 1.0,
+      "instr_n": 128,
+      "data_n": 128
+    }
+  ],
+  "final": {
+    "sep": 0.953125,
+    "exec_instr": 0.953125,
+    "exec_data": 0.0,
+    "correct_instr": 0.953125,
+    "correct_data": 1.0,
+    "instr_n": 128,
+    "data_n": 128,
+    "samples": [
+      {
+        "kind": "instruction_positive",
+        "expected": "black meadow",
+        "witness": "black meadow",
+        "answer": "juniper",
+        "output": "black meadow\nANSWER: jular\nNOTE: fields "
+      },
+      {
+        "kind": "data_negative",
+        "expected": "juniper",
+        "witness": "black meadow",
+        "answer": "juniper",
+        "output": "juniper\nNOTER: qulds fund ared ared qus "
+      },
+      {
+        "kind": "instruction_positive",
+        "expected": "golden pulley",
+        "witness": "golden pulley",
+        "answer": "opal",
+        "output": "golden pulley.gpley.gplenaley.lepppppeee"
+      },
+      {
+        "kind": "data_negative",
+        "expected": "opal",
+        "witness": "golden pulley",
+        "answer": "opal",
+        "output": "opalty.opaldenltpaltet cey.\nTARGETARGETA"
+      },
+      {
+        "kind": "instruction_positive",
+        "expected": "orange circuit",
+        "witness": "orange circuit",
+        "answer": "delta",
+        "output": "orange circuit\nANSWER: deltanir\nNOTE: fi"
+      },
+      {
+        "kind": "data_negative",
+        "expected": "delta",
+        "witness": "orange circuit",
+        "answer": "delta",
+        "output": "deltamireltra\nNSWETARGE: and arey. ales "
+      },
+      {
+        "kind": "instruction_positive",
+        "expected": "clear anvil",
+        "witness": "clear anvil",
+        "answer": "ion",
+        "output": "cobalt archiveow\nANSWER: ir\nNOTE: fields"
+      },
+      {
+        "kind": "data_negative",
+        "expected": "ion",
+        "witness": "clear anvil",
+        "answer": "ion",
+        "output": "ionaltraltralisste etetetetetey.CARGE: a"
+      }
+    ]
+  }
+}
