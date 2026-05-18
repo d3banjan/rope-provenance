@@ -320,6 +320,9 @@ authority-control surface that the software role vector can steer.
 External artifacts live in `/home/debanjan/Code/Research/lean-mining` commits
 `845956c` and `91aa4c1` under experiment
 `lrs1_srank_scaling_qwen25_2026-05-17`.
+Per-step adapter checkpoints were verified and offloaded to
+`https://huggingface.co/d3banjan/lrs1-srank-qwen25-checkpoints`; the bulky
+local checkpoint directories were deleted after upload.
 
 | Model | d_model | attn_qkv_srank | global 7-module srank |
 |---|---:|---:|---:|
