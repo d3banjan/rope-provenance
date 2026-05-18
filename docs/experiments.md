@@ -1,6 +1,6 @@
 # Experiment Tracker
 
-Last updated: 2026-05-17T13:09:27+02:00.
+Last updated: 2026-05-18T20:40:00+02:00.
 
 This file is the active tracker. Every run gets one row. Do not encode active
 state in README, ad hoc notes, or generated logs.
@@ -27,6 +27,13 @@ Each row must include:
 
 When a run completes, copy stable metrics into [results.md](results.md). Keep
 transient progress here only if it affects an operational decision.
+
+Checkpoint cleanup note, 2026-05-18: local SmolLM2 `runs/*/checkpoint-*`
+directories were verified and offloaded to
+`https://huggingface.co/d3banjan/rope-provenance-smollm2-checkpoints`, then
+deleted locally. The `runs/*/final` directories remain local for quick evals.
+Rows below may still mention the original retained checkpoint policy; those
+checkpoint directories now live in the HF repo.
 
 ## Run Ledger
 

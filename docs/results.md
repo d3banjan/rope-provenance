@@ -323,6 +323,9 @@ External artifacts live in `/home/debanjan/Code/Research/lean-mining` commits
 Per-step adapter checkpoints were verified and offloaded to
 `https://huggingface.co/d3banjan/lrs1-srank-qwen25-checkpoints`; the bulky
 local checkpoint directories were deleted after upload.
+Historical SmolLM2 `runs/*/checkpoint-*` directories were likewise verified and
+offloaded to `https://huggingface.co/d3banjan/rope-provenance-smollm2-checkpoints`;
+local `final/` artifacts were kept for evaluation convenience.
 
 | Model | d_model | attn_qkv_srank | global 7-module srank |
 |---|---:|---:|---:|
