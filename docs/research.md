@@ -513,3 +513,21 @@ training loss. The instruct role-only arm was already 0.988 at step 200. This
 kills the thesis that the 3.5K role-vector trick is a generic pretrained-base
 capability. It appears to depend on the instruction-tuned authority/readout
 surface.
+
+LRS1 Qwen2.5 lazy-rudder cross-check, completed in `lean-mining` commits
+`845956c` and `91aa4c1`: plain HH-RLHF DPO LoRA on Qwen2.5 0.5B/1.5B/3B
+replicates the flat low-rank qkv floor. Primary metric is `attn_qkv_srank`,
+because the original Pythia lazy-rudder headline refers to fused
+`attention.query_key_value`, not the seven-module global mean. Results:
+0.5B=3.435, 1.5B=3.963, 3B=3.939; constant fit `3.779 +/- 0.243`, matching the
+Pythia reference `3.653 +/- 0.289`; Delta AIC favors constant over falling-width
+laws. The 3B run used 8-bit Adam after bf16 LoRA OOM; a 0.5B optimizer control
+passed with srank delta 0.076.
+
+Current synthesis: the provenance experiments and LRS1 now support a two-part
+story. First, Qwen instruction/preference tuning has a task-intrinsic low-rank
+qkv control geometry across scale. Second, once that aligned model exists, a
+tiny additive software role vector can steer authority direction without
+training LoRA at all. The stronger claim that the role vector literally lies in
+the raw base-to-instruct delta remains unproven; the useful claim is
+compatibility/composability with an already-formed alignment control surface.

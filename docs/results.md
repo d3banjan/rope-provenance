@@ -314,3 +314,34 @@ answer formatting reaches only 0.156 after 200 steps, despite near-zero train
 loss. At the same point the instruct role-only run was already 0.988. This
 supports the interpretation that instruction tuning creates or exposes the
 authority-control surface that the software role vector can steer.
+
+## Qwen2.5 Lazy-Rudder Geometry Cross-Check
+
+External artifacts live in `/home/debanjan/Code/Research/lean-mining` commits
+`845956c` and `91aa4c1` under experiment
+`lrs1_srank_scaling_qwen25_2026-05-17`.
+
+| Model | d_model | attn_qkv_srank | global 7-module srank |
+|---|---:|---:|---:|
+| Qwen2.5-0.5B | 896 | 3.435 | 4.600 |
+| Qwen2.5-1.5B | 1536 | 3.963 | 4.426 |
+| Qwen2.5-3B | 2048 | 3.939 | 4.163 |
+
+Interpretation: Qwen2.5 DPO LoRA replicates the lazy-rudder flat floor on the
+correct comparison metric: attention q/k/v modules as the analogue of Pythia's
+fused `attention.query_key_value`. The constant fit is `3.779 +/- 0.243`, close
+to the Pythia reference `3.653 +/- 0.289`; spread is 0.527, within the
+pre-registered band. Constant srank beats falling-width laws by Delta AIC
+`+7.73` versus `c/sqrt(d)` and `+6.06` versus `c/d^(1/3)`.
+
+The 3B run required 8-bit Adam after bf16 LoRA OOM on the 12GB GPU. The
+optimizer-control rerun at 0.5B passed: 32-bit Adam `3.435` versus 8-bit Adam
+`3.511`, Delta `0.076 <= 0.25`, so the mixed optimizer recipe is accepted for
+the primary scaling fit.
+
+How this connects to provenance: the result supports a low-dimensional
+alignment/control geometry in Qwen across scale. Combined with the role-only
+probe, the strongest current thesis is that instruction tuning exposes an
+authority-routing control surface, and software role vectors can steer that
+surface directly. The LRS1 result does not show that the role vectors overlap
+the raw DPO delta; it shows the expected alignment substrate exists.
