@@ -110,6 +110,12 @@ operation the text is attempting.
 Question: does separating source from attempted operation create the minimum
 viable compositional harness?
 
+Status: initial oracle-operation Qwen2.5-0.5B-Instruct smoke is positive.
+Training only 9,856 source+operation embedding parameters reaches strict exact
+1.000 across trusted OBEY, untrusted OBEY suppression, DATA USE, and DATA
+QUOTE. Controls remain meaningful: source-swap is 0.000; operation ablation is
+0.215; OBEY/USE swap is 0.438.
+
 Input:
 
 ```text

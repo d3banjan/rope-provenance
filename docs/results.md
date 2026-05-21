@@ -334,6 +334,28 @@ directive-looking text should be followed versus treated as data. The result is
 synthetic and source-only. It does not yet test the harder source+operation
 rail, nor does it solve role-to-policy composition.
 
+## Qwen2.5-0.5B-Instruct Source + Operation Rail Smoke
+
+The second policy-IR rung adds an oracle attempted-operation rail beside the
+source rail. The model receives both source ids and operation ids as additive
+input embeddings, still with no LoRA. Trainable parameters are 9,856.
+
+| Control | exact_match | trusted_obey | untrusted_obey | data_use | data_quote |
+|---|---:|---:|---:|---:|---:|
+| Correct source+operation rails | 1.000 | 1.000 | 1.000 | 1.000 | 1.000 |
+| Constant source rail | 0.059 | - | - | - | - |
+| Constant operation rail | 0.215 | - | - | - | - |
+| Trusted/untrusted source swap | 0.000 | - | - | - | - |
+| OBEY/USE operation swap | 0.438 | - | - | - | - |
+
+Interpretation: the oracle source+operation rail is also a positive smoke. It
+shows the model can apply a typed side-channel rule with two independent rails:
+trusted OBEY opens, untrusted OBEY suppresses, DATA USE opens, and DATA QUOTE
+opens. The nonzero operation-swap score means some examples remain solvable
+without the intended operation semantics, so future rungs should keep reporting
+per-kind controls rather than only aggregate exact match. This rung still uses
+oracle operation ids; it does not test operation detection from language.
+
 ## Qwen2.5 Lazy-Rudder Geometry Cross-Check
 
 External artifacts live in `/home/debanjan/Code/Research/lean-mining` commits

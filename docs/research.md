@@ -542,3 +542,13 @@ trusted/untrusted source ids drops to 0.000. This supports the core rail
 intuition: a software-supplied source channel can act as a deterministic
 authority input for an instruction-tuned model. It remains source-only; the next
 harder rung is source plus attempted operation.
+
+Policy-IR source+operation smoke: the oracle attempted-operation rung also
+succeeds. Training only source+operation embeddings (9,856 parameters) reaches
+strict exact 1.000 across trusted OBEY, untrusted OBEY suppression, DATA USE,
+and DATA QUOTE. Source ablation drops to 0.059, operation ablation drops to
+0.215, source-swap drops to 0.000, and OBEY/USE operation-swap lands at 0.438.
+Interpretation: typed side-channel rails are learnable and behaviorally causal
+in this synthetic instruct-model setting. The remaining hard part is no longer
+whether rails can be applied; it is policy-vector binding and operation
+detection without oracle labels.
