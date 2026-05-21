@@ -356,6 +356,44 @@ without the intended operation semantics, so future rungs should keep reporting
 per-kind controls rather than only aggregate exact match. This rung still uses
 oracle operation ids; it does not test operation detection from language.
 
+## Qwen2.5-0.5B-Instruct Explicit Policy Vector Smoke
+
+The third policy-IR rung keeps source and operation as oracle rails, but makes
+the role policy a factorized out-of-band bit vector over OBEY/USE/QUOTE. The
+model trains only source embeddings, operation embeddings, and per-policy-bit
+allowed/denied embeddings: 15,232 trainable parameters and no LoRA.
+
+| Metric | Value |
+|---|---:|
+| exact_match | 0.048 |
+| seen_policy_exact | 0.056 |
+| heldout_policy_exact | 0.000 |
+| open_obey_exact | 0.016 |
+| decline_obey_exact | 0.042 |
+| open_use_exact | 0.031 |
+| decline_use_exact | 0.063 |
+| open_quote_exact | 0.016 |
+| decline_quote_exact | 0.146 |
+
+The train policy masks were `001`, `010`, `100`, `011`, `110`, and `111`; the
+held-out mask was `101` (OBEY+QUOTE). Loss decreased from 12.02 at step 1 to
+1.96 at step 300, but exact-match stayed near floor. Samples were fluent and
+often witness-like, but selected the wrong candidate or fallback string.
+
+Interpretation: classify this as `VOID / installation_failed`, not
+`NO_GENERALIZATION`. The seen policies did not install, so the held-out policy
+score cannot yet adjudicate compositional generalization. The likely mechanism
+is a missing binder: source and operation rails are local salience signals, but
+the policy vector requires the frozen model to compute `allowed =
+policy[operation]` from a global bit vector plus a local attempted-operation
+label. Additive input embeddings supply a constant bias, not an explicit
+multiplicative lookup or feature-wise modulation.
+
+Minimal next ablation: overfit one seen policy mask on a tiny set. If the
+embedding-only model cannot reach exact 1.000 there, the architecture lacks the
+needed binder. If it can, rerun with more steps or a better schedule before
+claiming an architectural limit.
+
 ## Qwen2.5 Lazy-Rudder Geometry Cross-Check
 
 External artifacts live in `/home/debanjan/Code/Research/lean-mining` commits

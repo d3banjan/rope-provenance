@@ -552,3 +552,19 @@ Interpretation: typed side-channel rails are learnable and behaviorally causal
 in this synthetic instruct-model setting. The remaining hard part is no longer
 whether rails can be applied; it is policy-vector binding and operation
 detection without oracle labels.
+
+Policy-IR explicit policy-vector smoke: the first Rung 3 attempt is
+`VOID / installation_failed`. Source and operation remained oracle rails, but
+the role policy was supplied as a factorized OBEY/USE/QUOTE bit vector and the
+model trained only additive rail embeddings (15,232 parameters, no LoRA). Loss
+fell from 12.02 to 1.96, but exact-match was only 0.048, seen-policy exact was
+0.056, and held-out OBEY+QUOTE exact was 0.000. This does not yet show
+non-compositional generalization, because in-distribution policy masks did not
+install. Mechanistically, the failure is likely the missing binder: Rung 2
+gives each candidate a local source+operation salience signal, while Rung 3
+requires a cross-factor lookup, `allowed = policy[operation]`, from a global bit
+vector and a local operation id. A uniform additive prompt embedding can steer
+existing behavior, but it does not provide an explicit multiplicative
+modulation site. The next kill-test is to overfit one seen policy mask; if that
+cannot reach exact 1.000, move to an explicit current-operation permission rail
+or a tiny policy-binder module.

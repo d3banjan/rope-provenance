@@ -148,6 +148,15 @@ semantic detection; it is policy application or architecture.
 Question: can the model bind arbitrary roles to reusable primitive permissions
 when the role policy is a typed tensor rather than text?
 
+Status: first embedding-only smoke is `VOID / installation_failed`. With source
+and operation still supplied as oracle rails, a factorized OBEY/USE/QUOTE
+policy bit vector trained only 15,232 additive embedding parameters. Loss fell
+from 12.02 to 1.96, but exact stayed at 0.048, seen-policy exact at 0.056, and
+held-out policy exact at 0.000. Because seen policies did not install, this is
+not a clean held-out-composition failure. The live hypothesis is that a policy
+vector needs an explicit binder or modulation site that computes
+`allowed = policy[operation]`; a uniform additive prompt bias is not enough.
+
 Input:
 
 ```text
@@ -173,6 +182,10 @@ Metrics:
 
 Success means the model has learned `role -> policy vector -> behavior`, not
 `role string -> memorized behavior`.
+
+Immediate next diagnostic: overfit one seen policy mask on a tiny dataset. If
+that fails, add an explicit current-operation permission rail or a tiny
+policy-binder module before spending more runs on held-out vectors.
 
 ## Rung 4: Auxiliary Rail Pretraining
 
