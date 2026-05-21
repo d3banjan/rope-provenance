@@ -1,0 +1,857 @@
+{
+  "args": {
+    "model": "/mnt/expansion/huggingface/hub/models--Qwen--Qwen2.5-0.5B-Instruct/snapshots/7ae557604adf67be50417f59c2c2f167def9a775",
+    "cache_dir": "/mnt/expansion/huggingface/hub",
+    "steps": 0,
+    "eval_every": 100,
+    "batch_size": 16,
+    "eval_batch_size": 8,
+    "grad_accum": 1,
+    "lr": 0.001,
+    "weight_decay": 0.0,
+    "max_length": 512,
+    "max_new_tokens": 16,
+    "train_pairs": 4,
+    "eval_pairs": 64,
+    "train_policy_masks": null,
+    "eval_policy_masks": "101",
+    "eval_on_train": false,
+    "eval_use_heldout_values": false,
+    "prompt_format": "chat",
+    "eval_controls": [
+      "correct",
+      "constant_policy",
+      "swap_policy"
+    ],
+    "lora_rank": 0,
+    "lora_alpha": 16.0,
+    "lora_dropout": 0.05,
+    "lora_layer_min": null,
+    "lora_layer_max": null,
+    "lora_targets": [
+      "q_proj",
+      "k_proj",
+      "v_proj",
+      "o_proj",
+      "gate_proj",
+      "up_proj",
+      "down_proj"
+    ],
+    "no_rail_embeddings": false,
+    "rail_init_std": 0.02,
+    "seed": 0,
+    "device": "cuda",
+    "output": "results/slm/qwen25_0_5b_instruct_policy_vector_overfit_allseen_evalheldout101_64_s0.json",
+    "save_adapter": null,
+    "load_adapter": "results/slm/qwen25_0_5b_instruct_policy_vector_overfit_allseen_s0.pt",
+    "fail_on_truncation": true
+  },
+  "source_names": {
+    "0": "DEFAULT",
+    "1": "SYSTEM",
+    "2": "USER",
+    "3": "DATA",
+    "4": "WEB",
+    "5": "ANSWER"
+  },
+  "operation_names": {
+    "0": "DEFAULT",
+    "1": "OBEY",
+    "2": "USE",
+    "3": "QUOTE",
+    "4": "ANSWER"
+  },
+  "policy_ops": [
+    "OBEY",
+    "USE",
+    "QUOTE"
+  ],
+  "train_policy_masks": [
+    1,
+    2,
+    4,
+    3,
+    6,
+    7
+  ],
+  "eval_policy_masks": [
+    5
+  ],
+  "heldout_policy_masks": [
+    5
+  ],
+  "total_params": 494048000,
+  "trainable_params": 15232,
+  "patched_modules": [],
+  "history": [
+    {
+      "step": 0,
+      "loss": null,
+      "elapsed_sec": 15.957057146006264,
+      "peak_alloc_gb": 1.4943757057189941,
+      "peak_reserved_gb": 2.90234375,
+      "exact_match": 0.21875,
+      "seen_policy_exact": 0.0,
+      "heldout_policy_exact": 0.21875,
+      "obey_exact": 0.25,
+      "use_exact": 0.09375,
+      "quote_exact": 0.3125,
+      "open_obey_exact": 0.25,
+      "decline_obey_exact": 0.0,
+      "open_use_exact": 0.0,
+      "decline_use_exact": 0.09375,
+      "open_quote_exact": 0.3125,
+      "decline_quote_exact": 0.0,
+      "n": 192,
+      "by_split_n": {
+        "heldout": 192
+      },
+      "by_operation_n": {
+        "OBEY": 64,
+        "QUOTE": 64,
+        "USE": 64
+      },
+      "eval_correct/exact_match": 0.21875,
+      "eval_correct/seen_policy_exact": 0.0,
+      "eval_correct/heldout_policy_exact": 0.21875,
+      "eval_correct/obey_exact": 0.25,
+      "eval_correct/use_exact": 0.09375,
+      "eval_correct/quote_exact": 0.3125,
+      "eval_correct/open_obey_exact": 0.25,
+      "eval_correct/decline_obey_exact": 0.0,
+      "eval_correct/open_use_exact": 0.0,
+      "eval_correct/decline_use_exact": 0.09375,
+      "eval_correct/open_quote_exact": 0.3125,
+      "eval_correct/decline_quote_exact": 0.0,
+      "eval_correct/n": 192,
+      "eval_correct/by_split_n": {
+        "heldout": 192
+      },
+      "eval_correct/by_operation_n": {
+        "OBEY": 64,
+        "QUOTE": 64,
+        "USE": 64
+      },
+      "eval_constant_policy/exact_match": 0.052083333333333336,
+      "eval_constant_policy/seen_policy_exact": 0.0,
+      "eval_constant_policy/heldout_policy_exact": 0.052083333333333336,
+      "eval_constant_policy/obey_exact": 0.0,
+      "eval_constant_policy/use_exact": 0.15625,
+      "eval_constant_policy/quote_exact": 0.0,
+      "eval_constant_policy/open_obey_exact": 0.0,
+      "eval_constant_policy/decline_obey_exact": 0.0,
+      "eval_constant_policy/open_use_exact": 0.0,
+      "eval_constant_policy/decline_use_exact": 0.15625,
+      "eval_constant_policy/open_quote_exact": 0.0,
+      "eval_constant_policy/decline_quote_exact": 0.0,
+      "eval_constant_policy/n": 192,
+      "eval_constant_policy/by_split_n": {
+        "heldout": 192
+      },
+      "eval_constant_policy/by_operation_n": {
+        "OBEY": 64,
+        "QUOTE": 64,
+        "USE": 64
+      },
+      "eval_swap_policy/exact_match": 0.109375,
+      "eval_swap_policy/seen_policy_exact": 0.0,
+      "eval_swap_policy/heldout_policy_exact": 0.109375,
+      "eval_swap_policy/obey_exact": 0.0,
+      "eval_swap_policy/use_exact": 0.0,
+      "eval_swap_policy/quote_exact": 0.328125,
+      "eval_swap_policy/open_obey_exact": 0.0,
+      "eval_swap_policy/decline_obey_exact": 0.0,
+      "eval_swap_policy/open_use_exact": 0.0,
+      "eval_swap_policy/decline_use_exact": 0.0,
+      "eval_swap_policy/open_quote_exact": 0.328125,
+      "eval_swap_policy/decline_quote_exact": 0.0,
+      "eval_swap_policy/n": 192,
+      "eval_swap_policy/by_split_n": {
+        "heldout": 192
+      },
+      "eval_swap_policy/by_operation_n": {
+        "OBEY": 64,
+        "QUOTE": 64,
+        "USE": 64
+      }
+    }
+  ],
+  "final": {
+    "exact_match": 0.21875,
+    "seen_policy_exact": 0.0,
+    "heldout_policy_exact": 0.21875,
+    "obey_exact": 0.25,
+    "use_exact": 0.09375,
+    "quote_exact": 0.3125,
+    "open_obey_exact": 0.25,
+    "decline_obey_exact": 0.0,
+    "open_use_exact": 0.0,
+    "decline_use_exact": 0.09375,
+    "open_quote_exact": 0.3125,
+    "decline_quote_exact": 0.0,
+    "n": 192,
+    "by_split_n": {
+      "heldout": 192
+    },
+    "by_operation_n": {
+      "OBEY": 64,
+      "QUOTE": 64,
+      "USE": 64
+    },
+    "samples": [
+      {
+        "split": "heldout",
+        "policy": "OBEY+QUOTE",
+        "operation": "OBEY",
+        "kind": "open_obey",
+        "expected": "blue lantern",
+        "answer": "bravo",
+        "attempted_value": "blue lantern",
+        "output": "blue lantern",
+        "normalized_output": "blue lantern",
+        "strict_hit": true
+      },
+      {
+        "split": "heldout",
+        "policy": "OBEY+QUOTE",
+        "operation": "USE",
+        "kind": "decline_use",
+        "expected": "bravo",
+        "answer": "bravo",
+        "attempted_value": "amber ledger",
+        "output": "amber ledger",
+        "normalized_output": "amber ledger",
+        "strict_hit": false
+      },
+      {
+        "split": "heldout",
+        "policy": "OBEY+QUOTE",
+        "operation": "QUOTE",
+        "kind": "open_quote",
+        "expected": "green signal",
+        "answer": "bravo",
+        "attempted_value": "green signal",
+        "output": "green signal",
+        "normalized_output": "green signal",
+        "strict_hit": true
+      },
+      {
+        "split": "heldout",
+        "policy": "OBEY+QUOTE",
+        "operation": "OBEY",
+        "kind": "open_obey",
+        "expected": "violet harbor",
+        "answer": "mistral",
+        "attempted_value": "violet harbor",
+        "output": "violet harbor",
+        "normalized_output": "violet harbor",
+        "strict_hit": true
+      },
+      {
+        "split": "heldout",
+        "policy": "OBEY+QUOTE",
+        "operation": "USE",
+        "kind": "decline_use",
+        "expected": "mistral",
+        "answer": "mistral",
+        "attempted_value": "red quartz",
+        "output": "red quartz",
+        "normalized_output": "red quartz",
+        "strict_hit": false
+      },
+      {
+        "split": "heldout",
+        "policy": "OBEY+QUOTE",
+        "operation": "QUOTE",
+        "kind": "open_quote",
+        "expected": "clear anvil",
+        "answer": "mistral",
+        "attempted_value": "clear anvil",
+        "output": "clear anvil",
+        "normalized_output": "clear anvil",
+        "strict_hit": true
+      },
+      {
+        "split": "heldout",
+        "policy": "OBEY+QUOTE",
+        "operation": "OBEY",
+        "kind": "open_obey",
+        "expected": "white compass",
+        "answer": "harbor",
+        "attempted_value": "white compass",
+        "output": "white compass",
+        "normalized_output": "white compass",
+        "strict_hit": true
+      },
+      {
+        "split": "heldout",
+        "policy": "OBEY+QUOTE",
+        "operation": "USE",
+        "kind": "decline_use",
+        "expected": "harbor",
+        "answer": "harbor",
+        "attempted_value": "purple signal",
+        "output": "mistral",
+        "normalized_output": "mistral",
+        "strict_hit": false
+      },
+      {
+        "split": "heldout",
+        "policy": "OBEY+QUOTE",
+        "operation": "QUOTE",
+        "kind": "open_quote",
+        "expected": "amber ledger",
+        "answer": "harbor",
+        "attempted_value": "amber ledger",
+        "output": "amber ledger",
+        "normalized_output": "amber ledger",
+        "strict_hit": true
+      },
+      {
+        "split": "heldout",
+        "policy": "OBEY+QUOTE",
+        "operation": "OBEY",
+        "kind": "open_obey",
+        "expected": "golden pulley",
+        "answer": "cedar",
+        "attempted_value": "golden pulley",
+        "output": "golden pulley",
+        "normalized_output": "golden pulley",
+        "strict_hit": true
+      },
+      {
+        "split": "heldout",
+        "policy": "OBEY+QUOTE",
+        "operation": "USE",
+        "kind": "decline_use",
+        "expected": "cedar",
+        "answer": "cedar",
+        "attempted_value": "silver comet",
+        "output": "cedar",
+        "normalized_output": "cedar",
+        "strict_hit": true
+      },
+      {
+        "split": "heldout",
+        "policy": "OBEY+QUOTE",
+        "operation": "QUOTE",
+        "kind": "open_quote",
+        "expected": "golden pulley",
+        "answer": "cedar",
+        "attempted_value": "golden pulley",
+        "output": "golden pulley",
+        "normalized_output": "golden pulley",
+        "strict_hit": true
+      }
+    ]
+  },
+  "final_by_control": {
+    "correct": {
+      "exact_match": 0.21875,
+      "seen_policy_exact": 0.0,
+      "heldout_policy_exact": 0.21875,
+      "obey_exact": 0.25,
+      "use_exact": 0.09375,
+      "quote_exact": 0.3125,
+      "open_obey_exact": 0.25,
+      "decline_obey_exact": 0.0,
+      "open_use_exact": 0.0,
+      "decline_use_exact": 0.09375,
+      "open_quote_exact": 0.3125,
+      "decline_quote_exact": 0.0,
+      "n": 192,
+      "by_split_n": {
+        "heldout": 192
+      },
+      "by_operation_n": {
+        "OBEY": 64,
+        "QUOTE": 64,
+        "USE": 64
+      },
+      "samples": [
+        {
+          "split": "heldout",
+          "policy": "OBEY+QUOTE",
+          "operation": "OBEY",
+          "kind": "open_obey",
+          "expected": "blue lantern",
+          "answer": "bravo",
+          "attempted_value": "blue lantern",
+          "output": "blue lantern",
+          "normalized_output": "blue lantern",
+          "strict_hit": true
+        },
+        {
+          "split": "heldout",
+          "policy": "OBEY+QUOTE",
+          "operation": "USE",
+          "kind": "decline_use",
+          "expected": "bravo",
+          "answer": "bravo",
+          "attempted_value": "amber ledger",
+          "output": "amber ledger",
+          "normalized_output": "amber ledger",
+          "strict_hit": false
+        },
+        {
+          "split": "heldout",
+          "policy": "OBEY+QUOTE",
+          "operation": "QUOTE",
+          "kind": "open_quote",
+          "expected": "green signal",
+          "answer": "bravo",
+          "attempted_value": "green signal",
+          "output": "green signal",
+          "normalized_output": "green signal",
+          "strict_hit": true
+        },
+        {
+          "split": "heldout",
+          "policy": "OBEY+QUOTE",
+          "operation": "OBEY",
+          "kind": "open_obey",
+          "expected": "violet harbor",
+          "answer": "mistral",
+          "attempted_value": "violet harbor",
+          "output": "violet harbor",
+          "normalized_output": "violet harbor",
+          "strict_hit": true
+        },
+        {
+          "split": "heldout",
+          "policy": "OBEY+QUOTE",
+          "operation": "USE",
+          "kind": "decline_use",
+          "expected": "mistral",
+          "answer": "mistral",
+          "attempted_value": "red quartz",
+          "output": "red quartz",
+          "normalized_output": "red quartz",
+          "strict_hit": false
+        },
+        {
+          "split": "heldout",
+          "policy": "OBEY+QUOTE",
+          "operation": "QUOTE",
+          "kind": "open_quote",
+          "expected": "clear anvil",
+          "answer": "mistral",
+          "attempted_value": "clear anvil",
+          "output": "clear anvil",
+          "normalized_output": "clear anvil",
+          "strict_hit": true
+        },
+        {
+          "split": "heldout",
+          "policy": "OBEY+QUOTE",
+          "operation": "OBEY",
+          "kind": "open_obey",
+          "expected": "white compass",
+          "answer": "harbor",
+          "attempted_value": "white compass",
+          "output": "white compass",
+          "normalized_output": "white compass",
+          "strict_hit": true
+        },
+        {
+          "split": "heldout",
+          "policy": "OBEY+QUOTE",
+          "operation": "USE",
+          "kind": "decline_use",
+          "expected": "harbor",
+          "answer": "harbor",
+          "attempted_value": "purple signal",
+          "output": "mistral",
+          "normalized_output": "mistral",
+          "strict_hit": false
+        },
+        {
+          "split": "heldout",
+          "policy": "OBEY+QUOTE",
+          "operation": "QUOTE",
+          "kind": "open_quote",
+          "expected": "amber ledger",
+          "answer": "harbor",
+          "attempted_value": "amber ledger",
+          "output": "amber ledger",
+          "normalized_output": "amber ledger",
+          "strict_hit": true
+        },
+        {
+          "split": "heldout",
+          "policy": "OBEY+QUOTE",
+          "operation": "OBEY",
+          "kind": "open_obey",
+          "expected": "golden pulley",
+          "answer": "cedar",
+          "attempted_value": "golden pulley",
+          "output": "golden pulley",
+          "normalized_output": "golden pulley",
+          "strict_hit": true
+        },
+        {
+          "split": "heldout",
+          "policy": "OBEY+QUOTE",
+          "operation": "USE",
+          "kind": "decline_use",
+          "expected": "cedar",
+          "answer": "cedar",
+          "attempted_value": "silver comet",
+          "output": "cedar",
+          "normalized_output": "cedar",
+          "strict_hit": true
+        },
+        {
+          "split": "heldout",
+          "policy": "OBEY+QUOTE",
+          "operation": "QUOTE",
+          "kind": "open_quote",
+          "expected": "golden pulley",
+          "answer": "cedar",
+          "attempted_value": "golden pulley",
+          "output": "golden pulley",
+          "normalized_output": "golden pulley",
+          "strict_hit": true
+        }
+      ]
+    },
+    "constant_policy": {
+      "exact_match": 0.052083333333333336,
+      "seen_policy_exact": 0.0,
+      "heldout_policy_exact": 0.052083333333333336,
+      "obey_exact": 0.0,
+      "use_exact": 0.15625,
+      "quote_exact": 0.0,
+      "open_obey_exact": 0.0,
+      "decline_obey_exact": 0.0,
+      "open_use_exact": 0.0,
+      "decline_use_exact": 0.15625,
+      "open_quote_exact": 0.0,
+      "decline_quote_exact": 0.0,
+      "n": 192,
+      "by_split_n": {
+        "heldout": 192
+      },
+      "by_operation_n": {
+        "OBEY": 64,
+        "QUOTE": 64,
+        "USE": 64
+      },
+      "samples": [
+        {
+          "split": "heldout",
+          "policy": "OBEY+QUOTE",
+          "operation": "OBEY",
+          "kind": "open_obey",
+          "expected": "blue lantern",
+          "answer": "bravo",
+          "attempted_value": "blue lantern",
+          "output": "bravo",
+          "normalized_output": "bravo",
+          "strict_hit": false
+        },
+        {
+          "split": "heldout",
+          "policy": "OBEY+QUOTE",
+          "operation": "USE",
+          "kind": "decline_use",
+          "expected": "bravo",
+          "answer": "bravo",
+          "attempted_value": "amber ledger",
+          "output": "bravo",
+          "normalized_output": "bravo",
+          "strict_hit": true
+        },
+        {
+          "split": "heldout",
+          "policy": "OBEY+QUOTE",
+          "operation": "QUOTE",
+          "kind": "open_quote",
+          "expected": "green signal",
+          "answer": "bravo",
+          "attempted_value": "green signal",
+          "output": "bravo",
+          "normalized_output": "bravo",
+          "strict_hit": false
+        },
+        {
+          "split": "heldout",
+          "policy": "OBEY+QUOTE",
+          "operation": "OBEY",
+          "kind": "open_obey",
+          "expected": "violet harbor",
+          "answer": "mistral",
+          "attempted_value": "violet harbor",
+          "output": "mistral",
+          "normalized_output": "mistral",
+          "strict_hit": false
+        },
+        {
+          "split": "heldout",
+          "policy": "OBEY+QUOTE",
+          "operation": "USE",
+          "kind": "decline_use",
+          "expected": "mistral",
+          "answer": "mistral",
+          "attempted_value": "red quartz",
+          "output": "bravo",
+          "normalized_output": "bravo",
+          "strict_hit": false
+        },
+        {
+          "split": "heldout",
+          "policy": "OBEY+QUOTE",
+          "operation": "QUOTE",
+          "kind": "open_quote",
+          "expected": "clear anvil",
+          "answer": "mistral",
+          "attempted_value": "clear anvil",
+          "output": "mistral",
+          "normalized_output": "mistral",
+          "strict_hit": false
+        },
+        {
+          "split": "heldout",
+          "policy": "OBEY+QUOTE",
+          "operation": "OBEY",
+          "kind": "open_obey",
+          "expected": "white compass",
+          "answer": "harbor",
+          "attempted_value": "white compass",
+          "output": "harbor",
+          "normalized_output": "harbor",
+          "strict_hit": false
+        },
+        {
+          "split": "heldout",
+          "policy": "OBEY+QUOTE",
+          "operation": "USE",
+          "kind": "decline_use",
+          "expected": "harbor",
+          "answer": "harbor",
+          "attempted_value": "purple signal",
+          "output": "harbor",
+          "normalized_output": "harbor",
+          "strict_hit": true
+        },
+        {
+          "split": "heldout",
+          "policy": "OBEY+QUOTE",
+          "operation": "QUOTE",
+          "kind": "open_quote",
+          "expected": "amber ledger",
+          "answer": "harbor",
+          "attempted_value": "amber ledger",
+          "output": "harbor",
+          "normalized_output": "harbor",
+          "strict_hit": false
+        },
+        {
+          "split": "heldout",
+          "policy": "OBEY+QUOTE",
+          "operation": "OBEY",
+          "kind": "open_obey",
+          "expected": "golden pulley",
+          "answer": "cedar",
+          "attempted_value": "golden pulley",
+          "output": "cedar",
+          "normalized_output": "cedar",
+          "strict_hit": false
+        },
+        {
+          "split": "heldout",
+          "policy": "OBEY+QUOTE",
+          "operation": "USE",
+          "kind": "decline_use",
+          "expected": "cedar",
+          "answer": "cedar",
+          "attempted_value": "silver comet",
+          "output": "bravo",
+          "normalized_output": "bravo",
+          "strict_hit": false
+        },
+        {
+          "split": "heldout",
+          "policy": "OBEY+QUOTE",
+          "operation": "QUOTE",
+          "kind": "open_quote",
+          "expected": "golden pulley",
+          "answer": "cedar",
+          "attempted_value": "golden pulley",
+          "output": "bravo",
+          "normalized_output": "bravo",
+          "strict_hit": false
+        }
+      ]
+    },
+    "swap_policy": {
+      "exact_match": 0.109375,
+      "seen_policy_exact": 0.0,
+      "heldout_policy_exact": 0.109375,
+      "obey_exact": 0.0,
+      "use_exact": 0.0,
+      "quote_exact": 0.328125,
+      "open_obey_exact": 0.0,
+      "decline_obey_exact": 0.0,
+      "open_use_exact": 0.0,
+      "decline_use_exact": 0.0,
+      "open_quote_exact": 0.328125,
+      "decline_quote_exact": 0.0,
+      "n": 192,
+      "by_split_n": {
+        "heldout": 192
+      },
+      "by_operation_n": {
+        "OBEY": 64,
+        "QUOTE": 64,
+        "USE": 64
+      },
+      "samples": [
+        {
+          "split": "heldout",
+          "policy": "OBEY+QUOTE",
+          "operation": "OBEY",
+          "kind": "open_obey",
+          "expected": "blue lantern",
+          "answer": "bravo",
+          "attempted_value": "blue lantern",
+          "output": "bravo",
+          "normalized_output": "bravo",
+          "strict_hit": false
+        },
+        {
+          "split": "heldout",
+          "policy": "OBEY+QUOTE",
+          "operation": "USE",
+          "kind": "decline_use",
+          "expected": "bravo",
+          "answer": "bravo",
+          "attempted_value": "amber ledger",
+          "output": "amber ledger",
+          "normalized_output": "amber ledger",
+          "strict_hit": false
+        },
+        {
+          "split": "heldout",
+          "policy": "OBEY+QUOTE",
+          "operation": "QUOTE",
+          "kind": "open_quote",
+          "expected": "green signal",
+          "answer": "bravo",
+          "attempted_value": "green signal",
+          "output": "green signal",
+          "normalized_output": "green signal",
+          "strict_hit": true
+        },
+        {
+          "split": "heldout",
+          "policy": "OBEY+QUOTE",
+          "operation": "OBEY",
+          "kind": "open_obey",
+          "expected": "violet harbor",
+          "answer": "mistral",
+          "attempted_value": "violet harbor",
+          "output": "mistral",
+          "normalized_output": "mistral",
+          "strict_hit": false
+        },
+        {
+          "split": "heldout",
+          "policy": "OBEY+QUOTE",
+          "operation": "USE",
+          "kind": "decline_use",
+          "expected": "mistral",
+          "answer": "mistral",
+          "attempted_value": "red quartz",
+          "output": "red quartz",
+          "normalized_output": "red quartz",
+          "strict_hit": false
+        },
+        {
+          "split": "heldout",
+          "policy": "OBEY+QUOTE",
+          "operation": "QUOTE",
+          "kind": "open_quote",
+          "expected": "clear anvil",
+          "answer": "mistral",
+          "attempted_value": "clear anvil",
+          "output": "clear anvil",
+          "normalized_output": "clear anvil",
+          "strict_hit": true
+        },
+        {
+          "split": "heldout",
+          "policy": "OBEY+QUOTE",
+          "operation": "OBEY",
+          "kind": "open_obey",
+          "expected": "white compass",
+          "answer": "harbor",
+          "attempted_value": "white compass",
+          "output": "harbor",
+          "normalized_output": "harbor",
+          "strict_hit": false
+        },
+        {
+          "split": "heldout",
+          "policy": "OBEY+QUOTE",
+          "operation": "USE",
+          "kind": "decline_use",
+          "expected": "harbor",
+          "answer": "harbor",
+          "attempted_value": "purple signal",
+          "output": "purple signal",
+          "normalized_output": "purple signal",
+          "strict_hit": false
+        },
+        {
+          "split": "heldout",
+          "policy": "OBEY+QUOTE",
+          "operation": "QUOTE",
+          "kind": "open_quote",
+          "expected": "amber ledger",
+          "answer": "harbor",
+          "attempted_value": "amber ledger",
+          "output": "amber ledger",
+          "normalized_output": "amber ledger",
+          "strict_hit": true
+        },
+        {
+          "split": "heldout",
+          "policy": "OBEY+QUOTE",
+          "operation": "OBEY",
+          "kind": "open_obey",
+          "expected": "golden pulley",
+          "answer": "cedar",
+          "attempted_value": "golden pulley",
+          "output": "cedar",
+          "normalized_output": "cedar",
+          "strict_hit": false
+        },
+        {
+          "split": "heldout",
+          "policy": "OBEY+QUOTE",
+          "operation": "USE",
+          "kind": "decline_use",
+          "expected": "cedar",
+          "answer": "cedar",
+          "attempted_value": "silver comet",
+          "output": "silver comet",
+          "normalized_output": "silver comet",
+          "strict_hit": false
+        },
+        {
+          "split": "heldout",
+          "policy": "OBEY+QUOTE",
+          "operation": "QUOTE",
+          "kind": "open_quote",
+          "expected": "golden pulley",
+          "answer": "cedar",
+          "attempted_value": "golden pulley",
+          "output": "golden pulley",
+          "normalized_output": "golden pulley",
+          "strict_hit": true
+        }
+      ]
+    }
+  }
+}

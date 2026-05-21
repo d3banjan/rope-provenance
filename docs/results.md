@@ -394,6 +394,52 @@ embedding-only model cannot reach exact 1.000 there, the architecture lacks the
 needed binder. If it can, rerun with more steps or a better schedule before
 claiming an architectural limit.
 
+Follow-up diagnostics:
+
+| Run | Eval set | exact | Interpretation |
+|---|---|---:|---|
+| fixed mask `001` overfit | exact training rows | 1.000 | A fixed policy can be installed with additive embeddings; the harness is not broken. |
+| all six seen masks, tiny overfit | exact training rows | 1.000 | The model can memorize a small table of seen policy cases. |
+| same all-seen adapter | fresh seen-policy rows | 0.261 | The learned table does not generalize to fresh values/prompts. |
+| same all-seen adapter | fresh held-out `101` rows | 0.219 | No reusable bitwise composition emerges from the additive policy bits. |
+
+This refines the failure. The embedding-only policy-vector arm is not globally
+incapable of fitting examples; it overfits. What it fails to learn is the
+reusable binding rule that should transfer across fresh rows.
+
+## Qwen2.5-0.5B-Instruct Oracle Permission Rail
+
+The deterministic-binder ablation computes the missing lookup outside the
+model:
+
+```text
+permission_for_candidate = policy_bits[operation_id]
+```
+
+It then injects a local ALLOWED/DENIED rail on the candidate span. Separate
+policy-bit embeddings are disabled, so the model receives source, operation,
+and the already-bound permission state. Trainable parameters are 12,544.
+
+| Metric | Value |
+|---|---:|
+| exact_match | 1.000 |
+| seen_policy_exact | 1.000 |
+| heldout_policy_exact | 1.000 |
+| open_obey_exact | 1.000 |
+| decline_obey_exact | 1.000 |
+| open_use_exact | 1.000 |
+| decline_use_exact | 1.000 |
+| open_quote_exact | 1.000 |
+| decline_quote_exact | 1.000 |
+
+Interpretation: the rail ladder works when the policy vector is compiled into a
+local bound permission rail. This is the strongest current positive result for
+the policy-IR direction. It also kills the weaker hope that a frozen
+instruction-tuned 0.5B model plus additive policy-bit embeddings will
+spontaneously learn the `policy[operation]` lookup. The binding layer should be
+software-supplied or architecturally explicit, not left implicit in prompt-wide
+additive bits.
+
 ## Qwen2.5 Lazy-Rudder Geometry Cross-Check
 
 External artifacts live in `/home/debanjan/Code/Research/lean-mining` commits

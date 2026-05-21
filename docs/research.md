@@ -568,3 +568,16 @@ existing behavior, but it does not provide an explicit multiplicative
 modulation site. The next kill-test is to overfit one seen policy mask; if that
 cannot reach exact 1.000, move to an explicit current-operation permission rail
 or a tiny policy-binder module.
+
+Policy-IR permission-rail pivot: the binder diagnosis is now tested. A fixed
+mask `001` overfit reaches exact 1.000, and an all-seen-mask tiny overfit also
+reaches exact 1.000 on the training rows. But the all-seen adapter drops to
+0.261 on fresh seen-policy rows and 0.219 on fresh held-out `101` rows, so it
+memorized rather than learning a reusable bitwise policy rule. When the
+software stack computes the missing lookup and injects a local ALLOWED/DENIED
+permission rail on candidate spans, the same Qwen2.5-0.5B-Instruct setup
+reaches exact 1.000 on both seen masks and held-out `101` with only 12,544
+trainable parameters. Current conclusion: the viable policy-IR interface is a
+compiled permission rail, not raw prompt-wide policy bits. The next real rung is
+to replace the oracle operation/permission compiler with a learned detector or
+tiny binder while preserving the 1.000 behavior.

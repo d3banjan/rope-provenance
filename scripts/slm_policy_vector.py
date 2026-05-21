@@ -64,6 +64,14 @@ TRAIN_POLICY_MASKS = (0b001, 0b010, 0b100, 0b011, 0b110, 0b111)
 HELDOUT_POLICY_MASKS = (0b101,)
 EVAL_POLICY_MASKS = TRAIN_POLICY_MASKS + HELDOUT_POLICY_MASKS
 EVAL_CONTROL_CHOICES = ("correct", "constant_policy", "swap_policy")
+PERMISSION_DEFAULT = 0
+PERMISSION_DENIED = 1
+PERMISSION_ALLOWED = 2
+PERMISSION_NAMES = {
+    PERMISSION_DEFAULT: "DEFAULT",
+    PERMISSION_DENIED: "DENIED",
+    PERMISSION_ALLOWED: "ALLOWED",
+}
 
 POLICY_TEXT = (
     "Policy vector task. Hidden rails provide source, operation, and policy bits. "
@@ -79,6 +87,30 @@ class EncodedExample:
     source_ids: list[int]
     operation_ids: list[int]
     policy_bits: list[tuple[int, int, int]]
+
+
+def parse_policy_masks(value: str | None) -> tuple[int, ...] | None:
+    if value is None:
+        return None
+    masks = []
+    for raw in value.replace(",", " ").split():
+        token = raw.strip()
+        if not token:
+            continue
+        if token.startswith("0b"):
+            mask = int(token, 2)
+        elif all(ch in "01" for ch in token):
+            mask = int(token, 2)
+        else:
+            mask = int(token)
+        if mask <= 0 or mask >= (1 << POLICY_BITS):
+            raise ValueError(
+                f"policy mask must be in [1, {(1 << POLICY_BITS) - 1}], got {raw!r}"
+            )
+        masks.append(mask)
+    if not masks:
+        raise ValueError("empty policy mask list")
+    return tuple(dict.fromkeys(masks))
 
 
 def mask_to_bits(mask: int) -> tuple[int, int, int]:
@@ -202,8 +234,9 @@ def build_policy_vector_examples(
     *,
     heldout: bool,
     eval_control: str,
+    policy_masks: tuple[int, ...] | None = None,
 ) -> list[dict]:
-    masks = EVAL_POLICY_MASKS if heldout else TRAIN_POLICY_MASKS
+    masks = policy_masks or (EVAL_POLICY_MASKS if heldout else TRAIN_POLICY_MASKS)
     examples = []
     for i in range(n_pairs):
         for mask in masks:
@@ -225,6 +258,22 @@ def build_policy_vector_examples(
                 item["eval_control"] = eval_control
                 examples.append(item)
     return examples
+
+
+def with_policy_control(examples: list[dict], eval_control: str) -> list[dict]:
+    controlled = []
+    for ex in examples:
+        item = dict(ex)
+        item["policy_bits"] = [
+            _apply_policy_control(bits, eval_control) for bits in ex["policy_bits"]
+        ]
+        item["prompt_policy_bits"] = [
+            _apply_policy_control(bits, eval_control)
+            for bits in ex["prompt_policy_bits"]
+        ]
+        item["eval_control"] = eval_control
+        controlled.append(item)
+    return controlled
 
 
 def _format_char_rail(
@@ -452,11 +501,38 @@ def make_batch(
 
 
 def policy_delta(model, policy_bits: torch.Tensor) -> torch.Tensor:
+    if not hasattr(model, "policy_bit_emb"):
+        return torch.zeros(
+            (*policy_bits.shape[:2], model.config.hidden_size),
+            device=policy_bits.device,
+            dtype=torch.float32,
+        )
     # policy_bits: [B, T, 3]. Each bit selects denied/allowed embedding for that op.
     out = 0
     for idx in range(POLICY_BITS):
         out = out + model.policy_bit_emb[idx](policy_bits[:, :, idx])
     return out
+
+
+def permission_ids_from(
+    *,
+    operation_ids: torch.Tensor,
+    policy_bits: torch.Tensor,
+) -> torch.Tensor:
+    permission_ids = torch.full_like(operation_ids, PERMISSION_DEFAULT)
+    for idx, op_id in enumerate(POLICY_OPS):
+        is_op = operation_ids == op_id
+        allowed = policy_bits[:, :, idx].bool()
+        permission_ids = torch.where(
+            is_op,
+            torch.where(
+                allowed,
+                torch.full_like(permission_ids, PERMISSION_ALLOWED),
+                torch.full_like(permission_ids, PERMISSION_DENIED),
+            ),
+            permission_ids,
+        )
+    return permission_ids
 
 
 def forward_model(
@@ -468,6 +544,7 @@ def forward_model(
     operation_ids: torch.Tensor,
     policy_bits: torch.Tensor,
     use_rail_embeddings: bool,
+    permission_rail: str,
 ):
     if not use_rail_embeddings:
         return model(input_ids=input_ids, attention_mask=attention_mask)
@@ -477,6 +554,12 @@ def forward_model(
         + model.operation_emb(operation_ids)
         + policy_delta(model, policy_bits)
     )
+    if permission_rail == "oracle":
+        permission_ids = permission_ids_from(
+            operation_ids=operation_ids,
+            policy_bits=policy_bits,
+        )
+        rail_delta = rail_delta + model.permission_emb(permission_ids)
     return model(
         inputs_embeds=inputs_embeds + rail_delta.to(inputs_embeds.dtype),
         attention_mask=attention_mask,
@@ -514,6 +597,7 @@ def generate_with_rails(
     device: torch.device,
     max_new_tokens: int,
     use_rail_embeddings: bool,
+    permission_rail: str,
 ) -> list[str]:
     if not use_rail_embeddings:
         prompts = [ex["prompt"] for ex in examples]
@@ -587,6 +671,7 @@ def generate_with_rails(
             operation_ids=operations_tensor,
             policy_bits=policy_tensor,
             use_rail_embeddings=True,
+            permission_rail=permission_rail,
         )
         for row, seq in enumerate(sequences):
             if done[row]:
@@ -617,6 +702,7 @@ def evaluate(
     batch_size: int,
     max_new_tokens: int,
     use_rail_embeddings: bool,
+    permission_rail: str,
 ) -> dict:
     model.eval()
     old_padding_side = tokenizer.padding_side
@@ -636,6 +722,7 @@ def evaluate(
                 device=device,
                 max_new_tokens=max_new_tokens,
                 use_rail_embeddings=use_rail_embeddings,
+                permission_rail=permission_rail,
             )
             for ex, out in zip(chunk, decoded):
                 normalized_output = normalize_answer(out)
@@ -708,6 +795,26 @@ def main() -> None:
     parser.add_argument("--train-pairs", type=int, default=512)
     parser.add_argument("--eval-pairs", type=int, default=32)
     parser.add_argument(
+        "--train-policy-masks",
+        default=None,
+        help="Optional comma/space-separated mask list, e.g. '001,011'.",
+    )
+    parser.add_argument(
+        "--eval-policy-masks",
+        default=None,
+        help="Optional comma/space-separated eval mask list.",
+    )
+    parser.add_argument(
+        "--eval-on-train",
+        action="store_true",
+        help="Evaluate controls on the exact training examples.",
+    )
+    parser.add_argument(
+        "--eval-use-heldout-values",
+        action="store_true",
+        help="Use heldout value offsets for generated eval examples.",
+    )
+    parser.add_argument(
         "--prompt-format",
         choices=("raw", "answer", "chat"),
         default="chat",
@@ -737,6 +844,13 @@ def main() -> None:
         ],
     )
     parser.add_argument("--no-rail-embeddings", action="store_true")
+    parser.add_argument("--no-policy-bit-embeddings", action="store_true")
+    parser.add_argument(
+        "--permission-rail",
+        choices=("off", "oracle"),
+        default="off",
+        help="Add a derived local allowed/denied rail from policy_bits[operation].",
+    )
     parser.add_argument("--rail-init-std", type=float, default=0.02)
     parser.add_argument("--seed", type=int, default=0)
     parser.add_argument("--device", default="cuda" if torch.cuda.is_available() else "cpu")
@@ -766,19 +880,36 @@ def main() -> None:
     if tokenizer.pad_token_id is None:
         tokenizer.pad_token = tokenizer.eos_token
 
+    train_policy_masks = parse_policy_masks(args.train_policy_masks) or TRAIN_POLICY_MASKS
+    if args.eval_on_train:
+        eval_policy_masks = train_policy_masks
+    else:
+        eval_policy_masks = (
+            parse_policy_masks(args.eval_policy_masks)
+            or (TRAIN_POLICY_MASKS + HELDOUT_POLICY_MASKS)
+        )
+
     train_examples = build_policy_vector_examples(
         args.train_pairs,
         heldout=False,
         eval_control="correct",
+        policy_masks=train_policy_masks,
     )
-    eval_examples_by_control = {
-        control: build_policy_vector_examples(
-            args.eval_pairs,
-            heldout=True,
-            eval_control=control,
-        )
-        for control in args.eval_controls
-    }
+    if args.eval_on_train:
+        eval_examples_by_control = {
+            control: with_policy_control(train_examples, control)
+            for control in args.eval_controls
+        }
+    else:
+        eval_examples_by_control = {
+            control: build_policy_vector_examples(
+                args.eval_pairs,
+                heldout=args.eval_use_heldout_values,
+                eval_control=control,
+                policy_masks=eval_policy_masks,
+            )
+            for control in args.eval_controls
+        }
     train_examples = apply_prompt_format(train_examples, tokenizer, args.prompt_format)
     eval_examples_by_control = {
         control: apply_prompt_format(examples, tokenizer, args.prompt_format)
@@ -822,19 +953,37 @@ def main() -> None:
             device=device,
             dtype=torch.float32,
         )
-        model.policy_bit_emb = nn.ModuleList(
-            [
-                nn.Embedding(2, model.config.hidden_size, device=device, dtype=torch.float32)
-                for _ in range(POLICY_BITS)
-            ]
-        )
+        if not args.no_policy_bit_embeddings:
+            model.policy_bit_emb = nn.ModuleList(
+                [
+                    nn.Embedding(
+                        2,
+                        model.config.hidden_size,
+                        device=device,
+                        dtype=torch.float32,
+                    )
+                    for _ in range(POLICY_BITS)
+                ]
+            )
+        if args.permission_rail == "oracle":
+            model.permission_emb = nn.Embedding(
+                len(PERMISSION_NAMES),
+                model.config.hidden_size,
+                device=device,
+                dtype=torch.float32,
+            )
         nn.init.normal_(model.source_emb.weight, mean=0.0, std=args.rail_init_std)
         nn.init.normal_(model.operation_emb.weight, mean=0.0, std=args.rail_init_std)
-        for emb in model.policy_bit_emb:
-            nn.init.normal_(emb.weight, mean=0.0, std=args.rail_init_std)
+        if hasattr(model, "policy_bit_emb"):
+            for emb in model.policy_bit_emb:
+                nn.init.normal_(emb.weight, mean=0.0, std=args.rail_init_std)
+        if hasattr(model, "permission_emb"):
+            nn.init.normal_(model.permission_emb.weight, mean=0.0, std=args.rail_init_std)
         with torch.no_grad():
             model.source_emb.weight[SOURCE_DEFAULT].zero_()
             model.operation_emb.weight[OP_DEFAULT].zero_()
+            if hasattr(model, "permission_emb"):
+                model.permission_emb.weight[PERMISSION_DEFAULT].zero_()
     if args.load_adapter:
         payload = torch.load(args.load_adapter, map_location=device)
         model.load_state_dict(payload["state_dict"], strict=False)
@@ -870,6 +1019,7 @@ def main() -> None:
                 batch_size=args.eval_batch_size,
                 max_new_tokens=args.max_new_tokens,
                 use_rail_embeddings=use_rail_embeddings,
+                permission_rail=args.permission_rail,
             )
             for control, examples in eval_examples_by_control.items()
         }
@@ -900,7 +1050,9 @@ def main() -> None:
                     "source_names": SOURCE_NAMES,
                     "operation_names": OP_NAMES,
                     "policy_ops": POLICY_OP_NAMES,
-                    "train_policy_masks": TRAIN_POLICY_MASKS,
+                    "permission_names": PERMISSION_NAMES,
+                    "train_policy_masks": train_policy_masks,
+                    "eval_policy_masks": eval_policy_masks,
                     "heldout_policy_masks": HELDOUT_POLICY_MASKS,
                     "total_params": total_params,
                     "trainable_params": trainable_params,
@@ -954,6 +1106,7 @@ def main() -> None:
                     operation_ids=batch["operation_ids"],
                     policy_bits=batch["policy_bits"],
                     use_rail_embeddings=use_rail_embeddings,
+                    permission_rail=args.permission_rail,
                 )
                 loss = causal_loss(outputs.logits, batch["labels"])
                 loss = loss / args.grad_accum
@@ -976,6 +1129,7 @@ def main() -> None:
             batch_size=args.eval_batch_size,
             max_new_tokens=args.max_new_tokens,
             use_rail_embeddings=use_rail_embeddings,
+            permission_rail=args.permission_rail,
         )
         for control, examples in eval_examples_by_control.items()
     }
@@ -985,7 +1139,9 @@ def main() -> None:
         "source_names": SOURCE_NAMES,
         "operation_names": OP_NAMES,
         "policy_ops": POLICY_OP_NAMES,
-        "train_policy_masks": TRAIN_POLICY_MASKS,
+        "permission_names": PERMISSION_NAMES,
+        "train_policy_masks": train_policy_masks,
+        "eval_policy_masks": eval_policy_masks,
         "heldout_policy_masks": HELDOUT_POLICY_MASKS,
         "total_params": total_params,
         "trainable_params": trainable_params,
@@ -1005,7 +1161,9 @@ def main() -> None:
                 "source_names": SOURCE_NAMES,
                 "operation_names": OP_NAMES,
                 "policy_ops": POLICY_OP_NAMES,
-                "train_policy_masks": TRAIN_POLICY_MASKS,
+                "permission_names": PERMISSION_NAMES,
+                "train_policy_masks": train_policy_masks,
+                "eval_policy_masks": eval_policy_masks,
                 "heldout_policy_masks": HELDOUT_POLICY_MASKS,
                 "total_params": total_params,
                 "trainable_params": trainable_params,

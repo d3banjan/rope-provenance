@@ -157,6 +157,20 @@ not a clean held-out-composition failure. The live hypothesis is that a policy
 vector needs an explicit binder or modulation site that computes
 `allowed = policy[operation]`; a uniform additive prompt bias is not enough.
 
+Diagnostic update: tiny overfit confirms the distinction. A fixed mask `001`
+overfits to exact 1.000, and all six seen masks overfit to exact 1.000 on 72
+training rows. The same all-seen adapter falls to 0.261 on fresh seen rows and
+0.219 on fresh held-out `101` rows. This kills the "just underfit one run"
+interpretation: additive policy bits can memorize a small table, but they do
+not learn a reusable binding rule.
+
+Positive pivot: the oracle permission rail succeeds. When the software stack
+computes the lookup and injects a local ALLOWED/DENIED rail on candidate spans,
+Qwen2.5-0.5B-Instruct reaches exact 1.000 on seen policies and held-out `101`
+with only 12,544 trainable embedding parameters. The working interface is
+therefore not raw `policy_bits`; it is a compiled, operation-local permission
+rail.
+
 Input:
 
 ```text
@@ -183,9 +197,9 @@ Metrics:
 Success means the model has learned `role -> policy vector -> behavior`, not
 `role string -> memorized behavior`.
 
-Immediate next diagnostic: overfit one seen policy mask on a tiny dataset. If
-that fails, add an explicit current-operation permission rail or a tiny
-policy-binder module before spending more runs on held-out vectors.
+Immediate next diagnostic: replace the oracle permission rail with a learned
+operation detector or a tiny learned binder, and test whether it preserves the
+1.000 behavior without hand-supplying the bound permission.
 
 ## Rung 4: Auxiliary Rail Pretraining
 

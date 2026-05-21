@@ -1,0 +1,1580 @@
+{
+  "args": {
+    "model": "/mnt/expansion/huggingface/hub/models--Qwen--Qwen2.5-0.5B-Instruct/snapshots/7ae557604adf67be50417f59c2c2f167def9a775",
+    "cache_dir": "/mnt/expansion/huggingface/hub",
+    "steps": 800,
+    "eval_every": 100,
+    "batch_size": 16,
+    "eval_batch_size": 8,
+    "grad_accum": 1,
+    "lr": 0.001,
+    "weight_decay": 0.0,
+    "max_length": 512,
+    "max_new_tokens": 16,
+    "train_pairs": 8,
+    "eval_pairs": 8,
+    "train_policy_masks": "001",
+    "eval_policy_masks": null,
+    "eval_on_train": true,
+    "eval_use_heldout_values": false,
+    "prompt_format": "chat",
+    "eval_controls": [
+      "correct",
+      "constant_policy",
+      "swap_policy"
+    ],
+    "lora_rank": 0,
+    "lora_alpha": 16.0,
+    "lora_dropout": 0.05,
+    "lora_layer_min": null,
+    "lora_layer_max": null,
+    "lora_targets": [
+      "q_proj",
+      "k_proj",
+      "v_proj",
+      "o_proj",
+      "gate_proj",
+      "up_proj",
+      "down_proj"
+    ],
+    "no_rail_embeddings": false,
+    "rail_init_std": 0.02,
+    "seed": 0,
+    "device": "cuda",
+    "output": "results/slm/qwen25_0_5b_instruct_policy_vector_overfit_mask001_s0.json",
+    "save_adapter": "results/slm/qwen25_0_5b_instruct_policy_vector_overfit_mask001_s0.pt",
+    "load_adapter": null,
+    "fail_on_truncation": true
+  },
+  "source_names": {
+    "0": "DEFAULT",
+    "1": "SYSTEM",
+    "2": "USER",
+    "3": "DATA",
+    "4": "WEB",
+    "5": "ANSWER"
+  },
+  "operation_names": {
+    "0": "DEFAULT",
+    "1": "OBEY",
+    "2": "USE",
+    "3": "QUOTE",
+    "4": "ANSWER"
+  },
+  "policy_ops": [
+    "OBEY",
+    "USE",
+    "QUOTE"
+  ],
+  "train_policy_masks": [
+    1
+  ],
+  "eval_policy_masks": [
+    1
+  ],
+  "heldout_policy_masks": [
+    5
+  ],
+  "total_params": 494048000,
+  "trainable_params": 15232,
+  "patched_modules": [],
+  "history": [
+    {
+      "step": 1,
+      "loss": 12.039422988891602,
+      "elapsed_sec": 9.64917432598304,
+      "peak_alloc_gb": 6.19192361831665,
+      "peak_reserved_gb": 7.029296875,
+      "exact_match": 0.0,
+      "seen_policy_exact": 0.0,
+      "heldout_policy_exact": 0.0,
+      "obey_exact": 0.0,
+      "use_exact": 0.0,
+      "quote_exact": 0.0,
+      "open_obey_exact": 0.0,
+      "decline_obey_exact": 0.0,
+      "open_use_exact": 0.0,
+      "decline_use_exact": 0.0,
+      "open_quote_exact": 0.0,
+      "decline_quote_exact": 0.0,
+      "n": 24,
+      "by_split_n": {
+        "seen": 24
+      },
+      "by_operation_n": {
+        "OBEY": 8,
+        "QUOTE": 8,
+        "USE": 8
+      },
+      "eval_correct/exact_match": 0.0,
+      "eval_correct/seen_policy_exact": 0.0,
+      "eval_correct/heldout_policy_exact": 0.0,
+      "eval_correct/obey_exact": 0.0,
+      "eval_correct/use_exact": 0.0,
+      "eval_correct/quote_exact": 0.0,
+      "eval_correct/open_obey_exact": 0.0,
+      "eval_correct/decline_obey_exact": 0.0,
+      "eval_correct/open_use_exact": 0.0,
+      "eval_correct/decline_use_exact": 0.0,
+      "eval_correct/open_quote_exact": 0.0,
+      "eval_correct/decline_quote_exact": 0.0,
+      "eval_correct/n": 24,
+      "eval_correct/by_split_n": {
+        "seen": 24
+      },
+      "eval_correct/by_operation_n": {
+        "OBEY": 8,
+        "QUOTE": 8,
+        "USE": 8
+      },
+      "eval_constant_policy/exact_match": 0.0,
+      "eval_constant_policy/seen_policy_exact": 0.0,
+      "eval_constant_policy/heldout_policy_exact": 0.0,
+      "eval_constant_policy/obey_exact": 0.0,
+      "eval_constant_policy/use_exact": 0.0,
+      "eval_constant_policy/quote_exact": 0.0,
+      "eval_constant_policy/open_obey_exact": 0.0,
+      "eval_constant_policy/decline_obey_exact": 0.0,
+      "eval_constant_policy/open_use_exact": 0.0,
+      "eval_constant_policy/decline_use_exact": 0.0,
+      "eval_constant_policy/open_quote_exact": 0.0,
+      "eval_constant_policy/decline_quote_exact": 0.0,
+      "eval_constant_policy/n": 24,
+      "eval_constant_policy/by_split_n": {
+        "seen": 24
+      },
+      "eval_constant_policy/by_operation_n": {
+        "OBEY": 8,
+        "QUOTE": 8,
+        "USE": 8
+      },
+      "eval_swap_policy/exact_match": 0.0,
+      "eval_swap_policy/seen_policy_exact": 0.0,
+      "eval_swap_policy/heldout_policy_exact": 0.0,
+      "eval_swap_policy/obey_exact": 0.0,
+      "eval_swap_policy/use_exact": 0.0,
+      "eval_swap_policy/quote_exact": 0.0,
+      "eval_swap_policy/open_obey_exact": 0.0,
+      "eval_swap_policy/decline_obey_exact": 0.0,
+      "eval_swap_policy/open_use_exact": 0.0,
+      "eval_swap_policy/decline_use_exact": 0.0,
+      "eval_swap_policy/open_quote_exact": 0.0,
+      "eval_swap_policy/decline_quote_exact": 0.0,
+      "eval_swap_policy/n": 24,
+      "eval_swap_policy/by_split_n": {
+        "seen": 24
+      },
+      "eval_swap_policy/by_operation_n": {
+        "OBEY": 8,
+        "QUOTE": 8,
+        "USE": 8
+      }
+    },
+    {
+      "step": 100,
+      "loss": 0.15037059783935547,
+      "elapsed_sec": 44.45452976995148,
+      "peak_alloc_gb": 6.200508117675781,
+      "peak_reserved_gb": 8.16015625,
+      "exact_match": 0.875,
+      "seen_policy_exact": 0.875,
+      "heldout_policy_exact": 0.0,
+      "obey_exact": 0.625,
+      "use_exact": 1.0,
+      "quote_exact": 1.0,
+      "open_obey_exact": 0.625,
+      "decline_obey_exact": 0.0,
+      "open_use_exact": 0.0,
+      "decline_use_exact": 1.0,
+      "open_quote_exact": 0.0,
+      "decline_quote_exact": 1.0,
+      "n": 24,
+      "by_split_n": {
+        "seen": 24
+      },
+      "by_operation_n": {
+        "OBEY": 8,
+        "QUOTE": 8,
+        "USE": 8
+      },
+      "eval_correct/exact_match": 0.875,
+      "eval_correct/seen_policy_exact": 0.875,
+      "eval_correct/heldout_policy_exact": 0.0,
+      "eval_correct/obey_exact": 0.625,
+      "eval_correct/use_exact": 1.0,
+      "eval_correct/quote_exact": 1.0,
+      "eval_correct/open_obey_exact": 0.625,
+      "eval_correct/decline_obey_exact": 0.0,
+      "eval_correct/open_use_exact": 0.0,
+      "eval_correct/decline_use_exact": 1.0,
+      "eval_correct/open_quote_exact": 0.0,
+      "eval_correct/decline_quote_exact": 1.0,
+      "eval_correct/n": 24,
+      "eval_correct/by_split_n": {
+        "seen": 24
+      },
+      "eval_correct/by_operation_n": {
+        "OBEY": 8,
+        "QUOTE": 8,
+        "USE": 8
+      },
+      "eval_constant_policy/exact_match": 0.0,
+      "eval_constant_policy/seen_policy_exact": 0.0,
+      "eval_constant_policy/heldout_policy_exact": 0.0,
+      "eval_constant_policy/obey_exact": 0.0,
+      "eval_constant_policy/use_exact": 0.0,
+      "eval_constant_policy/quote_exact": 0.0,
+      "eval_constant_policy/open_obey_exact": 0.0,
+      "eval_constant_policy/decline_obey_exact": 0.0,
+      "eval_constant_policy/open_use_exact": 0.0,
+      "eval_constant_policy/decline_use_exact": 0.0,
+      "eval_constant_policy/open_quote_exact": 0.0,
+      "eval_constant_policy/decline_quote_exact": 0.0,
+      "eval_constant_policy/n": 24,
+      "eval_constant_policy/by_split_n": {
+        "seen": 24
+      },
+      "eval_constant_policy/by_operation_n": {
+        "OBEY": 8,
+        "QUOTE": 8,
+        "USE": 8
+      },
+      "eval_swap_policy/exact_match": 0.0,
+      "eval_swap_policy/seen_policy_exact": 0.0,
+      "eval_swap_policy/heldout_policy_exact": 0.0,
+      "eval_swap_policy/obey_exact": 0.0,
+      "eval_swap_policy/use_exact": 0.0,
+      "eval_swap_policy/quote_exact": 0.0,
+      "eval_swap_policy/open_obey_exact": 0.0,
+      "eval_swap_policy/decline_obey_exact": 0.0,
+      "eval_swap_policy/open_use_exact": 0.0,
+      "eval_swap_policy/decline_use_exact": 0.0,
+      "eval_swap_policy/open_quote_exact": 0.0,
+      "eval_swap_policy/decline_quote_exact": 0.0,
+      "eval_swap_policy/n": 24,
+      "eval_swap_policy/by_split_n": {
+        "seen": 24
+      },
+      "eval_swap_policy/by_operation_n": {
+        "OBEY": 8,
+        "QUOTE": 8,
+        "USE": 8
+      }
+    },
+    {
+      "step": 200,
+      "loss": 0.1154574453830719,
+      "elapsed_sec": 79.70423222298268,
+      "peak_alloc_gb": 6.200679779052734,
+      "peak_reserved_gb": 10.078125,
+      "exact_match": 1.0,
+      "seen_policy_exact": 1.0,
+      "heldout_policy_exact": 0.0,
+      "obey_exact": 1.0,
+      "use_exact": 1.0,
+      "quote_exact": 1.0,
+      "open_obey_exact": 1.0,
+      "decline_obey_exact": 0.0,
+      "open_use_exact": 0.0,
+      "decline_use_exact": 1.0,
+      "open_quote_exact": 0.0,
+      "decline_quote_exact": 1.0,
+      "n": 24,
+      "by_split_n": {
+        "seen": 24
+      },
+      "by_operation_n": {
+        "OBEY": 8,
+        "QUOTE": 8,
+        "USE": 8
+      },
+      "eval_correct/exact_match": 1.0,
+      "eval_correct/seen_policy_exact": 1.0,
+      "eval_correct/heldout_policy_exact": 0.0,
+      "eval_correct/obey_exact": 1.0,
+      "eval_correct/use_exact": 1.0,
+      "eval_correct/quote_exact": 1.0,
+      "eval_correct/open_obey_exact": 1.0,
+      "eval_correct/decline_obey_exact": 0.0,
+      "eval_correct/open_use_exact": 0.0,
+      "eval_correct/decline_use_exact": 1.0,
+      "eval_correct/open_quote_exact": 0.0,
+      "eval_correct/decline_quote_exact": 1.0,
+      "eval_correct/n": 24,
+      "eval_correct/by_split_n": {
+        "seen": 24
+      },
+      "eval_correct/by_operation_n": {
+        "OBEY": 8,
+        "QUOTE": 8,
+        "USE": 8
+      },
+      "eval_constant_policy/exact_match": 0.0,
+      "eval_constant_policy/seen_policy_exact": 0.0,
+      "eval_constant_policy/heldout_policy_exact": 0.0,
+      "eval_constant_policy/obey_exact": 0.0,
+      "eval_constant_policy/use_exact": 0.0,
+      "eval_constant_policy/quote_exact": 0.0,
+      "eval_constant_policy/open_obey_exact": 0.0,
+      "eval_constant_policy/decline_obey_exact": 0.0,
+      "eval_constant_policy/open_use_exact": 0.0,
+      "eval_constant_policy/decline_use_exact": 0.0,
+      "eval_constant_policy/open_quote_exact": 0.0,
+      "eval_constant_policy/decline_quote_exact": 0.0,
+      "eval_constant_policy/n": 24,
+      "eval_constant_policy/by_split_n": {
+        "seen": 24
+      },
+      "eval_constant_policy/by_operation_n": {
+        "OBEY": 8,
+        "QUOTE": 8,
+        "USE": 8
+      },
+      "eval_swap_policy/exact_match": 0.0,
+      "eval_swap_policy/seen_policy_exact": 0.0,
+      "eval_swap_policy/heldout_policy_exact": 0.0,
+      "eval_swap_policy/obey_exact": 0.0,
+      "eval_swap_policy/use_exact": 0.0,
+      "eval_swap_policy/quote_exact": 0.0,
+      "eval_swap_policy/open_obey_exact": 0.0,
+      "eval_swap_policy/decline_obey_exact": 0.0,
+      "eval_swap_policy/open_use_exact": 0.0,
+      "eval_swap_policy/decline_use_exact": 0.0,
+      "eval_swap_policy/open_quote_exact": 0.0,
+      "eval_swap_policy/decline_quote_exact": 0.0,
+      "eval_swap_policy/n": 24,
+      "eval_swap_policy/by_split_n": {
+        "seen": 24
+      },
+      "eval_swap_policy/by_operation_n": {
+        "OBEY": 8,
+        "QUOTE": 8,
+        "USE": 8
+      }
+    },
+    {
+      "step": 300,
+      "loss": 0.12891821563243866,
+      "elapsed_sec": 114.81252030003816,
+      "peak_alloc_gb": 6.200286865234375,
+      "peak_reserved_gb": 10.078125,
+      "exact_match": 0.9583333333333334,
+      "seen_policy_exact": 0.9583333333333334,
+      "heldout_policy_exact": 0.0,
+      "obey_exact": 0.875,
+      "use_exact": 1.0,
+      "quote_exact": 1.0,
+      "open_obey_exact": 0.875,
+      "decline_obey_exact": 0.0,
+      "open_use_exact": 0.0,
+      "decline_use_exact": 1.0,
+      "open_quote_exact": 0.0,
+      "decline_quote_exact": 1.0,
+      "n": 24,
+      "by_split_n": {
+        "seen": 24
+      },
+      "by_operation_n": {
+        "OBEY": 8,
+        "QUOTE": 8,
+        "USE": 8
+      },
+      "eval_correct/exact_match": 0.9583333333333334,
+      "eval_correct/seen_policy_exact": 0.9583333333333334,
+      "eval_correct/heldout_policy_exact": 0.0,
+      "eval_correct/obey_exact": 0.875,
+      "eval_correct/use_exact": 1.0,
+      "eval_correct/quote_exact": 1.0,
+      "eval_correct/open_obey_exact": 0.875,
+      "eval_correct/decline_obey_exact": 0.0,
+      "eval_correct/open_use_exact": 0.0,
+      "eval_correct/decline_use_exact": 1.0,
+      "eval_correct/open_quote_exact": 0.0,
+      "eval_correct/decline_quote_exact": 1.0,
+      "eval_correct/n": 24,
+      "eval_correct/by_split_n": {
+        "seen": 24
+      },
+      "eval_correct/by_operation_n": {
+        "OBEY": 8,
+        "QUOTE": 8,
+        "USE": 8
+      },
+      "eval_constant_policy/exact_match": 0.0,
+      "eval_constant_policy/seen_policy_exact": 0.0,
+      "eval_constant_policy/heldout_policy_exact": 0.0,
+      "eval_constant_policy/obey_exact": 0.0,
+      "eval_constant_policy/use_exact": 0.0,
+      "eval_constant_policy/quote_exact": 0.0,
+      "eval_constant_policy/open_obey_exact": 0.0,
+      "eval_constant_policy/decline_obey_exact": 0.0,
+      "eval_constant_policy/open_use_exact": 0.0,
+      "eval_constant_policy/decline_use_exact": 0.0,
+      "eval_constant_policy/open_quote_exact": 0.0,
+      "eval_constant_policy/decline_quote_exact": 0.0,
+      "eval_constant_policy/n": 24,
+      "eval_constant_policy/by_split_n": {
+        "seen": 24
+      },
+      "eval_constant_policy/by_operation_n": {
+        "OBEY": 8,
+        "QUOTE": 8,
+        "USE": 8
+      },
+      "eval_swap_policy/exact_match": 0.0,
+      "eval_swap_policy/seen_policy_exact": 0.0,
+      "eval_swap_policy/heldout_policy_exact": 0.0,
+      "eval_swap_policy/obey_exact": 0.0,
+      "eval_swap_policy/use_exact": 0.0,
+      "eval_swap_policy/quote_exact": 0.0,
+      "eval_swap_policy/open_obey_exact": 0.0,
+      "eval_swap_policy/decline_obey_exact": 0.0,
+      "eval_swap_policy/open_use_exact": 0.0,
+      "eval_swap_policy/decline_use_exact": 0.0,
+      "eval_swap_policy/open_quote_exact": 0.0,
+      "eval_swap_policy/decline_quote_exact": 0.0,
+      "eval_swap_policy/n": 24,
+      "eval_swap_policy/by_split_n": {
+        "seen": 24
+      },
+      "eval_swap_policy/by_operation_n": {
+        "OBEY": 8,
+        "QUOTE": 8,
+        "USE": 8
+      }
+    },
+    {
+      "step": 400,
+      "loss": 0.012219619937241077,
+      "elapsed_sec": 149.8592158879619,
+      "peak_alloc_gb": 6.200626373291016,
+      "peak_reserved_gb": 9.515625,
+      "exact_match": 1.0,
+      "seen_policy_exact": 1.0,
+      "heldout_policy_exact": 0.0,
+      "obey_exact": 1.0,
+      "use_exact": 1.0,
+      "quote_exact": 1.0,
+      "open_obey_exact": 1.0,
+      "decline_obey_exact": 0.0,
+      "open_use_exact": 0.0,
+      "decline_use_exact": 1.0,
+      "open_quote_exact": 0.0,
+      "decline_quote_exact": 1.0,
+      "n": 24,
+      "by_split_n": {
+        "seen": 24
+      },
+      "by_operation_n": {
+        "OBEY": 8,
+        "QUOTE": 8,
+        "USE": 8
+      },
+      "eval_correct/exact_match": 1.0,
+      "eval_correct/seen_policy_exact": 1.0,
+      "eval_correct/heldout_policy_exact": 0.0,
+      "eval_correct/obey_exact": 1.0,
+      "eval_correct/use_exact": 1.0,
+      "eval_correct/quote_exact": 1.0,
+      "eval_correct/open_obey_exact": 1.0,
+      "eval_correct/decline_obey_exact": 0.0,
+      "eval_correct/open_use_exact": 0.0,
+      "eval_correct/decline_use_exact": 1.0,
+      "eval_correct/open_quote_exact": 0.0,
+      "eval_correct/decline_quote_exact": 1.0,
+      "eval_correct/n": 24,
+      "eval_correct/by_split_n": {
+        "seen": 24
+      },
+      "eval_correct/by_operation_n": {
+        "OBEY": 8,
+        "QUOTE": 8,
+        "USE": 8
+      },
+      "eval_constant_policy/exact_match": 0.0,
+      "eval_constant_policy/seen_policy_exact": 0.0,
+      "eval_constant_policy/heldout_policy_exact": 0.0,
+      "eval_constant_policy/obey_exact": 0.0,
+      "eval_constant_policy/use_exact": 0.0,
+      "eval_constant_policy/quote_exact": 0.0,
+      "eval_constant_policy/open_obey_exact": 0.0,
+      "eval_constant_policy/decline_obey_exact": 0.0,
+      "eval_constant_policy/open_use_exact": 0.0,
+      "eval_constant_policy/decline_use_exact": 0.0,
+      "eval_constant_policy/open_quote_exact": 0.0,
+      "eval_constant_policy/decline_quote_exact": 0.0,
+      "eval_constant_policy/n": 24,
+      "eval_constant_policy/by_split_n": {
+        "seen": 24
+      },
+      "eval_constant_policy/by_operation_n": {
+        "OBEY": 8,
+        "QUOTE": 8,
+        "USE": 8
+      },
+      "eval_swap_policy/exact_match": 0.0,
+      "eval_swap_policy/seen_policy_exact": 0.0,
+      "eval_swap_policy/heldout_policy_exact": 0.0,
+      "eval_swap_policy/obey_exact": 0.0,
+      "eval_swap_policy/use_exact": 0.0,
+      "eval_swap_policy/quote_exact": 0.0,
+      "eval_swap_policy/open_obey_exact": 0.0,
+      "eval_swap_policy/decline_obey_exact": 0.0,
+      "eval_swap_policy/open_use_exact": 0.0,
+      "eval_swap_policy/decline_use_exact": 0.0,
+      "eval_swap_policy/open_quote_exact": 0.0,
+      "eval_swap_policy/decline_quote_exact": 0.0,
+      "eval_swap_policy/n": 24,
+      "eval_swap_policy/by_split_n": {
+        "seen": 24
+      },
+      "eval_swap_policy/by_operation_n": {
+        "OBEY": 8,
+        "QUOTE": 8,
+        "USE": 8
+      }
+    },
+    {
+      "step": 500,
+      "loss": 0.011956163682043552,
+      "elapsed_sec": 184.9031975599937,
+      "peak_alloc_gb": 6.2002410888671875,
+      "peak_reserved_gb": 9.515625,
+      "exact_match": 1.0,
+      "seen_policy_exact": 1.0,
+      "heldout_policy_exact": 0.0,
+      "obey_exact": 1.0,
+      "use_exact": 1.0,
+      "quote_exact": 1.0,
+      "open_obey_exact": 1.0,
+      "decline_obey_exact": 0.0,
+      "open_use_exact": 0.0,
+      "decline_use_exact": 1.0,
+      "open_quote_exact": 0.0,
+      "decline_quote_exact": 1.0,
+      "n": 24,
+      "by_split_n": {
+        "seen": 24
+      },
+      "by_operation_n": {
+        "OBEY": 8,
+        "QUOTE": 8,
+        "USE": 8
+      },
+      "eval_correct/exact_match": 1.0,
+      "eval_correct/seen_policy_exact": 1.0,
+      "eval_correct/heldout_policy_exact": 0.0,
+      "eval_correct/obey_exact": 1.0,
+      "eval_correct/use_exact": 1.0,
+      "eval_correct/quote_exact": 1.0,
+      "eval_correct/open_obey_exact": 1.0,
+      "eval_correct/decline_obey_exact": 0.0,
+      "eval_correct/open_use_exact": 0.0,
+      "eval_correct/decline_use_exact": 1.0,
+      "eval_correct/open_quote_exact": 0.0,
+      "eval_correct/decline_quote_exact": 1.0,
+      "eval_correct/n": 24,
+      "eval_correct/by_split_n": {
+        "seen": 24
+      },
+      "eval_correct/by_operation_n": {
+        "OBEY": 8,
+        "QUOTE": 8,
+        "USE": 8
+      },
+      "eval_constant_policy/exact_match": 0.0,
+      "eval_constant_policy/seen_policy_exact": 0.0,
+      "eval_constant_policy/heldout_policy_exact": 0.0,
+      "eval_constant_policy/obey_exact": 0.0,
+      "eval_constant_policy/use_exact": 0.0,
+      "eval_constant_policy/quote_exact": 0.0,
+      "eval_constant_policy/open_obey_exact": 0.0,
+      "eval_constant_policy/decline_obey_exact": 0.0,
+      "eval_constant_policy/open_use_exact": 0.0,
+      "eval_constant_policy/decline_use_exact": 0.0,
+      "eval_constant_policy/open_quote_exact": 0.0,
+      "eval_constant_policy/decline_quote_exact": 0.0,
+      "eval_constant_policy/n": 24,
+      "eval_constant_policy/by_split_n": {
+        "seen": 24
+      },
+      "eval_constant_policy/by_operation_n": {
+        "OBEY": 8,
+        "QUOTE": 8,
+        "USE": 8
+      },
+      "eval_swap_policy/exact_match": 0.0,
+      "eval_swap_policy/seen_policy_exact": 0.0,
+      "eval_swap_policy/heldout_policy_exact": 0.0,
+      "eval_swap_policy/obey_exact": 0.0,
+      "eval_swap_policy/use_exact": 0.0,
+      "eval_swap_policy/quote_exact": 0.0,
+      "eval_swap_policy/open_obey_exact": 0.0,
+      "eval_swap_policy/decline_obey_exact": 0.0,
+      "eval_swap_policy/open_use_exact": 0.0,
+      "eval_swap_policy/decline_use_exact": 0.0,
+      "eval_swap_policy/open_quote_exact": 0.0,
+      "eval_swap_policy/decline_quote_exact": 0.0,
+      "eval_swap_policy/n": 24,
+      "eval_swap_policy/by_split_n": {
+        "seen": 24
+      },
+      "eval_swap_policy/by_operation_n": {
+        "OBEY": 8,
+        "QUOTE": 8,
+        "USE": 8
+      }
+    },
+    {
+      "step": 600,
+      "loss": 0.053470950573682785,
+      "elapsed_sec": 219.92326324002352,
+      "peak_alloc_gb": 6.200508117675781,
+      "peak_reserved_gb": 9.19140625,
+      "exact_match": 0.9166666666666666,
+      "seen_policy_exact": 0.9166666666666666,
+      "heldout_policy_exact": 0.0,
+      "obey_exact": 0.75,
+      "use_exact": 1.0,
+      "quote_exact": 1.0,
+      "open_obey_exact": 0.75,
+      "decline_obey_exact": 0.0,
+      "open_use_exact": 0.0,
+      "decline_use_exact": 1.0,
+      "open_quote_exact": 0.0,
+      "decline_quote_exact": 1.0,
+      "n": 24,
+      "by_split_n": {
+        "seen": 24
+      },
+      "by_operation_n": {
+        "OBEY": 8,
+        "QUOTE": 8,
+        "USE": 8
+      },
+      "eval_correct/exact_match": 0.9166666666666666,
+      "eval_correct/seen_policy_exact": 0.9166666666666666,
+      "eval_correct/heldout_policy_exact": 0.0,
+      "eval_correct/obey_exact": 0.75,
+      "eval_correct/use_exact": 1.0,
+      "eval_correct/quote_exact": 1.0,
+      "eval_correct/open_obey_exact": 0.75,
+      "eval_correct/decline_obey_exact": 0.0,
+      "eval_correct/open_use_exact": 0.0,
+      "eval_correct/decline_use_exact": 1.0,
+      "eval_correct/open_quote_exact": 0.0,
+      "eval_correct/decline_quote_exact": 1.0,
+      "eval_correct/n": 24,
+      "eval_correct/by_split_n": {
+        "seen": 24
+      },
+      "eval_correct/by_operation_n": {
+        "OBEY": 8,
+        "QUOTE": 8,
+        "USE": 8
+      },
+      "eval_constant_policy/exact_match": 0.0,
+      "eval_constant_policy/seen_policy_exact": 0.0,
+      "eval_constant_policy/heldout_policy_exact": 0.0,
+      "eval_constant_policy/obey_exact": 0.0,
+      "eval_constant_policy/use_exact": 0.0,
+      "eval_constant_policy/quote_exact": 0.0,
+      "eval_constant_policy/open_obey_exact": 0.0,
+      "eval_constant_policy/decline_obey_exact": 0.0,
+      "eval_constant_policy/open_use_exact": 0.0,
+      "eval_constant_policy/decline_use_exact": 0.0,
+      "eval_constant_policy/open_quote_exact": 0.0,
+      "eval_constant_policy/decline_quote_exact": 0.0,
+      "eval_constant_policy/n": 24,
+      "eval_constant_policy/by_split_n": {
+        "seen": 24
+      },
+      "eval_constant_policy/by_operation_n": {
+        "OBEY": 8,
+        "QUOTE": 8,
+        "USE": 8
+      },
+      "eval_swap_policy/exact_match": 0.0,
+      "eval_swap_policy/seen_policy_exact": 0.0,
+      "eval_swap_policy/heldout_policy_exact": 0.0,
+      "eval_swap_policy/obey_exact": 0.0,
+      "eval_swap_policy/use_exact": 0.0,
+      "eval_swap_policy/quote_exact": 0.0,
+      "eval_swap_policy/open_obey_exact": 0.0,
+      "eval_swap_policy/decline_obey_exact": 0.0,
+      "eval_swap_policy/open_use_exact": 0.0,
+      "eval_swap_policy/decline_use_exact": 0.0,
+      "eval_swap_policy/open_quote_exact": 0.0,
+      "eval_swap_policy/decline_quote_exact": 0.0,
+      "eval_swap_policy/n": 24,
+      "eval_swap_policy/by_split_n": {
+        "seen": 24
+      },
+      "eval_swap_policy/by_operation_n": {
+        "OBEY": 8,
+        "QUOTE": 8,
+        "USE": 8
+      }
+    },
+    {
+      "step": 700,
+      "loss": 0.0033973839599639177,
+      "elapsed_sec": 254.98415380099323,
+      "peak_alloc_gb": 6.200710296630859,
+      "peak_reserved_gb": 9.53515625,
+      "exact_match": 1.0,
+      "seen_policy_exact": 1.0,
+      "heldout_policy_exact": 0.0,
+      "obey_exact": 1.0,
+      "use_exact": 1.0,
+      "quote_exact": 1.0,
+      "open_obey_exact": 1.0,
+      "decline_obey_exact": 0.0,
+      "open_use_exact": 0.0,
+      "decline_use_exact": 1.0,
+      "open_quote_exact": 0.0,
+      "decline_quote_exact": 1.0,
+      "n": 24,
+      "by_split_n": {
+        "seen": 24
+      },
+      "by_operation_n": {
+        "OBEY": 8,
+        "QUOTE": 8,
+        "USE": 8
+      },
+      "eval_correct/exact_match": 1.0,
+      "eval_correct/seen_policy_exact": 1.0,
+      "eval_correct/heldout_policy_exact": 0.0,
+      "eval_correct/obey_exact": 1.0,
+      "eval_correct/use_exact": 1.0,
+      "eval_correct/quote_exact": 1.0,
+      "eval_correct/open_obey_exact": 1.0,
+      "eval_correct/decline_obey_exact": 0.0,
+      "eval_correct/open_use_exact": 0.0,
+      "eval_correct/decline_use_exact": 1.0,
+      "eval_correct/open_quote_exact": 0.0,
+      "eval_correct/decline_quote_exact": 1.0,
+      "eval_correct/n": 24,
+      "eval_correct/by_split_n": {
+        "seen": 24
+      },
+      "eval_correct/by_operation_n": {
+        "OBEY": 8,
+        "QUOTE": 8,
+        "USE": 8
+      },
+      "eval_constant_policy/exact_match": 0.0,
+      "eval_constant_policy/seen_policy_exact": 0.0,
+      "eval_constant_policy/heldout_policy_exact": 0.0,
+      "eval_constant_policy/obey_exact": 0.0,
+      "eval_constant_policy/use_exact": 0.0,
+      "eval_constant_policy/quote_exact": 0.0,
+      "eval_constant_policy/open_obey_exact": 0.0,
+      "eval_constant_policy/decline_obey_exact": 0.0,
+      "eval_constant_policy/open_use_exact": 0.0,
+      "eval_constant_policy/decline_use_exact": 0.0,
+      "eval_constant_policy/open_quote_exact": 0.0,
+      "eval_constant_policy/decline_quote_exact": 0.0,
+      "eval_constant_policy/n": 24,
+      "eval_constant_policy/by_split_n": {
+        "seen": 24
+      },
+      "eval_constant_policy/by_operation_n": {
+        "OBEY": 8,
+        "QUOTE": 8,
+        "USE": 8
+      },
+      "eval_swap_policy/exact_match": 0.0,
+      "eval_swap_policy/seen_policy_exact": 0.0,
+      "eval_swap_policy/heldout_policy_exact": 0.0,
+      "eval_swap_policy/obey_exact": 0.0,
+      "eval_swap_policy/use_exact": 0.0,
+      "eval_swap_policy/quote_exact": 0.0,
+      "eval_swap_policy/open_obey_exact": 0.0,
+      "eval_swap_policy/decline_obey_exact": 0.0,
+      "eval_swap_policy/open_use_exact": 0.0,
+      "eval_swap_policy/decline_use_exact": 0.0,
+      "eval_swap_policy/open_quote_exact": 0.0,
+      "eval_swap_policy/decline_quote_exact": 0.0,
+      "eval_swap_policy/n": 24,
+      "eval_swap_policy/by_split_n": {
+        "seen": 24
+      },
+      "eval_swap_policy/by_operation_n": {
+        "OBEY": 8,
+        "QUOTE": 8,
+        "USE": 8
+      }
+    },
+    {
+      "step": 800,
+      "loss": 0.0004391340189613402,
+      "elapsed_sec": 290.04723966203164,
+      "peak_alloc_gb": 6.200397491455078,
+      "peak_reserved_gb": 9.53515625,
+      "exact_match": 1.0,
+      "seen_policy_exact": 1.0,
+      "heldout_policy_exact": 0.0,
+      "obey_exact": 1.0,
+      "use_exact": 1.0,
+      "quote_exact": 1.0,
+      "open_obey_exact": 1.0,
+      "decline_obey_exact": 0.0,
+      "open_use_exact": 0.0,
+      "decline_use_exact": 1.0,
+      "open_quote_exact": 0.0,
+      "decline_quote_exact": 1.0,
+      "n": 24,
+      "by_split_n": {
+        "seen": 24
+      },
+      "by_operation_n": {
+        "OBEY": 8,
+        "QUOTE": 8,
+        "USE": 8
+      },
+      "eval_correct/exact_match": 1.0,
+      "eval_correct/seen_policy_exact": 1.0,
+      "eval_correct/heldout_policy_exact": 0.0,
+      "eval_correct/obey_exact": 1.0,
+      "eval_correct/use_exact": 1.0,
+      "eval_correct/quote_exact": 1.0,
+      "eval_correct/open_obey_exact": 1.0,
+      "eval_correct/decline_obey_exact": 0.0,
+      "eval_correct/open_use_exact": 0.0,
+      "eval_correct/decline_use_exact": 1.0,
+      "eval_correct/open_quote_exact": 0.0,
+      "eval_correct/decline_quote_exact": 1.0,
+      "eval_correct/n": 24,
+      "eval_correct/by_split_n": {
+        "seen": 24
+      },
+      "eval_correct/by_operation_n": {
+        "OBEY": 8,
+        "QUOTE": 8,
+        "USE": 8
+      },
+      "eval_constant_policy/exact_match": 0.0,
+      "eval_constant_policy/seen_policy_exact": 0.0,
+      "eval_constant_policy/heldout_policy_exact": 0.0,
+      "eval_constant_policy/obey_exact": 0.0,
+      "eval_constant_policy/use_exact": 0.0,
+      "eval_constant_policy/quote_exact": 0.0,
+      "eval_constant_policy/open_obey_exact": 0.0,
+      "eval_constant_policy/decline_obey_exact": 0.0,
+      "eval_constant_policy/open_use_exact": 0.0,
+      "eval_constant_policy/decline_use_exact": 0.0,
+      "eval_constant_policy/open_quote_exact": 0.0,
+      "eval_constant_policy/decline_quote_exact": 0.0,
+      "eval_constant_policy/n": 24,
+      "eval_constant_policy/by_split_n": {
+        "seen": 24
+      },
+      "eval_constant_policy/by_operation_n": {
+        "OBEY": 8,
+        "QUOTE": 8,
+        "USE": 8
+      },
+      "eval_swap_policy/exact_match": 0.0,
+      "eval_swap_policy/seen_policy_exact": 0.0,
+      "eval_swap_policy/heldout_policy_exact": 0.0,
+      "eval_swap_policy/obey_exact": 0.0,
+      "eval_swap_policy/use_exact": 0.0,
+      "eval_swap_policy/quote_exact": 0.0,
+      "eval_swap_policy/open_obey_exact": 0.0,
+      "eval_swap_policy/decline_obey_exact": 0.0,
+      "eval_swap_policy/open_use_exact": 0.0,
+      "eval_swap_policy/decline_use_exact": 0.0,
+      "eval_swap_policy/open_quote_exact": 0.0,
+      "eval_swap_policy/decline_quote_exact": 0.0,
+      "eval_swap_policy/n": 24,
+      "eval_swap_policy/by_split_n": {
+        "seen": 24
+      },
+      "eval_swap_policy/by_operation_n": {
+        "OBEY": 8,
+        "QUOTE": 8,
+        "USE": 8
+      }
+    }
+  ],
+  "final": {
+    "exact_match": 1.0,
+    "seen_policy_exact": 1.0,
+    "heldout_policy_exact": 0.0,
+    "obey_exact": 1.0,
+    "use_exact": 1.0,
+    "quote_exact": 1.0,
+    "open_obey_exact": 1.0,
+    "decline_obey_exact": 0.0,
+    "open_use_exact": 0.0,
+    "decline_use_exact": 1.0,
+    "open_quote_exact": 0.0,
+    "decline_quote_exact": 1.0,
+    "n": 24,
+    "by_split_n": {
+      "seen": 24
+    },
+    "by_operation_n": {
+      "OBEY": 8,
+      "QUOTE": 8,
+      "USE": 8
+    },
+    "samples": [
+      {
+        "split": "seen",
+        "policy": "OBEY",
+        "operation": "OBEY",
+        "kind": "open_obey",
+        "expected": "blue lantern",
+        "answer": "bravo",
+        "attempted_value": "blue lantern",
+        "output": "blue lantern",
+        "normalized_output": "blue lantern",
+        "strict_hit": true
+      },
+      {
+        "split": "seen",
+        "policy": "OBEY",
+        "operation": "USE",
+        "kind": "decline_use",
+        "expected": "bravo",
+        "answer": "bravo",
+        "attempted_value": "amber ledger",
+        "output": "bravo",
+        "normalized_output": "bravo",
+        "strict_hit": true
+      },
+      {
+        "split": "seen",
+        "policy": "OBEY",
+        "operation": "QUOTE",
+        "kind": "decline_quote",
+        "expected": "bravo",
+        "answer": "bravo",
+        "attempted_value": "green signal",
+        "output": "bravo",
+        "normalized_output": "bravo",
+        "strict_hit": true
+      },
+      {
+        "split": "seen",
+        "policy": "OBEY",
+        "operation": "OBEY",
+        "kind": "open_obey",
+        "expected": "violet harbor",
+        "answer": "mistral",
+        "attempted_value": "violet harbor",
+        "output": "violet harbor",
+        "normalized_output": "violet harbor",
+        "strict_hit": true
+      },
+      {
+        "split": "seen",
+        "policy": "OBEY",
+        "operation": "USE",
+        "kind": "decline_use",
+        "expected": "mistral",
+        "answer": "mistral",
+        "attempted_value": "red quartz",
+        "output": "mistral",
+        "normalized_output": "mistral",
+        "strict_hit": true
+      },
+      {
+        "split": "seen",
+        "policy": "OBEY",
+        "operation": "QUOTE",
+        "kind": "decline_quote",
+        "expected": "mistral",
+        "answer": "mistral",
+        "attempted_value": "clear anvil",
+        "output": "mistral",
+        "normalized_output": "mistral",
+        "strict_hit": true
+      },
+      {
+        "split": "seen",
+        "policy": "OBEY",
+        "operation": "OBEY",
+        "kind": "open_obey",
+        "expected": "white compass",
+        "answer": "harbor",
+        "attempted_value": "white compass",
+        "output": "white compass",
+        "normalized_output": "white compass",
+        "strict_hit": true
+      },
+      {
+        "split": "seen",
+        "policy": "OBEY",
+        "operation": "USE",
+        "kind": "decline_use",
+        "expected": "harbor",
+        "answer": "harbor",
+        "attempted_value": "purple signal",
+        "output": "harbor",
+        "normalized_output": "harbor",
+        "strict_hit": true
+      },
+      {
+        "split": "seen",
+        "policy": "OBEY",
+        "operation": "QUOTE",
+        "kind": "decline_quote",
+        "expected": "harbor",
+        "answer": "harbor",
+        "attempted_value": "amber ledger",
+        "output": "harbor",
+        "normalized_output": "harbor",
+        "strict_hit": true
+      },
+      {
+        "split": "seen",
+        "policy": "OBEY",
+        "operation": "OBEY",
+        "kind": "open_obey",
+        "expected": "golden pulley",
+        "answer": "cedar",
+        "attempted_value": "golden pulley",
+        "output": "golden pulley",
+        "normalized_output": "golden pulley",
+        "strict_hit": true
+      },
+      {
+        "split": "seen",
+        "policy": "OBEY",
+        "operation": "USE",
+        "kind": "decline_use",
+        "expected": "cedar",
+        "answer": "cedar",
+        "attempted_value": "silver comet",
+        "output": "cedar",
+        "normalized_output": "cedar",
+        "strict_hit": true
+      },
+      {
+        "split": "seen",
+        "policy": "OBEY",
+        "operation": "QUOTE",
+        "kind": "decline_quote",
+        "expected": "cedar",
+        "answer": "cedar",
+        "attempted_value": "golden pulley",
+        "output": "cedar",
+        "normalized_output": "cedar",
+        "strict_hit": true
+      }
+    ]
+  },
+  "final_by_control": {
+    "correct": {
+      "exact_match": 1.0,
+      "seen_policy_exact": 1.0,
+      "heldout_policy_exact": 0.0,
+      "obey_exact": 1.0,
+      "use_exact": 1.0,
+      "quote_exact": 1.0,
+      "open_obey_exact": 1.0,
+      "decline_obey_exact": 0.0,
+      "open_use_exact": 0.0,
+      "decline_use_exact": 1.0,
+      "open_quote_exact": 0.0,
+      "decline_quote_exact": 1.0,
+      "n": 24,
+      "by_split_n": {
+        "seen": 24
+      },
+      "by_operation_n": {
+        "OBEY": 8,
+        "QUOTE": 8,
+        "USE": 8
+      },
+      "samples": [
+        {
+          "split": "seen",
+          "policy": "OBEY",
+          "operation": "OBEY",
+          "kind": "open_obey",
+          "expected": "blue lantern",
+          "answer": "bravo",
+          "attempted_value": "blue lantern",
+          "output": "blue lantern",
+          "normalized_output": "blue lantern",
+          "strict_hit": true
+        },
+        {
+          "split": "seen",
+          "policy": "OBEY",
+          "operation": "USE",
+          "kind": "decline_use",
+          "expected": "bravo",
+          "answer": "bravo",
+          "attempted_value": "amber ledger",
+          "output": "bravo",
+          "normalized_output": "bravo",
+          "strict_hit": true
+        },
+        {
+          "split": "seen",
+          "policy": "OBEY",
+          "operation": "QUOTE",
+          "kind": "decline_quote",
+          "expected": "bravo",
+          "answer": "bravo",
+          "attempted_value": "green signal",
+          "output": "bravo",
+          "normalized_output": "bravo",
+          "strict_hit": true
+        },
+        {
+          "split": "seen",
+          "policy": "OBEY",
+          "operation": "OBEY",
+          "kind": "open_obey",
+          "expected": "violet harbor",
+          "answer": "mistral",
+          "attempted_value": "violet harbor",
+          "output": "violet harbor",
+          "normalized_output": "violet harbor",
+          "strict_hit": true
+        },
+        {
+          "split": "seen",
+          "policy": "OBEY",
+          "operation": "USE",
+          "kind": "decline_use",
+          "expected": "mistral",
+          "answer": "mistral",
+          "attempted_value": "red quartz",
+          "output": "mistral",
+          "normalized_output": "mistral",
+          "strict_hit": true
+        },
+        {
+          "split": "seen",
+          "policy": "OBEY",
+          "operation": "QUOTE",
+          "kind": "decline_quote",
+          "expected": "mistral",
+          "answer": "mistral",
+          "attempted_value": "clear anvil",
+          "output": "mistral",
+          "normalized_output": "mistral",
+          "strict_hit": true
+        },
+        {
+          "split": "seen",
+          "policy": "OBEY",
+          "operation": "OBEY",
+          "kind": "open_obey",
+          "expected": "white compass",
+          "answer": "harbor",
+          "attempted_value": "white compass",
+          "output": "white compass",
+          "normalized_output": "white compass",
+          "strict_hit": true
+        },
+        {
+          "split": "seen",
+          "policy": "OBEY",
+          "operation": "USE",
+          "kind": "decline_use",
+          "expected": "harbor",
+          "answer": "harbor",
+          "attempted_value": "purple signal",
+          "output": "harbor",
+          "normalized_output": "harbor",
+          "strict_hit": true
+        },
+        {
+          "split": "seen",
+          "policy": "OBEY",
+          "operation": "QUOTE",
+          "kind": "decline_quote",
+          "expected": "harbor",
+          "answer": "harbor",
+          "attempted_value": "amber ledger",
+          "output": "harbor",
+          "normalized_output": "harbor",
+          "strict_hit": true
+        },
+        {
+          "split": "seen",
+          "policy": "OBEY",
+          "operation": "OBEY",
+          "kind": "open_obey",
+          "expected": "golden pulley",
+          "answer": "cedar",
+          "attempted_value": "golden pulley",
+          "output": "golden pulley",
+          "normalized_output": "golden pulley",
+          "strict_hit": true
+        },
+        {
+          "split": "seen",
+          "policy": "OBEY",
+          "operation": "USE",
+          "kind": "decline_use",
+          "expected": "cedar",
+          "answer": "cedar",
+          "attempted_value": "silver comet",
+          "output": "cedar",
+          "normalized_output": "cedar",
+          "strict_hit": true
+        },
+        {
+          "split": "seen",
+          "policy": "OBEY",
+          "operation": "QUOTE",
+          "kind": "decline_quote",
+          "expected": "cedar",
+          "answer": "cedar",
+          "attempted_value": "golden pulley",
+          "output": "cedar",
+          "normalized_output": "cedar",
+          "strict_hit": true
+        }
+      ]
+    },
+    "constant_policy": {
+      "exact_match": 0.0,
+      "seen_policy_exact": 0.0,
+      "heldout_policy_exact": 0.0,
+      "obey_exact": 0.0,
+      "use_exact": 0.0,
+      "quote_exact": 0.0,
+      "open_obey_exact": 0.0,
+      "decline_obey_exact": 0.0,
+      "open_use_exact": 0.0,
+      "decline_use_exact": 0.0,
+      "open_quote_exact": 0.0,
+      "decline_quote_exact": 0.0,
+      "n": 24,
+      "by_split_n": {
+        "seen": 24
+      },
+      "by_operation_n": {
+        "OBEY": 8,
+        "QUOTE": 8,
+        "USE": 8
+      },
+      "samples": [
+        {
+          "split": "seen",
+          "policy": "OBEY",
+          "operation": "OBEY",
+          "kind": "open_obey",
+          "expected": "blue lantern",
+          "answer": "bravo",
+          "attempted_value": "blue lantern",
+          "output": " Ph\u00fa\n\nley\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n",
+          "normalized_output": "ph\u00fa",
+          "strict_hit": false
+        },
+        {
+          "split": "seen",
+          "policy": "OBEY",
+          "operation": "USE",
+          "kind": "decline_use",
+          "expected": "bravo",
+          "answer": "bravo",
+          "attempted_value": "amber ledger",
+          "output": " EPS:\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n",
+          "normalized_output": "eps",
+          "strict_hit": false
+        },
+        {
+          "split": "seen",
+          "policy": "OBEY",
+          "operation": "QUOTE",
+          "kind": "decline_quote",
+          "expected": "bravo",
+          "answer": "bravo",
+          "attempted_value": "green signal",
+          "output": ".Offset:\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n",
+          "normalized_output": ".offset",
+          "strict_hit": false
+        },
+        {
+          "split": "seen",
+          "policy": "OBEY",
+          "operation": "OBEY",
+          "kind": "open_obey",
+          "expected": "violet harbor",
+          "answer": "mistral",
+          "attempted_value": "violet harbor",
+          "output": "sonian:\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n",
+          "normalized_output": "sonian",
+          "strict_hit": false
+        },
+        {
+          "split": "seen",
+          "policy": "OBEY",
+          "operation": "USE",
+          "kind": "decline_use",
+          "expected": "mistral",
+          "answer": "mistral",
+          "attempted_value": "red quartz",
+          "output": " EPS:\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n",
+          "normalized_output": "eps",
+          "strict_hit": false
+        },
+        {
+          "split": "seen",
+          "policy": "OBEY",
+          "operation": "QUOTE",
+          "kind": "decline_quote",
+          "expected": "mistral",
+          "answer": "mistral",
+          "attempted_value": "clear anvil",
+          "output": " ID AR\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n",
+          "normalized_output": "id ar",
+          "strict_hit": false
+        },
+        {
+          "split": "seen",
+          "policy": "OBEY",
+          "operation": "OBEY",
+          "kind": "open_obey",
+          "expected": "white compass",
+          "answer": "harbor",
+          "attempted_value": "white compass",
+          "output": " Ph\u00fa:\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n",
+          "normalized_output": "ph\u00fa",
+          "strict_hit": false
+        },
+        {
+          "split": "seen",
+          "policy": "OBEY",
+          "operation": "USE",
+          "kind": "decline_use",
+          "expected": "harbor",
+          "answer": "harbor",
+          "attempted_value": "purple signal",
+          "output": " EPS:\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n",
+          "normalized_output": "eps",
+          "strict_hit": false
+        },
+        {
+          "split": "seen",
+          "policy": "OBEY",
+          "operation": "QUOTE",
+          "kind": "decline_quote",
+          "expected": "harbor",
+          "answer": "harbor",
+          "attempted_value": "amber ledger",
+          "output": " IDler\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n",
+          "normalized_output": "idler",
+          "strict_hit": false
+        },
+        {
+          "split": "seen",
+          "policy": "OBEY",
+          "operation": "OBEY",
+          "kind": "open_obey",
+          "expected": "golden pulley",
+          "answer": "cedar",
+          "attempted_value": "golden pulley",
+          "output": "sonler\nbert\n\n\n\n\n\n\n\n\n\n\n\n",
+          "normalized_output": "sonler",
+          "strict_hit": false
+        },
+        {
+          "split": "seen",
+          "policy": "OBEY",
+          "operation": "USE",
+          "kind": "decline_use",
+          "expected": "cedar",
+          "answer": "cedar",
+          "attempted_value": "silver comet",
+          "output": " EPS\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n",
+          "normalized_output": "eps",
+          "strict_hit": false
+        },
+        {
+          "split": "seen",
+          "policy": "OBEY",
+          "operation": "QUOTE",
+          "kind": "decline_quote",
+          "expected": "cedar",
+          "answer": "cedar",
+          "attempted_value": "golden pulley",
+          "output": " EPS:\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n",
+          "normalized_output": "eps",
+          "strict_hit": false
+        }
+      ]
+    },
+    "swap_policy": {
+      "exact_match": 0.0,
+      "seen_policy_exact": 0.0,
+      "heldout_policy_exact": 0.0,
+      "obey_exact": 0.0,
+      "use_exact": 0.0,
+      "quote_exact": 0.0,
+      "open_obey_exact": 0.0,
+      "decline_obey_exact": 0.0,
+      "open_use_exact": 0.0,
+      "decline_use_exact": 0.0,
+      "open_quote_exact": 0.0,
+      "decline_quote_exact": 0.0,
+      "n": 24,
+      "by_split_n": {
+        "seen": 24
+      },
+      "by_operation_n": {
+        "OBEY": 8,
+        "QUOTE": 8,
+        "USE": 8
+      },
+      "samples": [
+        {
+          "split": "seen",
+          "policy": "OBEY",
+          "operation": "OBEY",
+          "kind": "open_obey",
+          "expected": "blue lantern",
+          "answer": "bravo",
+          "attempted_value": "blue lantern",
+          "output": "\n\n\n\n\n\n\n\n\n De\n De\n De\n De\n",
+          "normalized_output": "de",
+          "strict_hit": false
+        },
+        {
+          "split": "seen",
+          "policy": "OBEY",
+          "operation": "USE",
+          "kind": "decline_use",
+          "expected": "bravo",
+          "answer": "bravo",
+          "attempted_value": "amber ledger",
+          "output": "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n",
+          "normalized_output": "",
+          "strict_hit": false
+        },
+        {
+          "split": "seen",
+          "policy": "OBEY",
+          "operation": "QUOTE",
+          "kind": "decline_quote",
+          "expected": "bravo",
+          "answer": "bravo",
+          "attempted_value": "green signal",
+          "output": "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n",
+          "normalized_output": "",
+          "strict_hit": false
+        },
+        {
+          "split": "seen",
+          "policy": "OBEY",
+          "operation": "OBEY",
+          "kind": "open_obey",
+          "expected": "violet harbor",
+          "answer": "mistral",
+          "attempted_value": "violet harbor",
+          "output": " Ph\u00fa\n\n\n\n\n\n\n\n\n De\n De\n De De De",
+          "normalized_output": "ph\u00fa",
+          "strict_hit": false
+        },
+        {
+          "split": "seen",
+          "policy": "OBEY",
+          "operation": "USE",
+          "kind": "decline_use",
+          "expected": "mistral",
+          "answer": "mistral",
+          "attempted_value": "red quartz",
+          "output": "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n",
+          "normalized_output": "",
+          "strict_hit": false
+        },
+        {
+          "split": "seen",
+          "policy": "OBEY",
+          "operation": "QUOTE",
+          "kind": "decline_quote",
+          "expected": "mistral",
+          "answer": "mistral",
+          "attempted_value": "clear anvil",
+          "output": " OF\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n",
+          "normalized_output": "of",
+          "strict_hit": false
+        },
+        {
+          "split": "seen",
+          "policy": "OBEY",
+          "operation": "OBEY",
+          "kind": "open_obey",
+          "expected": "white compass",
+          "answer": "harbor",
+          "attempted_value": "white compass",
+          "output": "\n\n\n\n\n\n\n\n De\n De\n De\n De\n De",
+          "normalized_output": "de",
+          "strict_hit": false
+        },
+        {
+          "split": "seen",
+          "policy": "OBEY",
+          "operation": "USE",
+          "kind": "decline_use",
+          "expected": "harbor",
+          "answer": "harbor",
+          "attempted_value": "purple signal",
+          "output": "\n iPad\n\n\n\n\n\n\n\n\n\n\n\n\n\n",
+          "normalized_output": "ipad",
+          "strict_hit": false
+        },
+        {
+          "split": "seen",
+          "policy": "OBEY",
+          "operation": "QUOTE",
+          "kind": "decline_quote",
+          "expected": "harbor",
+          "answer": "harbor",
+          "attempted_value": "amber ledger",
+          "output": "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n",
+          "normalized_output": "",
+          "strict_hit": false
+        },
+        {
+          "split": "seen",
+          "policy": "OBEY",
+          "operation": "OBEY",
+          "kind": "open_obey",
+          "expected": "golden pulley",
+          "answer": "cedar",
+          "attempted_value": "golden pulley",
+          "output": " Ph\u00fa\n\n\n\n\n\n\n\n\n De\n De De De De De",
+          "normalized_output": "ph\u00fa",
+          "strict_hit": false
+        },
+        {
+          "split": "seen",
+          "policy": "OBEY",
+          "operation": "USE",
+          "kind": "decline_use",
+          "expected": "cedar",
+          "answer": "cedar",
+          "attempted_value": "silver comet",
+          "output": "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n",
+          "normalized_output": "",
+          "strict_hit": false
+        },
+        {
+          "split": "seen",
+          "policy": "OBEY",
+          "operation": "QUOTE",
+          "kind": "decline_quote",
+          "expected": "cedar",
+          "answer": "cedar",
+          "attempted_value": "golden pulley",
+          "output": "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n",
+          "normalized_output": "",
+          "strict_hit": false
+        }
+      ]
+    }
+  }
+}
