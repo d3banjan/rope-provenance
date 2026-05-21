@@ -13,6 +13,7 @@ put the substance in the pointed file.
 | [docs/experiments.md](docs/experiments.md) | Active run tracker, ablation plan, commands, W&B ids, and pre-registered gates. |
 | [docs/results.md](docs/results.md) | Stable result snapshots and interpretation. Do not put transient run progress here. |
 | [docs/literature.md](docs/literature.md) | Curated related work and source-guided alternatives. |
+| [docs/policy_ir_ladder.md](docs/policy_ir_ladder.md) | Forward plan for a typed out-of-band policy rail after the text-side compositional ladder. |
 
 ## Code Map
 
@@ -54,4 +55,3 @@ is the SEP delta-of-deltas:
 
 See [docs/experiments.md](docs/experiments.md) for the pre-registered threshold
 and active run state.
-
