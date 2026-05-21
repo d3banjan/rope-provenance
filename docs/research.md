@@ -531,3 +531,14 @@ tiny additive software role vector can steer authority direction without
 training LoRA at all. The stronger claim that the role vector literally lies in
 the raw base-to-instruct delta remains unproven; the useful claim is
 compatibility/composability with an already-formed alignment control surface.
+
+Policy-IR source rail smoke: the first out-of-band policy-rail rung extends the
+role-only result from instruction/DATA roles to explicit source ids
+(`SYSTEM`, `USER`, `DATA`, `WEB`, plus default/answer). On a synthetic paired
+Qwen2.5-0.5B-Instruct task, training only the 6 x 896 source embedding reaches
+strict exact 1.000, with trusted-follow 1.000 and untrusted-suppress 1.000.
+Removing source information at eval drops to 0.305, and swapping
+trusted/untrusted source ids drops to 0.000. This supports the core rail
+intuition: a software-supplied source channel can act as a deterministic
+authority input for an instruction-tuned model. It remains source-only; the next
+harder rung is source plus attempted operation.

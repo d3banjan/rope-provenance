@@ -1,6 +1,6 @@
 # Parallel Policy Rail Plan
 
-Last updated: 2026-05-21T23:48:00+02:00.
+Last updated: 2026-05-22T00:09:00+02:00.
 
 ## Motivation
 
@@ -75,6 +75,12 @@ variants unless a new causal mechanism is identified.
 
 Question: can an out-of-band source label alone improve instruction/data
 separation?
+
+Status: initial Qwen2.5-0.5B-Instruct smoke is positive. Training only a
+5,376-parameter additive source embedding reaches strict exact 1.000 on the
+synthetic paired task; constant-source eval is 0.305 and trusted/untrusted
+source-swap eval is 0.000. Treat this as a source-only smoke, not evidence for
+source+operation composition.
 
 Input:
 

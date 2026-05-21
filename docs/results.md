@@ -315,6 +315,25 @@ loss. At the same point the instruct role-only run was already 0.988. This
 supports the interpretation that instruction tuning creates or exposes the
 authority-control surface that the software role vector can steer.
 
+## Qwen2.5-0.5B-Instruct Source Rail Smoke
+
+The first policy-IR ladder rung tests a source-only out-of-band rail. It uses
+ordinary visible prompt text plus per-token source ids injected as a learned
+additive input embedding. The model trains only 6 x 896 source embeddings
+(5,376 parameters), with no LoRA.
+
+| Run | Source control | exact_match | trusted_follow | untrusted_suppress | Interpretation |
+|---|---|---:|---:|---:|---|
+| Qwen2.5-0.5B-Instruct source rail | correct source ids | 1.000 | 1.000 | 1.000 | Source-only rail installs cleanly on the synthetic paired task. |
+| Same checkpoint, constant source eval | source ids removed except answer | 0.305 | 0.234 | 0.375 | Visible text alone is insufficient; the model loses the paired source distinction. |
+| Same checkpoint, trusted/untrusted source swap | SYSTEM/USER swapped with DATA/WEB | 0.000 | 0.000 | 0.000 | Behavior is causally tied to the supplied source rail. |
+
+Interpretation: this is a positive source-rail smoke. It shows that the
+instruct model can use a tiny software-supplied source channel to decide when
+directive-looking text should be followed versus treated as data. The result is
+synthetic and source-only. It does not yet test the harder source+operation
+rail, nor does it solve role-to-policy composition.
+
 ## Qwen2.5 Lazy-Rudder Geometry Cross-Check
 
 External artifacts live in `/home/debanjan/Code/Research/lean-mining` commits
