@@ -253,6 +253,50 @@ candidate-value surface explicitly delimited (`VALUE=...`, `[ ... ]`,
 extraction ambiguity, not a capacity ceiling. PR10 risk-domain rails
 are now unblocked.
 
+### PR10 — risk rail on top of value-delimited permission stack
+
+Training uses only the correct control and saves the adapter; the all-control
+trap eval reloads the best adapter.
+
+```bash
+uv run python scripts/slm_policy_vector.py \
+  --model Qwen/Qwen2.5-1.5B-Instruct \
+  --dataset-kind risk_multispan_grid \
+  --template-family value_delimited \
+  --risk-rail embedding \
+  --permission-rail oracle \
+  --no-policy-bit-embeddings --no-source-embeddings --no-operation-embeddings \
+  --steps 200 --eval-every 100 \
+  --train-pairs 512 --eval-pairs 2 \
+  --eval-use-heldout-values \
+  --eval-controls correct \
+  --batch-size 8 --eval-batch-size 16 \
+  --output results/slm/qwen25_1_5b_instruct_pr10_risk_value_delimited_train_s0.json \
+  --save-adapter results/slm/qwen25_1_5b_instruct_pr10_risk_value_delimited_s0.pt
+
+uv run python scripts/slm_policy_vector.py \
+  --model Qwen/Qwen2.5-1.5B-Instruct \
+  --dataset-kind risk_multispan_grid \
+  --template-family value_delimited \
+  --risk-rail embedding \
+  --permission-rail oracle \
+  --no-policy-bit-embeddings --no-source-embeddings --no-operation-embeddings \
+  --steps 0 \
+  --train-pairs 16 --eval-pairs 4 \
+  --eval-use-heldout-values \
+  --eval-controls correct constant_policy invert_policy constant_risk invert_risk \
+  --batch-size 8 --eval-batch-size 16 \
+  --load-adapter results/slm/qwen25_1_5b_instruct_pr10_risk_value_delimited_s0.best.pt \
+  --output results/slm/qwen25_1_5b_instruct_pr10_risk_value_delimited_s0.json
+```
+
+Expected: correct exact 0.995, C1/C2/C3/C4 all >= 0.993, risk-allow
+0.988, risk-refuse 1.000, permission-decline 1.000, and distractor
+error 0.000. Traps: constant-policy 0.444, invert-policy 0.005,
+constant-risk 0.773, invert-risk 0.444. The risk rail is causal, but
+this is still a synthetic rung, not a HarmBench/JailbreakBench/XSTest
+result.
+
 ## Selfcheck Variants
 
 Several `*_selfcheck_s0.json` files exist alongside the scored runs (Rung 1,

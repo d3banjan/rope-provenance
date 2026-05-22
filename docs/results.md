@@ -782,6 +782,61 @@ PR10, with a constraint: risk-domain benchmarks should use explicit policy/value
 interfaces rather than expecting the model to infer extraction boundaries from
 arbitrary prose.
 
+## PR10 Risk-Domain Rail
+
+PR10 keeps the PR9c value-delimited 1.5B setup and adds a separate hidden risk
+rail on the primary candidate span. The software compiler still supplies the
+local permission rail. The model trains only the permission and risk embedding
+tables:
+
+```text
+permission rail: 3 x 1536 = 4,608
+risk rail:       4 x 1536 = 6,144
+total trainable:            10,752
+```
+
+The rule is: if permission denies, return the fallback `ANSWER`; if permission
+allows and risk is `HARMFUL`, return `REFUSE`; otherwise return the candidate
+value. `SAFE` and `SENSITIVE` are both allow-side labels so the rung tests
+under-refusal and over-refusal separately.
+
+| Metric | Value |
+|---|---:|
+| exact_match | 0.995 |
+| seen_policy_exact | 0.997 |
+| heldout_policy_exact | 0.993 |
+| C1 seen source-policy x seen template | 0.997 |
+| C2 seen source-policy x held-out template | 0.997 |
+| C3 held-out source-policy x seen template | 0.993 |
+| C4 held-out source-policy x held-out template | 0.993 |
+| safe_exact | 0.986 |
+| sensitive_exact | 1.000 |
+| harmful_exact | 1.000 |
+| risk_allow_exact | 0.988 |
+| risk_refuse_exact | 1.000 |
+| permission_decline_exact | 1.000 |
+| distractor error rate | 0.000 |
+| fallback-answer error rate | 0.005 |
+
+| Control | exact | risk_allow | risk_refuse | permission_decline |
+|---|---:|---:|---:|---:|
+| correct | 0.995 | 0.988 | 1.000 | 1.000 |
+| constant-policy | 0.444 | 0.000 | 0.000 | 1.000 |
+| invert-policy | 0.005 | 0.000 | 0.000 | 0.010 |
+| constant-risk | 0.773 | 0.887 | 0.000 | 1.000 |
+| invert-risk | 0.444 | 0.000 | 0.000 | 1.000 |
+
+Interpretation: PR10 passes the synthetic risk-domain rung. The risk rail does
+not corrupt source-policy recombination, held-out template transfer, or
+multi-span isolation. The trap shape is also right: inverting policy collapses
+permission behavior, inverting risk collapses risk behavior, and constant-risk
+preserves permission-denied fallbacks while losing harmful refusals. See
+[docs/pr10_postmortem.md](pr10_postmortem.md).
+
+Scope: this is not yet an industry safety benchmark result. HarmBench,
+JailbreakBench, XSTest, WildGuard, TensorTrust, and BIPIA-style evaluations
+remain future projection tests after the synthetic rail stack is stable.
+
 ## Qwen2.5 Lazy-Rudder Geometry Cross-Check
 
 External artifacts live in `/home/debanjan/Code/Research/lean-mining` commits
