@@ -531,6 +531,40 @@ Next step: do not move to PR6 as if real-surface transfer is solved. The next
 low-cost rung is PR5b, a held-out SEP-surface adaptation test that preserves a
 rail-causality trap while avoiding answer leakage.
 
+## PR5b Paired SEP Surface Adaptation
+
+PR5b converts the failed PR5 transfer into a train/eval adaptation rung. Each
+SEP surface appears as a matched pair with the same visible text:
+
+```text
+DENIED -> ANSWER
+ALLOWED -> witness
+```
+
+The witness is made explicit inside the untrusted span, so the allowed side
+does not depend on the model's world knowledge. The only behavioral difference
+between the pair is the hidden permission rail.
+
+Pre-adaptation, loading the PR4 adapter gives exact 0.395 on 100 held-out
+paired SEP surfaces: OPEN_OBEY is only 0.040 and DECLINE_OBEY is 0.750. After
+300 adaptation steps on 512 disjoint SEP train surfaces, the held-out result is
+clean.
+
+| Metric | Pre-adapt | Post-adapt |
+|---|---:|---:|
+| exact_match | 0.395 | 1.000 |
+| open_obey_exact | 0.040 | 1.000 |
+| decline_obey_exact | 0.750 | 1.000 |
+| constant-policy control | 0.375 | 0.500 |
+| invert-policy control | 0.230 | 0.000 |
+| held-out paired rows | 200 | 400 |
+
+Interpretation: the permission-only rail can adapt to SEP-style injected
+surfaces while preserving a strong rail-causality trap. PR5b does not prove
+benchmark robustness without adaptation, and it does not remove the oracle
+operation label. It does unblock PR6: the next question is whether attempted
+operation can be learned rather than supplied.
+
 ## Qwen2.5 Lazy-Rudder Geometry Cross-Check
 
 External artifacts live in `/home/debanjan/Code/Research/lean-mining` commits

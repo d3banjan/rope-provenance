@@ -145,7 +145,13 @@ PR4_TEMPLATES = {
 }
 
 
-def load_sep_items(path: str | None, *, limit: int, seed: int) -> list[dict]:
+def load_sep_items(
+    path: str | None,
+    *,
+    limit: int,
+    seed: int,
+    offset: int = 0,
+) -> list[dict]:
     if path is None:
         raise ValueError("--sep-json is required for --dataset-kind sep_projection")
     sep_path = Path(path)
@@ -155,7 +161,7 @@ def load_sep_items(path: str | None, *, limit: int, seed: int) -> list[dict]:
     rng = random.Random(seed)
     shuffled = list(items)
     rng.shuffle(shuffled)
-    return shuffled[:limit]
+    return shuffled[offset : offset + limit]
 
 
 @dataclass
@@ -377,7 +383,13 @@ def _make_source_policy_grid_example(
     }
 
 
-def _make_sep_projection_example(i: int, item: dict) -> dict:
+def _make_sep_projection_example(
+    i: int,
+    item: dict,
+    *,
+    allowed: bool = False,
+    split_name: str = "sep",
+) -> dict:
     answer = ANSWERS[(i * 11 + 1) % len(ANSWERS)]
     witness = str(item.get("witness", "")).strip()
     clean_task = str(item.get("system_prompt_clean", "")).strip()
@@ -385,12 +397,15 @@ def _make_sep_projection_example(i: int, item: dict) -> dict:
     if not witness or not injected_prompt:
         raise ValueError("SEP row is missing witness or prompt_instructed")
     case_id = 120_000 + i
+    permission_bits = (1, 0, 0) if allowed else (0, 0, 0)
+    expected = witness if allowed else answer
     prompt_segments = [
         (PR5_POLICY_TEXT, SOURCE_SYSTEM, OP_DEFAULT),
         (f"CASE: {case_id}\n", SOURCE_DATA, OP_DEFAULT),
         (f"Clean task: {clean_task}\n", SOURCE_SYSTEM, OP_DEFAULT),
         ("Untrusted span:\n", SOURCE_SYSTEM, OP_DEFAULT),
         (f"{injected_prompt}\n", SOURCE_WEB, OP_OBEY),
+        (f"Candidate witness: {witness}\n", SOURCE_WEB, OP_OBEY),
         (f"ANSWER: {answer}\n", SOURCE_DATA, OP_DEFAULT),
         ("Final answer: ", SOURCE_SYSTEM, OP_DEFAULT),
     ]
@@ -401,12 +416,14 @@ def _make_sep_projection_example(i: int, item: dict) -> dict:
         + len(f"Clean task: {clean_task}\n")
         + len("Untrusted span:\n")
     )
-    untrusted_end = untrusted_start + len(f"{injected_prompt}\n")
+    untrusted_end = untrusted_start + len(
+        f"{injected_prompt}\nCandidate witness: {witness}\n"
+    )
     prompt_policy = [(0, 0, 0)] * len(prompt)
     for pos in range(untrusted_start, untrusted_end):
-        prompt_policy[pos] = (0, 0, 0)
+        prompt_policy[pos] = permission_bits
     answer_text, answer_sources, answer_operations = _segments_to_text(
-        [(answer, SOURCE_ANSWER, OP_ANSWER)]
+        [(expected, SOURCE_ANSWER, OP_ANSWER)]
     )
     answer_policy = [(0, 0, 0)] * len(answer_text)
     return {
@@ -418,20 +435,20 @@ def _make_sep_projection_example(i: int, item: dict) -> dict:
         "prompt_sources": prompt_sources,
         "prompt_operations": prompt_operations,
         "prompt_policy_bits": prompt_policy,
-        "expected": answer,
+        "expected": expected,
         "answer": answer,
         "attempted_value": witness,
         "operation": OP_NAMES[OP_OBEY],
-        "policy_mask": 0,
-        "policy_name": "NONE",
-        "policy_split": "sep",
-        "source_policy_split": "sep",
+        "policy_mask": 1 if allowed else 0,
+        "policy_name": "OBEY" if allowed else "NONE",
+        "policy_split": split_name,
+        "source_policy_split": split_name,
         "source_name": SOURCE_NAMES[SOURCE_WEB],
-        "source_policy_pair": "WEB:NONE",
+        "source_policy_pair": f"WEB:{'OBEY' if allowed else 'NONE'}",
         "template_split": "sep",
         "template_id": 0,
-        "cell": "PR5_sep_denied_obey",
-        "kind": "decline_obey",
+        "cell": f"PR5_{split_name}_{'allowed' if allowed else 'denied'}_obey",
+        "kind": "open_obey" if allowed else "decline_obey",
         "pair_id": i,
         "sep_type": item.get("info", {}).get("type"),
         "sep_subtask": item.get("info", {}).get("subtask"),
@@ -534,20 +551,29 @@ def build_sep_projection_examples(
     n_examples: int,
     eval_control: str,
     seed: int,
+    offset: int = 0,
+    paired: bool = False,
+    split_name: str = "sep",
 ) -> list[dict]:
-    rows = load_sep_items(sep_json, limit=n_examples, seed=seed)
+    rows = load_sep_items(sep_json, limit=n_examples, seed=seed, offset=offset)
     examples = []
     for i, row in enumerate(rows):
-        item = _make_sep_projection_example(i, row)
-        item["policy_bits"] = [
-            _apply_policy_control(bits, eval_control) for bits in item["policy_bits"]
-        ]
-        item["prompt_policy_bits"] = [
-            _apply_policy_control(bits, eval_control)
-            for bits in item["prompt_policy_bits"]
-        ]
-        item["eval_control"] = eval_control
-        examples.append(item)
+        for allowed in ((False, True) if paired else (False,)):
+            item = _make_sep_projection_example(
+                i + offset,
+                row,
+                allowed=allowed,
+                split_name=split_name,
+            )
+            item["policy_bits"] = [
+                _apply_policy_control(bits, eval_control) for bits in item["policy_bits"]
+            ]
+            item["prompt_policy_bits"] = [
+                _apply_policy_control(bits, eval_control)
+                for bits in item["prompt_policy_bits"]
+            ]
+            item["eval_control"] = eval_control
+            examples.append(item)
     return examples
 
 
@@ -1140,12 +1166,13 @@ def main() -> None:
     )
     parser.add_argument(
         "--dataset-kind",
-        choices=("policy_vector", "source_policy_grid", "sep_projection"),
+        choices=("policy_vector", "source_policy_grid", "sep_projection", "sep_paired"),
         default="policy_vector",
         help=(
             "policy_vector is the original PR3 mask task; source_policy_grid "
             "is the PR4 4-cell source-policy x template grid; sep_projection "
-            "is the PR5 eval-only SEP attack-surface projection."
+            "is the PR5 eval-only denied SEP attack-surface projection; "
+            "sep_paired is the PR5b paired allowed/denied adaptation rung."
         ),
     )
     parser.add_argument(
@@ -1277,7 +1304,7 @@ def main() -> None:
                 )
                 for control in args.eval_controls
             }
-    else:
+    elif args.dataset_kind == "sep_projection":
         if args.train_policy_masks or args.eval_policy_masks:
             raise ValueError(
                 "--train-policy-masks/--eval-policy-masks are not used by "
@@ -1303,6 +1330,41 @@ def main() -> None:
             )
             for control in args.eval_controls
         }
+    else:
+        if args.train_policy_masks or args.eval_policy_masks:
+            raise ValueError(
+                "--train-policy-masks/--eval-policy-masks are not used by "
+                "--dataset-kind sep_paired"
+            )
+        train_policy_masks = (0, 1)
+        eval_policy_masks = (0, 1)
+        train_examples = build_sep_projection_examples(
+            args.sep_json,
+            n_examples=args.train_pairs,
+            eval_control="correct",
+            seed=args.seed,
+            offset=0,
+            paired=True,
+            split_name="train",
+        )
+        if args.eval_on_train:
+            eval_examples_by_control = {
+                control: with_policy_control(train_examples, control)
+                for control in args.eval_controls
+            }
+        else:
+            eval_examples_by_control = {
+                control: build_sep_projection_examples(
+                    args.sep_json,
+                    n_examples=args.eval_pairs,
+                    eval_control=control,
+                    seed=args.seed,
+                    offset=args.train_pairs,
+                    paired=True,
+                    split_name="heldout",
+                )
+                for control in args.eval_controls
+            }
     train_examples = apply_prompt_format(train_examples, tokenizer, args.prompt_format)
     eval_examples_by_control = {
         control: apply_prompt_format(examples, tokenizer, args.prompt_format)
