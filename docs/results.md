@@ -440,6 +440,30 @@ spontaneously learn the `policy[operation]` lookup. The binding layer should be
 software-supplied or architecturally explicit, not left implicit in prompt-wide
 additive bits.
 
+Minimality ablation: source, operation, and raw policy-bit embeddings are not
+needed once the permission has been locally compiled. With only a 3 x 896
+ALLOWED/DENIED/default permission embedding table trainable (2,688 parameters),
+the same setup reaches exact 1.000 on all 672 eval rows, including seen policy
+masks and held-out `101`.
+
+| Metric | Permission-only value |
+|---|---:|
+| exact_match | 1.000 |
+| seen_policy_exact | 1.000 |
+| heldout_policy_exact | 1.000 |
+| open_obey_exact | 1.000 |
+| decline_obey_exact | 1.000 |
+| open_use_exact | 1.000 |
+| decline_use_exact | 1.000 |
+| open_quote_exact | 1.000 |
+| decline_quote_exact | 1.000 |
+
+This is now the cleanest working point in the ladder: a software-compiled
+permission rail, not a model-internal policy lookup. It supports the "parallel
+harness" interpretation: the reliable interface is a deterministic rail that
+supplies the already-bound action permission, and the LLM learns to route its
+generation through that rail.
+
 ## Qwen2.5 Lazy-Rudder Geometry Cross-Check
 
 External artifacts live in `/home/debanjan/Code/Research/lean-mining` commits

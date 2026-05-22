@@ -171,6 +171,14 @@ with only 12,544 trainable embedding parameters. The working interface is
 therefore not raw `policy_bits`; it is a compiled, operation-local permission
 rail.
 
+Minimality update: the permission rail alone is sufficient on this synthetic
+rung. Disabling source embeddings, operation embeddings, and raw policy-bit
+embeddings leaves only a 3 x 896 permission embedding table trainable
+(2,688 parameters). It still reaches exact 1.000 on seen policies and held-out
+`101`, with every OPEN/DECLINE primitive cell at 1.000. This is the current
+100% working path: a deterministic software compiler computes the local
+permission, and the model learns to obey that rail.
+
 Input:
 
 ```text
@@ -197,9 +205,9 @@ Metrics:
 Success means the model has learned `role -> policy vector -> behavior`, not
 `role string -> memorized behavior`.
 
-Immediate next diagnostic: replace the oracle permission rail with a learned
-operation detector or a tiny learned binder, and test whether it preserves the
-1.000 behavior without hand-supplying the bound permission.
+Immediate next diagnostic: replace the oracle permission compiler with a
+learned operation detector or a tiny learned binder, and test whether it
+preserves the 1.000 behavior without hand-supplying the bound permission.
 
 ## Rung 4: Auxiliary Rail Pretraining
 

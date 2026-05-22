@@ -576,8 +576,11 @@ reaches exact 1.000 on the training rows. But the all-seen adapter drops to
 memorized rather than learning a reusable bitwise policy rule. When the
 software stack computes the missing lookup and injects a local ALLOWED/DENIED
 permission rail on candidate spans, the same Qwen2.5-0.5B-Instruct setup
-reaches exact 1.000 on both seen masks and held-out `101` with only 12,544
-trainable parameters. Current conclusion: the viable policy-IR interface is a
-compiled permission rail, not raw prompt-wide policy bits. The next real rung is
-to replace the oracle operation/permission compiler with a learned detector or
-tiny binder while preserving the 1.000 behavior.
+reaches exact 1.000 on both seen masks and held-out `101`. The sharper
+minimality ablation disables source, operation, and raw policy-bit embeddings:
+with only a 3 x 896 permission embedding table trainable (2,688 parameters),
+the model still reaches exact 1.000 on all seen/held-out policy cells. Current
+conclusion: the viable policy-IR interface is a compiled permission rail, not
+raw prompt-wide policy bits. The next real rung is to replace the oracle
+operation/permission compiler with a learned detector or tiny binder while
+preserving the 1.000 behavior.

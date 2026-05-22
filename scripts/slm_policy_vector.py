@@ -549,11 +549,16 @@ def forward_model(
     if not use_rail_embeddings:
         return model(input_ids=input_ids, attention_mask=attention_mask)
     inputs_embeds = model.get_input_embeddings()(input_ids)
-    rail_delta = (
-        model.source_emb(source_ids)
-        + model.operation_emb(operation_ids)
-        + policy_delta(model, policy_bits)
+    rail_delta = torch.zeros(
+        (*input_ids.shape, model.config.hidden_size),
+        device=input_ids.device,
+        dtype=torch.float32,
     )
+    if hasattr(model, "source_emb"):
+        rail_delta = rail_delta + model.source_emb(source_ids)
+    if hasattr(model, "operation_emb"):
+        rail_delta = rail_delta + model.operation_emb(operation_ids)
+    rail_delta = rail_delta + policy_delta(model, policy_bits)
     if permission_rail == "oracle":
         permission_ids = permission_ids_from(
             operation_ids=operation_ids,
@@ -844,6 +849,8 @@ def main() -> None:
         ],
     )
     parser.add_argument("--no-rail-embeddings", action="store_true")
+    parser.add_argument("--no-source-embeddings", action="store_true")
+    parser.add_argument("--no-operation-embeddings", action="store_true")
     parser.add_argument("--no-policy-bit-embeddings", action="store_true")
     parser.add_argument(
         "--permission-rail",
@@ -941,18 +948,20 @@ def main() -> None:
     )
     use_rail_embeddings = not args.no_rail_embeddings
     if use_rail_embeddings:
-        model.source_emb = nn.Embedding(
-            SOURCE_COUNT,
-            model.config.hidden_size,
-            device=device,
-            dtype=torch.float32,
-        )
-        model.operation_emb = nn.Embedding(
-            OP_COUNT,
-            model.config.hidden_size,
-            device=device,
-            dtype=torch.float32,
-        )
+        if not args.no_source_embeddings:
+            model.source_emb = nn.Embedding(
+                SOURCE_COUNT,
+                model.config.hidden_size,
+                device=device,
+                dtype=torch.float32,
+            )
+        if not args.no_operation_embeddings:
+            model.operation_emb = nn.Embedding(
+                OP_COUNT,
+                model.config.hidden_size,
+                device=device,
+                dtype=torch.float32,
+            )
         if not args.no_policy_bit_embeddings:
             model.policy_bit_emb = nn.ModuleList(
                 [
@@ -972,16 +981,20 @@ def main() -> None:
                 device=device,
                 dtype=torch.float32,
             )
-        nn.init.normal_(model.source_emb.weight, mean=0.0, std=args.rail_init_std)
-        nn.init.normal_(model.operation_emb.weight, mean=0.0, std=args.rail_init_std)
+        if hasattr(model, "source_emb"):
+            nn.init.normal_(model.source_emb.weight, mean=0.0, std=args.rail_init_std)
+        if hasattr(model, "operation_emb"):
+            nn.init.normal_(model.operation_emb.weight, mean=0.0, std=args.rail_init_std)
         if hasattr(model, "policy_bit_emb"):
             for emb in model.policy_bit_emb:
                 nn.init.normal_(emb.weight, mean=0.0, std=args.rail_init_std)
         if hasattr(model, "permission_emb"):
             nn.init.normal_(model.permission_emb.weight, mean=0.0, std=args.rail_init_std)
         with torch.no_grad():
-            model.source_emb.weight[SOURCE_DEFAULT].zero_()
-            model.operation_emb.weight[OP_DEFAULT].zero_()
+            if hasattr(model, "source_emb"):
+                model.source_emb.weight[SOURCE_DEFAULT].zero_()
+            if hasattr(model, "operation_emb"):
+                model.operation_emb.weight[OP_DEFAULT].zero_()
             if hasattr(model, "permission_emb"):
                 model.permission_emb.weight[PERMISSION_DEFAULT].zero_()
     if args.load_adapter:
