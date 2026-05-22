@@ -193,7 +193,7 @@ uv run python scripts/slm_policy_vector.py \
 Expected: exact 0.989; C1 = 1.000; C2 = 0.982; C3 = 1.000; C4 = 0.969;
 constant-policy 0.444; invert-policy 0.002; zero distractor errors.
 
-### PR9 — scale replication on Qwen2.5-1.5B-Instruct (first boundary)
+### PR9 — first scale replication on Qwen2.5-1.5B-Instruct (boundary)
 
 ```bash
 uv run python scripts/slm_policy_vector.py \
@@ -207,9 +207,51 @@ uv run python scripts/slm_policy_vector.py \
 ```
 
 Expected: exact 0.948; C1 = 0.979; C2 = 0.917; C3 = 0.979; C4 = 0.917;
-constant-policy 0.444; invert-policy 0.017; zero distractor errors. Rail is
-causal and span-bound but does not clear the all-cell gate at the same
-budget — the first scale boundary.
+invert-policy 0.017; zero distractor errors. First scale boundary — the
+rail is causal and span-bound, but held-out-template OPEN_OBEY is the
+weak axis. See `docs/pr9_postmortem.md` for the diagnosis.
+
+### PR9b — extended-step regression (kill)
+
+```bash
+uv run python scripts/slm_policy_vector.py \
+  --model Qwen/Qwen2.5-1.5B-Instruct \
+  --dataset-kind multi_span_grid \
+  --permission-rail oracle \
+  --no-policy-bit-embeddings --no-source-embeddings --no-operation-embeddings \
+  --steps 400 \
+  --batch-size 8 --eval-batch-size 4 \
+  --output results/slm/qwen25_1_5b_instruct_pr9b_multispan_oracle_step400_s0.json
+```
+
+Expected: matches PR9 through step 200, then regresses at step 300 onward.
+Final: exact 0.882; C2 = 0.766; C4 = 0.760; held-out-template 0.764;
+invert-policy 0.000; distractor error 0.000. Failures are mostly `other`
+formatting errors — copying the full held-out carrier phrase instead of
+the bare value. **More sample exposure does not fix scale transfer; it
+overfits the model to template format.** Motivates PR9c.
+
+### PR9c — value-delimited surface (1.5B scale rung clears)
+
+```bash
+uv run python scripts/slm_policy_vector.py \
+  --model Qwen/Qwen2.5-1.5B-Instruct \
+  --dataset-kind multi_span_grid \
+  --template-family value_delimited \
+  --permission-rail oracle \
+  --no-policy-bit-embeddings --no-source-embeddings --no-operation-embeddings \
+  --steps 200 \
+  --batch-size 8 --eval-batch-size 4 \
+  --output results/slm/qwen25_1_5b_instruct_pr9c_multispan_value_delimited_s0.json
+```
+
+Expected: **exact 1.000 across all four cells, every OPEN/DECLINE
+primitive at 1.000, every error-type at 0.000, constant-policy 0.444,
+invert-policy 0.000.** Same rail architecture, same step budget,
+candidate-value surface explicitly delimited (`VALUE=...`, `[ ... ]`,
+`<value>...</value>`). The 0.5B → 1.5B scale boundary was an output-
+extraction ambiguity, not a capacity ceiling. PR10 risk-domain rails
+are now unblocked.
 
 ## Selfcheck Variants
 
