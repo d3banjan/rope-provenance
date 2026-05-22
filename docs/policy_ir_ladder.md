@@ -1,6 +1,6 @@
 # Parallel Policy Rail Plan
 
-Last updated: 2026-05-22T00:09:00+02:00.
+Last updated: 2026-05-22T14:10:00+02:00.
 
 ## Motivation
 
@@ -438,8 +438,18 @@ carrier prose.
 Question: can broader moderation/risk concepts be added without corrupting the
 source/operation/permission decomposition?
 
-Status: unblocked by PR9c. The risk rail can now be added as an attribute layer
-on top of the stable source/operation/permission/value-boundary interface.
+Status: completed as a positive synthetic rung on Qwen2.5-1.5B-Instruct. PR10
+keeps the PR9c value-delimited interface and trains only a local permission
+embedding plus a separate local risk embedding, 10,752 parameters total. Correct
+eval reaches exact 0.995 on 864 rows, with C1/C2/C3/C4 all >= 0.993,
+`risk_allow_exact=0.988`, `risk_refuse_exact=1.000`, and
+`permission_decline_exact=1.000`. Distractor error is 0.000.
+
+The controls have the expected shape: constant-policy 0.444, invert-policy
+0.005, constant-risk 0.773, and invert-risk 0.444. Constant-risk stays above
+the policy traps because removing the risk rail should preserve permission
+fallback behavior and safe/sensitive allowed cases while breaking harmful
+refusals.
 
 Add risk labels only after source, operation, and permission behavior survives
 PR4/PR5. Risk labels should be attributes of content, not replacements for
@@ -454,13 +464,29 @@ Industry-grade safety evals belong on this rung:
 These are not substitutes for prompt-injection benchmarks. They test the risk
 and moderation rails after the provenance/permission rail is already stable.
 
-Kill logic:
+Interpretation:
+
+- the risk rail composes with the already-bound permission rail.
+- the value-boundary fix from PR9c remains necessary and should be considered
+  part of the interface.
+- `SAFE/SENSITIVE/HARMFUL` is a minimal synthetic ladder, not the final
+  moderation ontology.
+- PR6 remains the unresolved bottleneck for replacing oracle operation labels
+  with a learned language detector.
+
+Kill logic for the next projection:
 
 - If risk labels reduce prompt-injection robustness or cause over-refusal,
   keep risk handling outside the LM until the rail can represent
   `allow/transform/refuse/escalate` separately.
 - If risk labels work only for synthetic labels and not benchmarked safety
   categories, treat them as classifiers, not policy rails.
+
+Next action: project PR10 onto real safety and prompt-injection benchmarks in
+separate tracks. Use HarmBench/JailbreakBench/XSTest/WildGuard for risk and
+moderation behavior, and TensorTrust/BIPIA/PromptInject-style corpora for
+source/operation injection behavior. Do not merge those benchmark families into
+one scalar score.
 
 ## Rung 4: Auxiliary Rail Pretraining
 
