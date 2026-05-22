@@ -505,6 +505,32 @@ legacy control for this balanced grid. The stricter `invert_policy` trap flips
 all policy bits and collapses to 0.000, which is the decisive causal control for
 the PR4 result.
 
+## PR5 SEP Projection Smoke
+
+PR5 asks whether the passing PR4 permission rail transfers to real
+prompt-injection surfaces. The first smoke is eval-only: load the PR4 adapter,
+project 200 SEP rows as untrusted OBEY attempts, deny the compiled permission
+rail, and require the model to return a synthetic fallback `ANSWER` rather than
+follow the injected witness request.
+
+| Metric | Value |
+|---|---:|
+| denied SEP projection exact | 0.900 |
+| constant-policy control | 0.900 |
+| invert-policy control | 0.465 |
+| n | 200 |
+
+Interpretation: PR5 eval-only is an early kill under the preregistered
+`>= 0.95` transfer gate. The rail is still causal — inverting the policy drops
+exact match from 0.900 to 0.465 — but the synthetic PR4 surface does not fully
+transfer to SEP-style injected prompts without adaptation. Because correct and
+constant-policy are equivalent for denied-only rows, the meaningful control is
+the invert-policy direction, not the constant-policy score.
+
+Next step: do not move to PR6 as if real-surface transfer is solved. The next
+low-cost rung is PR5b, a held-out SEP-surface adaptation test that preserves a
+rail-causality trap while avoiding answer leakage.
+
 ## Qwen2.5 Lazy-Rudder Geometry Cross-Check
 
 External artifacts live in `/home/debanjan/Code/Research/lean-mining` commits

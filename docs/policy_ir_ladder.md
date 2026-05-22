@@ -265,6 +265,12 @@ software. PR7 is the rung that replaces this compiler with a learned binder.
 Question: does the compiled local permission rail transfer from the synthetic
 grid to established prompt-injection distributions?
 
+Status: initial eval-only SEP projection is an early kill under the >= 0.95
+gate. Loading the passing PR4 adapter and evaluating 200 SEP-style denied OBEY
+rows gives exact 0.900. The invert-policy trap drops to 0.465, so the rail still
+causally changes behavior, but the synthetic PR4 surface does not fully transfer
+to real SEP prompt-injection surfaces without adaptation.
+
 Project SEP, BIPIA, and StruQ-style examples into the rail format:
 
 - trusted instruction span gets source/operation/policy rails.
@@ -278,6 +284,11 @@ Kill logic:
   task is missing real attack-surface diversity.
 - If attack suppression improves but utility collapses, the rail is too blunt
   and needs transform/refuse policy labels before risk-domain expansion.
+
+Next action after the eval-only kill: do not proceed to PR6 as if benchmark
+transfer were solved. Either add a PR5b surface-adaptation rung with a held-out
+SEP split and a rail-causality trap, or redesign PR5 so the benchmark projection
+contains both trainable allowed and denied cases without leaking the answer.
 
 ## PR6: Learned Operation Detector
 
