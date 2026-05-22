@@ -464,6 +464,47 @@ harness" interpretation: the reliable interface is a deterministic rail that
 supplies the already-bound action permission, and the LLM learns to route its
 generation through that rail.
 
+## PR4 4-Cell Compiled-Permission Grid
+
+PR4 stress-tests the permission-only result with a crossed held-out grid:
+
+```text
+                seen template     novel template
+seen source-policy      C1              C2
+novel source-policy     C3              C4
+```
+
+The software compiler still computes the local permission rail from
+`policy[source, operation]`, and the model trains only the same 3 x 896
+permission embedding table (2,688 parameters). Every source id, operation, and
+policy mask appears during training; the held-out axis is the pairing between
+source and policy plus the surface template.
+
+| Metric | Value |
+|---|---:|
+| exact_match | 1.000 |
+| C1 seen source-policy x seen template | 1.000 |
+| C2 seen source-policy x held-out template | 1.000 |
+| C3 held-out source-policy x seen template | 1.000 |
+| C4 held-out source-policy x held-out template | 1.000 |
+| open_obey_exact / decline_obey_exact | 1.000 / 1.000 |
+| open_use_exact / decline_use_exact | 1.000 / 1.000 |
+| open_quote_exact / decline_quote_exact | 1.000 / 1.000 |
+| constant-policy trap | 0.444 |
+| invert-policy trap | 0.000 |
+
+Interpretation: the compiled local permission rail composes across the PR4
+grid. This is not evidence that the model learned the policy lookup internally;
+it is evidence that once trusted software performs the lookup, the model can
+consume the local permission bit robustly across held-out source-policy and
+template combinations.
+
+Methodology note: the original `swap_policy` trap landed at 0.667 because it
+only swapped OBEY and USE while leaving QUOTE unchanged. Treat it as a weak
+legacy control for this balanced grid. The stricter `invert_policy` trap flips
+all policy bits and collapses to 0.000, which is the decisive causal control for
+the PR4 result.
+
 ## Qwen2.5 Lazy-Rudder Geometry Cross-Check
 
 External artifacts live in `/home/debanjan/Code/Research/lean-mining` commits

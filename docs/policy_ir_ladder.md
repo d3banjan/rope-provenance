@@ -209,6 +209,163 @@ Immediate next diagnostic: replace the oracle permission compiler with a
 learned operation detector or a tiny learned binder, and test whether it
 preserves the 1.000 behavior without hand-supplying the bound permission.
 
+## PR4: 4-Cell Compiled-Permission Grid
+
+Question: does the current 100% permission-only rail survive the same
+composition pressure that killed the text-side ladders?
+
+Status: completed on Qwen2.5-0.5B-Instruct. The 2,688-parameter
+permission-only rail reaches exact 1.000 on all four cells and every
+OPEN/DECLINE primitive cell. Constant-policy trap exact is 0.444; the stricter
+invert-policy trap is 0.000. The original OBEY/USE `swap_policy` control is
+kept as a legacy diagnostic but is weak on this grid because QUOTE is unchanged.
+
+Current working path:
+
+```text
+software compiler: permission = policy[source, operation]
+model rail:        DEFAULT / DENIED / ALLOWED at the candidate span
+```
+
+PR4 keeps the local permission rail and changes the evaluation distribution.
+Every source id, every operation id, and every policy mask appears during
+training. The held-out axis is the *pairing* between source and policy, crossed
+with the candidate surface template.
+
+```text
+                seen template     novel template
+seen source-policy      C1              C2
+novel source-policy     C3              C4
+```
+
+Decision rule:
+
+- C1 must reach exact >= 0.99 or the rung is VOID.
+- C2, C3, and C4 must each reach exact >= 0.95 for `GRID_GENERALIZES`.
+- constant-permission / constant-policy controls must collapse below 0.60.
+- swap-policy controls must collapse below 0.60.
+- per-operation OPEN and DECLINE cells must each be >= 0.95.
+
+Kill logic:
+
+- If C1 fails, the current rail does not install on the harder grid.
+- If C2 fails, the rail is template-fragile; do not scale before fixing
+  surface diversity.
+- If C3 fails, source-policy recombination is still not solved.
+- If C4 fails while C2/C3 pass, the rail has partial but not full
+  composition; scale-up is premature.
+- If all cells pass and traps collapse, PR5 becomes benchmark projection.
+
+Scope caveat: PR4 is a systems-composition test, not proof that the model
+learned the policy lookup internally. The lookup is deliberately compiled by
+software. PR7 is the rung that replaces this compiler with a learned binder.
+
+## PR5: Real Benchmark Projection
+
+Question: does the compiled local permission rail transfer from the synthetic
+grid to established prompt-injection distributions?
+
+Project SEP, BIPIA, and StruQ-style examples into the rail format:
+
+- trusted instruction span gets source/operation/policy rails.
+- untrusted document or tool-output span gets DATA/WEB/TOOL source rails.
+- injected lower-priority instruction attempts are labeled as attempted OBEY
+  but denied by the compiled permission rail.
+
+Kill logic:
+
+- If synthetic PR4 passes but SEP/BIPIA-style projection fails, the synthetic
+  task is missing real attack-surface diversity.
+- If attack suppression improves but utility collapses, the rail is too blunt
+  and needs transform/refuse policy labels before risk-domain expansion.
+
+## PR6: Learned Operation Detector
+
+Question: can the system stop using oracle operation labels without losing the
+compiled permission rail's behavior?
+
+Keep the software policy compiler and local ALLOWED/DENIED rail, but replace
+oracle operation ids with a small learned detector over span hidden states.
+
+Kill logic:
+
+- If operation detection is below 0.95 on held-out templates, do not train the
+  full rail stack; improve the detector dataset first.
+- If detector accuracy is high but rail exact collapses, the handoff between
+  detector and permission rail is the problem.
+
+## PR7: Tiny Policy Binder
+
+Question: can a constrained module learn the lookup that raw additive policy
+bits failed to learn?
+
+Replace the software compiler with a small binder:
+
+```text
+(policy_bits, operation_id, optional source_id) -> permission_id
+```
+
+The binder may be an MLP, bilinear table, or tied per-primitive module. It must
+be small and separately inspectable. The LM still consumes only the local
+permission rail.
+
+Kill logic:
+
+- If the binder cannot overfit a tiny all-seen table, the architecture is
+  wrong.
+- If it overfits but fails C3/C4, the problem is still compositional binding.
+- If it passes PR4-style C4, this is the first learned-compiler rung.
+
+## PR8: Span And Long-Context Scaling
+
+Question: does the rail survive realistic substring provenance instead of one
+clean candidate span?
+
+Add multiple candidate spans, repeated source types, long contexts, retrieved
+documents, tool outputs, and irrelevant distractors. Measure both correctness
+and whether the wrong span's rail bleeds into the candidate.
+
+Kill logic:
+
+- If short-context C4 passes but long-context performance decays sharply before
+  the model's nominal context limit, the rail needs position/span binding or a
+  different injection site.
+- If multi-span examples fail while single-span examples pass, the rail is a
+  local token cue rather than robust substring provenance.
+
+## PR9: Scale And Architecture Replication
+
+Question: is the rail a Qwen2.5-0.5B-Instruct artifact?
+
+Run the smallest passing PR4/PR5 setup on at least one larger Qwen model and
+one different architecture family if local hardware permits. Prefer a 7B
+replication only after PR4 and PR5 pass, because scale-up without the right
+traps is low information.
+
+Kill logic:
+
+- If 0.5B passes and larger instruct models fail, inspect whether the rail
+  injection scale or chat-template priors changed.
+- If only instruct models pass, frame the rail as reusing an instruction-tuned
+  authority surface, not installing provenance from scratch.
+
+## PR10: Risk-Domain Rails
+
+Question: can broader moderation/risk concepts be added without corrupting the
+source/operation/permission decomposition?
+
+Add risk labels only after source, operation, and permission behavior survives
+PR4/PR5. Risk labels should be attributes of content, not replacements for
+operation labels.
+
+Kill logic:
+
+- If risk labels reduce prompt-injection robustness or cause over-refusal,
+  keep risk handling outside the LM until the rail can represent
+  `allow/transform/refuse/escalate` separately.
+- If risk labels work only for synthetic labels and not benchmarked safety
+  categories, treat them as classifiers, not policy rails.
+
 ## Rung 4: Auxiliary Rail Pretraining
 
 Question: can the model learn the rail during continued pretraining, so SFT/DPO
