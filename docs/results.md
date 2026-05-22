@@ -701,6 +701,39 @@ Remaining errors are mostly formatting/other outputs on held-out templates.
 This unblocks PR9 scale/architecture replication while keeping PR10 risk-domain
 rails gated behind PR9.
 
+## PR9 Qwen2.5-1.5B Scale Boundary
+
+PR9 repeats the PR8b fixed-step multi-span protocol on Qwen2.5-1.5B-Instruct.
+Only the local permission rail is trained: `3 x 1536 = 4608` parameters. No
+LoRA, source embedding, operation embedding, or raw policy-bit embedding is
+enabled.
+
+| Metric | Value |
+|---|---:|
+| exact_match | 0.948 |
+| seen_policy_exact | 0.948 |
+| heldout_policy_exact | 0.948 |
+| C1 seen source-policy x seen template | 0.979 |
+| C2 seen source-policy x held-out template | 0.917 |
+| C3 held-out source-policy x seen template | 0.979 |
+| C4 held-out source-policy x held-out template | 0.917 |
+| held-out-template exact | 0.917 |
+| open_obey_exact | 0.813 |
+| decline_obey_exact | 1.000 |
+| distractor error rate | 0.000 |
+| primary-value error rate | 0.000 |
+| fallback-answer error rate | 0.024 |
+| other error rate | 0.028 |
+| constant-policy control | 0.444 |
+| invert-policy control | 0.017 |
+
+Interpretation: this is a scale-boundary, not a pass. The rail remains causal:
+constant-policy collapses to the fallback baseline and invert-policy nearly
+collapses. It also does not choose the distractor span. But the 1.5B model does
+not clear the PR8b all-cell gate at the same 200-step budget; the weak axis is
+held-out templates and OPEN decisions, especially OBEY. PR10 risk-domain rails
+remain gated.
+
 ## Qwen2.5 Lazy-Rudder Geometry Cross-Check
 
 External artifacts live in `/home/debanjan/Code/Research/lean-mining` commits
