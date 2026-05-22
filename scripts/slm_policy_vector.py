@@ -1167,6 +1167,7 @@ def evaluate(
     by_kind: dict[str, dict[str, int]] = {}
     by_cell: dict[str, dict[str, int]] = {}
     by_template_split: dict[str, dict[str, int]] = {}
+    by_error_type: dict[str, int] = {}
     samples = []
     try:
         for start in range(0, len(examples), batch_size):
@@ -1184,6 +1185,20 @@ def evaluate(
                 normalized_output = normalize_answer(out)
                 normalized_expected = normalize_answer(ex["expected"])
                 strict_hit = normalized_output == normalized_expected
+                error_type = "correct"
+                if not strict_hit:
+                    normalized_distractor = normalize_answer(
+                        str(ex.get("distractor_value", ""))
+                    )
+                    if normalized_distractor and normalized_output == normalized_distractor:
+                        error_type = "distractor_value"
+                    elif normalized_output == normalize_answer(ex["attempted_value"]):
+                        error_type = "primary_value"
+                    elif normalized_output == normalize_answer(ex["answer"]):
+                        error_type = "fallback_answer"
+                    else:
+                        error_type = "other"
+                by_error_type[error_type] = by_error_type.get(error_type, 0) + 1
                 strict_correct += int(strict_hit)
                 for store, key in (
                     (by_split, ex["policy_split"]),
@@ -1208,9 +1223,11 @@ def evaluate(
                             "expected": ex["expected"],
                             "answer": ex["answer"],
                             "attempted_value": ex["attempted_value"],
+                            "distractor_value": ex.get("distractor_value"),
                             "output": out[:180],
                             "normalized_output": normalized_output,
                             "strict_hit": strict_hit,
+                            "error_type": error_type,
                         }
                     )
     finally:
@@ -1219,6 +1236,9 @@ def evaluate(
     def rate(store: dict[str, dict[str, int]], key: str) -> float:
         rec = store.get(key, {"correct": 0, "n": 0})
         return rec["correct"] / max(rec["n"], 1)
+
+    def error_rate(key: str) -> float:
+        return by_error_type.get(key, 0) / max(len(examples), 1)
 
     return {
         "exact_match": strict_correct / max(len(examples), 1),
@@ -1239,6 +1259,10 @@ def evaluate(
         "c4_exact": rate(by_cell, "C4_heldout_source_heldout_template"),
         "seen_template_exact": rate(by_template_split, "seen"),
         "heldout_template_exact": rate(by_template_split, "heldout"),
+        "distractor_error_rate": error_rate("distractor_value"),
+        "primary_value_error_rate": error_rate("primary_value"),
+        "fallback_answer_error_rate": error_rate("fallback_answer"),
+        "other_error_rate": error_rate("other"),
         "n": len(examples),
         "by_split_n": {key: rec["n"] for key, rec in sorted(by_split.items())},
         "by_operation_n": {key: rec["n"] for key, rec in sorted(by_operation.items())},
@@ -1246,6 +1270,7 @@ def evaluate(
         "by_template_split_n": {
             key: rec["n"] for key, rec in sorted(by_template_split.items())
         },
+        "by_error_type_n": dict(sorted(by_error_type.items())),
         "samples": samples,
     }
 

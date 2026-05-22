@@ -587,6 +587,9 @@ seen operation surfaces and source-policy recombination is irrelevant, but
 held-out template generalization is far below the 0.95 threshold. Do not wire
 predicted operation ids into the permission rail yet. The next detector rung
 needs substantially more template diversity or a different span representation.
+A later PR6-RL retry is plausible only at the detector layer: train a small
+operation-id policy from trap-pair rewards after supervised learning saturates.
+The deterministic lookup itself should stay code.
 
 ## PR7 Tiny Policy Binder
 
@@ -667,6 +670,36 @@ multi-span held-out templates expose residual fragility. Because the failure is
 on C2/C4 rather than C3, the source-policy recombination still works; the weak
 axis is multi-span surface transfer. PR9 scale-up and PR10 risk-domain rails are
 gated behind a PR8b fix.
+
+## PR8b Multi-Span Fixed-Step Retest
+
+PR8b tested the narrowest diagnosis for PR8: the run had already looked best
+near step 200, then regressed by step 300. The retest fixed the endpoint at 200
+steps, enlarged evaluation from 576 to 2304 rows, used held-out values, and
+added error-type diagnostics.
+
+| Metric | Value |
+|---|---:|
+| exact_match | 0.989 |
+| seen_policy_exact | 0.991 |
+| heldout_policy_exact | 0.984 |
+| C1 seen source-policy x seen template | 1.000 |
+| C2 seen source-policy x held-out template | 0.982 |
+| C3 held-out source-policy x seen template | 1.000 |
+| C4 held-out source-policy x held-out template | 0.969 |
+| held-out-template exact | 0.977 |
+| distractor error rate | 0.000 |
+| primary-value error rate | 0.000 |
+| fallback-answer error rate | 0.002 |
+| other error rate | 0.010 |
+| constant-policy control | 0.444 |
+| invert-policy control | 0.002 |
+
+Interpretation: PR8b clears the multi-span gate under the fixed 200-step
+schedule. The failure was not wrong-span bleed: distractor errors are zero.
+Remaining errors are mostly formatting/other outputs on held-out templates.
+This unblocks PR9 scale/architecture replication while keeping PR10 risk-domain
+rails gated behind PR9.
 
 ## Qwen2.5 Lazy-Rudder Geometry Cross-Check
 

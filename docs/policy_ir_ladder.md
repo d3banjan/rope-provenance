@@ -320,8 +320,12 @@ Kill logic:
   detector and permission rail is the problem.
 
 Next action: do not integrate predicted operation ids yet. Either add a PR6b
-operation-detector diversity rung, or keep operation ids oracle-supplied while
-testing PR7's learned policy binder.
+operation-detector diversity rung, keep operation ids oracle-supplied while
+testing downstream rails, or later try PR6-RL: an independently trained detector
+policy using the existing trap pairs as reward. The lookup
+`permission = policy[operation]` remains definitional software; any RL belongs
+only on the operation detector or a separately audited concierge module, not on
+the base model and harness jointly.
 
 ## PR7: Tiny Policy Binder
 
@@ -362,13 +366,13 @@ PR8; the learned binder is not yet robust enough to replace it.
 Question: does the rail survive realistic substring provenance instead of one
 clean candidate span?
 
-Status: first multi-span oracle-compiler run is a boundary / early kill under
-an all-cell compositional gate. The model trains only the 2,688-param
-permission rail with a primary candidate plus a distractor candidate. Final
-exact is 0.965, constant-policy is 0.444, and invert-policy is 0.003, so the
-rail remains causal. But held-out template cells are below gate: C2 = 0.938 and
-C4 = 0.917. Do not scale to PR9 until PR8b fixes multi-span held-out-template
-fragility.
+Status: PR8b clears the first multi-span gate. The first PR8 run was a boundary
+at step 300: exact 0.965, C2 = 0.938, C4 = 0.917, constant-policy 0.444, and
+invert-policy 0.003. PR8b fixed the endpoint at 200 steps, enlarged evaluation
+to 2304 rows with held-out values, and added error diagnostics. It reaches exact
+0.989, C2 = 0.982, C4 = 0.969, constant-policy 0.444, invert-policy 0.002, and
+zero distractor errors. The residual mistakes are mostly formatting/other
+outputs, not wrong-span bleed.
 
 Add multiple candidate spans, repeated source types, long contexts, retrieved
 documents, tool outputs, and irrelevant distractors. Measure both correctness
@@ -391,19 +395,19 @@ Kill logic:
 - If multi-span examples fail while single-span examples pass, the rail is a
   local token cue rather than robust substring provenance.
 
-Next action: PR8b should add more primary/distractor template diversity or
-pre-register early stopping before any larger-model replication. The current
-failure is narrow but important: software-compiled rails work on one candidate
-and on paired SEP adaptation, but multi-span held-out templates are not yet
-clean.
+Next action: move to PR9 scale/architecture replication. Keep PR8b's fixed
+200-step schedule and error-type diagnostics as the baseline. Do not add
+risk-domain rails yet; PR10 remains gated behind PR9.
 
 ## PR9: Scale And Architecture Replication
 
 Question: is the rail a Qwen2.5-0.5B-Instruct artifact?
 
-Status: gated. Do not run PR9 until PR8b clears multi-span held-out-template
-composition. Scaling a known template-fragile rung would mostly measure model
-size against an unstable task design.
+Status: unblocked by PR8b. Run the fixed-step multi-span rail on at least one
+larger Qwen model if local hardware permits, and preferably one non-Qwen
+instruct model family. Scaling PR8 before the fixed-step retest would have been
+low information; scaling PR8b now tests whether the working side-channel is a
+0.5B Qwen artifact.
 
 Run the smallest passing PR4/PR5 setup on at least one larger Qwen model and
 one different architecture family if local hardware permits. Prefer a 7B
