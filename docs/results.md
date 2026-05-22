@@ -731,8 +731,56 @@ Interpretation: this is a scale-boundary, not a pass. The rail remains causal:
 constant-policy collapses to the fallback baseline and invert-policy nearly
 collapses. It also does not choose the distractor span. But the 1.5B model does
 not clear the PR8b all-cell gate at the same 200-step budget; the weak axis is
-held-out templates and OPEN decisions, especially OBEY. PR10 risk-domain rails
-remain gated.
+held-out templates and OPEN decisions, especially OBEY.
+
+Postmortem: this first comparison has a sample-budget confound. The 0.5B PR8b
+run used batch 16 for 200 steps; the 1.5B PR9 run used batch 8 for 200 steps,
+so it saw half as many sampled training examples. PR9b extended the 1.5B run
+to a planned 400 steps to match the 0.5B exposure. It matched PR9 exactly
+through step 200, then regressed at step 300: exact 0.882, C2 0.766, C4 0.760,
+held-out-template exact 0.764, invert-policy 0.000, distractor error 0.000.
+The new failures were `other` formatting errors, including copying the full
+held-out carrier phrase instead of the bare value. More sample exposure did not
+fix scale transfer; it pushed 1.5B into a template-format overfit. See
+[docs/pr9_postmortem.md](pr9_postmortem.md).
+
+PR10 risk-domain rails remain gated.
+
+## PR9c Value-Delimited Scale Fix
+
+PR9c keeps the Qwen2.5-1.5B-Instruct scale setting and the same permission rail,
+but changes the text surface so candidate values are explicitly delimited:
+`VALUE=...`, `[ ... ]`, or `<value>...</value>`. This directly targets PR9b's
+failure mode, where the model sometimes copied the whole held-out carrier
+phrase instead of the bare value.
+
+| Metric | Value |
+|---|---:|
+| exact_match | 1.000 |
+| seen_policy_exact | 1.000 |
+| heldout_policy_exact | 1.000 |
+| C1 seen source-policy x seen template | 1.000 |
+| C2 seen source-policy x held-out template | 1.000 |
+| C3 held-out source-policy x seen template | 1.000 |
+| C4 held-out source-policy x held-out template | 1.000 |
+| open_obey_exact | 1.000 |
+| open_use_exact | 1.000 |
+| open_quote_exact | 1.000 |
+| decline_*_exact | 1.000 |
+| distractor error rate | 0.000 |
+| primary-value error rate | 0.000 |
+| fallback-answer error rate | 0.000 |
+| other error rate | 0.000 |
+| constant-policy control | 0.444 |
+| invert-policy control | 0.000 |
+
+Interpretation: PR9c rescues the 1.5B scale rung. The policy rail and span
+binding scale when the candidate value boundary is explicit. The prior PR9
+failure was output extraction ambiguity, not policy lookup failure, not
+wrong-span bleed, and not an intrinsic 1.5B rail capacity failure. This unblocks
+PR10, with a constraint: risk-domain benchmarks should use explicit policy/value
+interfaces rather than expecting the model to infer extraction boundaries from
+arbitrary prose.
 
 ## Qwen2.5 Lazy-Rudder Geometry Cross-Check
 

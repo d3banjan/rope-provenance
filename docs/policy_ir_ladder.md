@@ -403,12 +403,18 @@ risk-domain rails yet; PR10 remains gated behind PR9.
 
 Question: is the rail a Qwen2.5-0.5B-Instruct artifact?
 
-Status: first scale replication is a boundary. Qwen2.5-1.5B-Instruct fits on
-the 12GB GPU and trains only `3 x 1536 = 4608` permission-rail parameters under
-the PR8b fixed 200-step protocol. It reaches exact 0.948 with C1 = 0.979,
-C2 = 0.917, C3 = 0.979, C4 = 0.917, constant-policy 0.444, invert-policy
-0.017, and zero distractor errors. The rail is causal and span-bound, but it
-does not clear the all-cell gate at the same budget.
+Status: first scale replication was a boundary, then PR9c fixed it. Qwen2.5-
+1.5B-Instruct fits on the 12GB GPU and trains only `3 x 1536 = 4608`
+permission-rail parameters. The direct PR8b protocol reached exact 0.948 with
+C2/C4 = 0.917, constant-policy 0.444, invert-policy 0.017, and zero distractor
+errors. PR9b showed that more sampled examples made held-out templates worse.
+The postmortem identified the failure as output extraction ambiguity: the model
+sometimes copied a full held-out carrier phrase instead of the bare value.
+
+PR9c made candidate values explicit (`VALUE=...`, `[ ... ]`, or
+`<value>...</value>`) while keeping the same rail architecture and traps. It
+reaches exact 1.000 on all cells, all OPEN/DECLINE primitive buckets, and all
+error diagnostics; constant-policy is 0.444 and invert-policy is 0.000.
 
 Run the smallest passing PR4/PR5 setup on at least one larger Qwen model and
 one different architecture family if local hardware permits. Prefer a 7B
@@ -422,18 +428,18 @@ Kill logic:
 - If only instruct models pass, frame the rail as reusing an instruction-tuned
   authority surface, not installing provenance from scratch.
 
-Next action: do not proceed to PR10 yet. Either run a PR9b calibration rung
-that changes only the rail schedule/scale for 1.5B, or record this as the first
-scale boundary and test a non-Qwen instruct model before risk-domain expansion.
+Next action: proceed to PR10 risk-domain rails, but carry forward the PR9c
+lesson. The policy/value interface must make the value boundary explicit. Do
+not rely on the base model to infer "the answer substring" from arbitrary
+carrier prose.
 
 ## PR10: Risk-Domain Rails
 
 Question: can broader moderation/risk concepts be added without corrupting the
 source/operation/permission decomposition?
 
-Status: gated behind PR8/PR9. The risk rail should not be added until the
-source/operation/permission path survives multi-span and at least one
-architecture/scale replication.
+Status: unblocked by PR9c. The risk rail can now be added as an attribute layer
+on top of the stable source/operation/permission/value-boundary interface.
 
 Add risk labels only after source, operation, and permission behavior survives
 PR4/PR5. Risk labels should be attributes of content, not replacements for
