@@ -639,6 +639,35 @@ does not yet replace the software compiler on compositional surface variation.
 The next span/long-context rung should therefore use the software compiler to
 isolate span binding, not conflate it with binder fragility.
 
+## PR8 Multi-Span Oracle Rail
+
+PR8 returns to the strongest software-compiled permission rail and adds a
+second operation-labeled span. Each prompt contains a primary candidate and a
+distractor candidate; the expected output is the primary candidate if it is
+allowed, otherwise the fallback `ANSWER`. This tests span binding and wrong-span
+bleed without conflating the result with the learned binder's template
+fragility.
+
+| Metric | Value |
+|---|---:|
+| exact_match | 0.965 |
+| seen_policy_exact | 0.969 |
+| heldout_policy_exact | 0.958 |
+| C1 seen source-policy x seen template | 1.000 |
+| C2 seen source-policy x held-out template | 0.938 |
+| C3 held-out source-policy x seen template | 1.000 |
+| C4 held-out source-policy x held-out template | 0.917 |
+| seen-template exact | 1.000 |
+| held-out-template exact | 0.931 |
+| constant-policy control | 0.444 |
+| invert-policy control | 0.003 |
+
+Interpretation: PR8 is not a clean pass. The rail is causal and strong, but
+multi-span held-out templates expose residual fragility. Because the failure is
+on C2/C4 rather than C3, the source-policy recombination still works; the weak
+axis is multi-span surface transfer. PR9 scale-up and PR10 risk-domain rails are
+gated behind a PR8b fix.
+
 ## Qwen2.5 Lazy-Rudder Geometry Cross-Check
 
 External artifacts live in `/home/debanjan/Code/Research/lean-mining` commits

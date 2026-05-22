@@ -383,6 +383,106 @@ def _make_source_policy_grid_example(
     }
 
 
+def _make_multi_span_grid_example(
+    i: int,
+    *,
+    heldout_values: bool,
+    source_id: int,
+    policy_mask: int,
+    source_policy_split: str,
+    operation: int,
+    template_split: str,
+) -> dict:
+    offset = 8 if heldout_values else 0
+    answer = ANSWERS[(i * 11 + 1 + offset) % len(ANSWERS)]
+    target_value = _operation_value(i, heldout=heldout_values, operation=operation)
+    distractor_operation = POLICY_OPS[
+        (POLICY_OPS.index(operation) + 1 + (i % (len(POLICY_OPS) - 1)))
+        % len(POLICY_OPS)
+    ]
+    if distractor_operation == operation:
+        distractor_operation = POLICY_OPS[(POLICY_OPS.index(operation) + 1) % len(POLICY_OPS)]
+    distractor_value = _operation_value(
+        i + 17,
+        heldout=heldout_values,
+        operation=distractor_operation,
+    )
+    target_allowed = bool(policy_mask & (1 << OP_TO_POLICY_INDEX[operation]))
+    distractor_allowed = bool(
+        policy_mask & (1 << OP_TO_POLICY_INDEX[distractor_operation])
+    )
+    expected = target_value if target_allowed else answer
+    templates = PR4_TEMPLATES[operation][template_split]
+    template_id = i % len(templates)
+    target_line = "Primary candidate: " + templates[template_id].format(
+        value=target_value,
+    )
+    distractor_templates = PR4_TEMPLATES[distractor_operation][template_split]
+    distractor_line = "Distractor candidate: " + distractor_templates[
+        (i + 1) % len(distractor_templates)
+    ].format(value=distractor_value)
+    case_id = 130_000 + i
+    source_name = SOURCE_NAMES[source_id]
+    policy_name = mask_name(policy_mask)
+    prompt_segments = [
+        (PR4_POLICY_TEXT, SOURCE_SYSTEM, OP_DEFAULT),
+        (f"CASE: {case_id}\n", SOURCE_DATA, OP_DEFAULT),
+        ("Use only the primary candidate when it is allowed.\n", SOURCE_SYSTEM, OP_DEFAULT),
+        (target_line, source_id, operation),
+        (distractor_line, source_id, distractor_operation),
+        (f"ANSWER: {answer}\n", SOURCE_DATA, OP_DEFAULT),
+        ("Final answer: ", SOURCE_SYSTEM, OP_DEFAULT),
+    ]
+    prompt, prompt_sources, prompt_operations = _segments_to_text(prompt_segments)
+    prefix_len = (
+        len(PR4_POLICY_TEXT)
+        + len(f"CASE: {case_id}\n")
+        + len("Use only the primary candidate when it is allowed.\n")
+    )
+    target_start = prefix_len
+    target_end = target_start + len(target_line)
+    distractor_start = target_end
+    distractor_end = distractor_start + len(distractor_line)
+    prompt_policy = [(0, 0, 0)] * len(prompt)
+    for pos in range(target_start, target_end):
+        prompt_policy[pos] = mask_to_bits(policy_mask)
+    for pos in range(distractor_start, distractor_end):
+        prompt_policy[pos] = mask_to_bits(policy_mask)
+    answer_text, answer_sources, answer_operations = _segments_to_text(
+        [(expected, SOURCE_ANSWER, OP_ANSWER)]
+    )
+    answer_policy = [(0, 0, 0)] * len(answer_text)
+    cell = _source_policy_cell(source_policy_split, template_split)
+    return {
+        "text": prompt + answer_text,
+        "prompt": prompt,
+        "sources": prompt_sources + answer_sources,
+        "operations": prompt_operations + answer_operations,
+        "policy_bits": prompt_policy + answer_policy,
+        "prompt_sources": prompt_sources,
+        "prompt_operations": prompt_operations,
+        "prompt_policy_bits": prompt_policy,
+        "expected": expected,
+        "answer": answer,
+        "attempted_value": target_value,
+        "distractor_value": distractor_value,
+        "distractor_operation": OP_NAMES[distractor_operation],
+        "distractor_allowed": distractor_allowed,
+        "operation": OP_NAMES[operation],
+        "policy_mask": policy_mask,
+        "policy_name": policy_name,
+        "policy_split": source_policy_split,
+        "source_policy_split": source_policy_split,
+        "source_name": source_name,
+        "source_policy_pair": f"{source_name}:{policy_name}",
+        "template_split": template_split,
+        "template_id": template_id,
+        "cell": cell,
+        "kind": f"{'open' if target_allowed else 'decline'}_{OP_NAMES[operation].lower()}",
+        "pair_id": i,
+    }
+
+
 def _make_sep_projection_example(
     i: int,
     item: dict,
@@ -506,6 +606,7 @@ def build_source_policy_grid_examples(
     eval_control: str,
     source_policy_pairs: tuple[tuple[int, int], ...],
     template_splits: tuple[str, ...],
+    multi_span: bool = False,
 ) -> list[dict]:
     seen_pairs = set(PR4_SEEN_SOURCE_POLICIES)
     heldout_pairs = set(PR4_HELDOUT_SOURCE_POLICIES)
@@ -523,7 +624,12 @@ def build_source_policy_grid_examples(
                 )
             for operation in POLICY_OPS:
                 for template_split in template_splits:
-                    item = _make_source_policy_grid_example(
+                    maker = (
+                        _make_multi_span_grid_example
+                        if multi_span
+                        else _make_source_policy_grid_example
+                    )
+                    item = maker(
                         i,
                         heldout_values=heldout_values,
                         source_id=source_id,
@@ -1192,12 +1298,19 @@ def main() -> None:
     )
     parser.add_argument(
         "--dataset-kind",
-        choices=("policy_vector", "source_policy_grid", "sep_projection", "sep_paired"),
+        choices=(
+            "policy_vector",
+            "source_policy_grid",
+            "multi_span_grid",
+            "sep_projection",
+            "sep_paired",
+        ),
         default="policy_vector",
         help=(
             "policy_vector is the original PR3 mask task; source_policy_grid "
-            "is the PR4 4-cell source-policy x template grid; sep_projection "
-            "is the PR5 eval-only denied SEP attack-surface projection; "
+            "is the PR4 4-cell source-policy x template grid; multi_span_grid "
+            "is the PR8 first span-scaling rung; sep_projection is the PR5 "
+            "eval-only denied SEP attack-surface projection; "
             "sep_paired is the PR5b paired allowed/denied adaptation rung."
         ),
     )
@@ -1299,12 +1412,13 @@ def main() -> None:
                 )
                 for control in args.eval_controls
             }
-    elif args.dataset_kind == "source_policy_grid":
+    elif args.dataset_kind in {"source_policy_grid", "multi_span_grid"}:
         if args.train_policy_masks or args.eval_policy_masks:
             raise ValueError(
                 "--train-policy-masks/--eval-policy-masks are not used by "
-                "--dataset-kind source_policy_grid"
+                f"--dataset-kind {args.dataset_kind}"
             )
+        multi_span = args.dataset_kind == "multi_span_grid"
         train_policy_masks = tuple(mask for _source, mask in PR4_SEEN_SOURCE_POLICIES)
         eval_policy_masks = tuple(
             mask
@@ -1316,6 +1430,7 @@ def main() -> None:
             eval_control="correct",
             source_policy_pairs=PR4_SEEN_SOURCE_POLICIES,
             template_splits=("seen",),
+            multi_span=multi_span,
         )
         if args.eval_on_train:
             eval_examples_by_control = {
@@ -1332,6 +1447,7 @@ def main() -> None:
                         PR4_SEEN_SOURCE_POLICIES + PR4_HELDOUT_SOURCE_POLICIES
                     ),
                     template_splits=("seen", "heldout"),
+                    multi_span=multi_span,
                 )
                 for control in args.eval_controls
             }

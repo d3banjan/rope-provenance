@@ -362,6 +362,14 @@ PR8; the learned binder is not yet robust enough to replace it.
 Question: does the rail survive realistic substring provenance instead of one
 clean candidate span?
 
+Status: first multi-span oracle-compiler run is a boundary / early kill under
+an all-cell compositional gate. The model trains only the 2,688-param
+permission rail with a primary candidate plus a distractor candidate. Final
+exact is 0.965, constant-policy is 0.444, and invert-policy is 0.003, so the
+rail remains causal. But held-out template cells are below gate: C2 = 0.938 and
+C4 = 0.917. Do not scale to PR9 until PR8b fixes multi-span held-out-template
+fragility.
+
 Add multiple candidate spans, repeated source types, long contexts, retrieved
 documents, tool outputs, and irrelevant distractors. Measure both correctness
 and whether the wrong span's rail bleeds into the candidate.
@@ -383,9 +391,19 @@ Kill logic:
 - If multi-span examples fail while single-span examples pass, the rail is a
   local token cue rather than robust substring provenance.
 
+Next action: PR8b should add more primary/distractor template diversity or
+pre-register early stopping before any larger-model replication. The current
+failure is narrow but important: software-compiled rails work on one candidate
+and on paired SEP adaptation, but multi-span held-out templates are not yet
+clean.
+
 ## PR9: Scale And Architecture Replication
 
 Question: is the rail a Qwen2.5-0.5B-Instruct artifact?
+
+Status: gated. Do not run PR9 until PR8b clears multi-span held-out-template
+composition. Scaling a known template-fragile rung would mostly measure model
+size against an unstable task design.
 
 Run the smallest passing PR4/PR5 setup on at least one larger Qwen model and
 one different architecture family if local hardware permits. Prefer a 7B
@@ -403,6 +421,10 @@ Kill logic:
 
 Question: can broader moderation/risk concepts be added without corrupting the
 source/operation/permission decomposition?
+
+Status: gated behind PR8/PR9. The risk rail should not be added until the
+source/operation/permission path survives multi-span and at least one
+architecture/scale replication.
 
 Add risk labels only after source, operation, and permission behavior survives
 PR4/PR5. Risk labels should be attributes of content, not replacements for
