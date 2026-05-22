@@ -303,6 +303,12 @@ than supplied as an oracle rail?"
 Question: can the system stop using oracle operation labels without losing the
 compiled permission rail's behavior?
 
+Status: early-killed by detector preflight. A frozen-Qwen hidden-state linear
+probe over the operation-labeled candidate span fits seen PR4 templates at
+1.000, but held-out template cells fall to 0.615. The shuffled-label trap is
+0.380, so the detector is learning real template signal, not random structure,
+but it is not template-invariant enough to feed the permission rail.
+
 Keep the software policy compiler and local ALLOWED/DENIED rail, but replace
 oracle operation ids with a small learned detector over span hidden states.
 
@@ -312,6 +318,10 @@ Kill logic:
   full rail stack; improve the detector dataset first.
 - If detector accuracy is high but rail exact collapses, the handoff between
   detector and permission rail is the problem.
+
+Next action: do not integrate predicted operation ids yet. Either add a PR6b
+operation-detector diversity rung, or keep operation ids oracle-supplied while
+testing PR7's learned policy binder.
 
 ## PR7: Tiny Policy Binder
 

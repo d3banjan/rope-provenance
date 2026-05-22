@@ -565,6 +565,29 @@ benchmark robustness without adaptation, and it does not remove the oracle
 operation label. It does unblock PR6: the next question is whether attempted
 operation can be learned rather than supplied.
 
+## PR6 Operation Detector Preflight
+
+PR6 tests whether the attempted-operation rail can stop being oracle-supplied.
+The first preflight freezes Qwen2.5-0.5B-Instruct, pools hidden states over the
+candidate span, and trains a 3-way linear probe for OBEY / USE / QUOTE on PR4
+seen templates. Evaluation uses the crossed PR4 grid.
+
+| Metric | Value |
+|---|---:|
+| train accuracy | 1.000 |
+| eval accuracy | 0.807 |
+| C1 seen source-policy x seen template | 1.000 |
+| C2 seen source-policy x held-out template | 0.615 |
+| C3 held-out source-policy x seen template | 1.000 |
+| C4 held-out source-policy x held-out template | 0.615 |
+| shuffled-label trap | 0.380 |
+
+Interpretation: PR6 is early-killed by the detector gate. The probe learns the
+seen operation surfaces and source-policy recombination is irrelevant, but
+held-out template generalization is far below the 0.95 threshold. Do not wire
+predicted operation ids into the permission rail yet. The next detector rung
+needs substantially more template diversity or a different span representation.
+
 ## Qwen2.5 Lazy-Rudder Geometry Cross-Check
 
 External artifacts live in `/home/debanjan/Code/Research/lean-mining` commits
