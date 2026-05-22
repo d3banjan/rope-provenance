@@ -352,9 +352,10 @@ Kill logic:
 - If it overfits but fails C3/C4, the problem is still compositional binding.
 - If it passes PR4-style C4, this is the first learned-compiler rung.
 
-Next action: test the learned binder on the PR4 grid and PR5b paired SEP
-surfaces. If it transfers there, PR8 can use the learned binder instead of the
-software oracle compiler. If it fails there, PR7b is the active rung.
+PR7b tested the same learned binder on the PR4 source-policy x template grid.
+It installs on seen templates (C1/C3 = 1.000) but fails held-out templates
+(C2 = 0.448, C4 = 0.438). The software compiler remains the strongest path for
+PR8; the learned binder is not yet robust enough to replace it.
 
 ## PR8: Span And Long-Context Scaling
 
@@ -364,6 +365,10 @@ clean candidate span?
 Add multiple candidate spans, repeated source types, long contexts, retrieved
 documents, tool outputs, and irrelevant distractors. Measure both correctness
 and whether the wrong span's rail bleeds into the candidate.
+
+Use the software-compiled permission rail first, not the learned binder. PR7b
+showed that the binder itself is template-fragile, so PR8 should isolate span
+binding and long-context effects using the strongest available compiler.
 
 Industry benchmark projection starts here as well. For prompt injection and
 in-context security, prioritize TensorTrust, PromptInject/InjecTQA-style RAG

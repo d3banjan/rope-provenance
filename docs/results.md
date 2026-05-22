@@ -617,6 +617,28 @@ Next step: test the binder on the PR4 compositional grid and PR5b paired SEP
 surfaces. If it transfers, the ladder can move to PR8 using a learned compiler
 rather than the software oracle compiler.
 
+### PR7b Binder Grid Transfer
+
+The same learned-binder architecture was then trained directly on the PR4 grid.
+It fits seen-template cells but does not transfer to held-out templates.
+
+| Metric | Value |
+|---|---:|
+| exact_match | 0.722 |
+| C1 seen source-policy x seen template | 1.000 |
+| C2 seen source-policy x held-out template | 0.448 |
+| C3 held-out source-policy x seen template | 1.000 |
+| C4 held-out source-policy x held-out template | 0.438 |
+| seen-template exact | 1.000 |
+| held-out-template exact | 0.444 |
+| constant-policy control | 0.444 |
+| invert-policy control | 0.229 |
+
+Interpretation: the learned binder rescues the simple raw policy-mask task, but
+does not yet replace the software compiler on compositional surface variation.
+The next span/long-context rung should therefore use the software compiler to
+isolate span binding, not conflate it with binder fragility.
+
 ## Qwen2.5 Lazy-Rudder Geometry Cross-Check
 
 External artifacts live in `/home/debanjan/Code/Research/lean-mining` commits
