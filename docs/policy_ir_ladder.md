@@ -328,6 +328,13 @@ testing PR7's learned policy binder.
 Question: can a constrained module learn the lookup that raw additive policy
 bits failed to learn?
 
+Status: completed positive on the original held-out policy-mask task. Replacing
+the software compiler with a 29,792-parameter MLP binder over
+`[policy_bits, operation_onehot]` reaches exact 1.000 on seen masks and the
+held-out `101` mask. Constant-policy is 0.429 and invert-policy is 0.000. This
+rescues the raw policy-bit failure when the lookup is made architecturally
+explicit.
+
 Replace the software compiler with a small binder:
 
 ```text
@@ -345,6 +352,10 @@ Kill logic:
 - If it overfits but fails C3/C4, the problem is still compositional binding.
 - If it passes PR4-style C4, this is the first learned-compiler rung.
 
+Next action: test the learned binder on the PR4 grid and PR5b paired SEP
+surfaces. If it transfers there, PR8 can use the learned binder instead of the
+software oracle compiler. If it fails there, PR7b is the active rung.
+
 ## PR8: Span And Long-Context Scaling
 
 Question: does the rail survive realistic substring provenance instead of one
@@ -353,6 +364,11 @@ clean candidate span?
 Add multiple candidate spans, repeated source types, long contexts, retrieved
 documents, tool outputs, and irrelevant distractors. Measure both correctness
 and whether the wrong span's rail bleeds into the candidate.
+
+Industry benchmark projection starts here as well. For prompt injection and
+in-context security, prioritize TensorTrust, PromptInject/InjecTQA-style RAG
+injections, and the local SEP projection. These test whether source/operation
+rails survive creative human injections and retrieval/tool-output surfaces.
 
 Kill logic:
 
@@ -386,6 +402,15 @@ source/operation/permission decomposition?
 Add risk labels only after source, operation, and permission behavior survives
 PR4/PR5. Risk labels should be attributes of content, not replacements for
 operation labels.
+
+Industry-grade safety evals belong on this rung:
+
+- HarmBench / JailbreakBench: adversarial harmful-behavior and jailbreak ASR.
+- XSTest: over-refusal / safety-creep capability tax.
+- WildGuard / WildChat: input-output moderation and refusal classification.
+
+These are not substitutes for prompt-injection benchmarks. They test the risk
+and moderation rails after the provenance/permission rail is already stable.
 
 Kill logic:
 

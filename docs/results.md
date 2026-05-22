@@ -588,6 +588,35 @@ held-out template generalization is far below the 0.95 threshold. Do not wire
 predicted operation ids into the permission rail yet. The next detector rung
 needs substantially more template diversity or a different span representation.
 
+## PR7 Tiny Policy Binder
+
+PR7 revisits the raw policy-bit failure with the missing architectural bias
+added explicitly. Instead of asking additive policy-bit embeddings to
+implicitly produce the local permission, a tiny MLP receives
+`[policy_bits, operation_onehot]` and emits the rail vector consumed by the
+model.
+
+| Metric | Value |
+|---|---:|
+| trainable params | 29,792 |
+| exact_match | 1.000 |
+| seen_policy_exact | 1.000 |
+| heldout_policy_exact | 1.000 |
+| open_obey_exact / decline_obey_exact | 1.000 / 1.000 |
+| open_use_exact / decline_use_exact | 1.000 / 1.000 |
+| open_quote_exact / decline_quote_exact | 1.000 / 1.000 |
+| constant-policy control | 0.429 |
+| invert-policy control | 0.000 |
+
+Interpretation: the model can use a learned policy binder when the lookup is
+made architecturally explicit. This does not contradict the raw policy-vector
+negative; it explains it. Additive global policy bits did not give the frozen
+model the right multiplicative lookup. A small explicit binder does.
+
+Next step: test the binder on the PR4 compositional grid and PR5b paired SEP
+surfaces. If it transfers, the ladder can move to PR8 using a learned compiler
+rather than the software oracle compiler.
+
 ## Qwen2.5 Lazy-Rudder Geometry Cross-Check
 
 External artifacts live in `/home/debanjan/Code/Research/lean-mining` commits

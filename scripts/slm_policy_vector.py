@@ -831,6 +831,26 @@ def policy_delta(model, policy_bits: torch.Tensor) -> torch.Tensor:
     return out
 
 
+def learned_permission_delta(
+    model,
+    *,
+    operation_ids: torch.Tensor,
+    policy_bits: torch.Tensor,
+) -> torch.Tensor:
+    op_features = torch.zeros(
+        (*operation_ids.shape, len(POLICY_OPS)),
+        device=operation_ids.device,
+        dtype=torch.float32,
+    )
+    op_mask = torch.zeros_like(operation_ids, dtype=torch.bool)
+    for idx, op_id in enumerate(POLICY_OPS):
+        is_op = operation_ids == op_id
+        op_features[:, :, idx] = is_op.float()
+        op_mask |= is_op
+    features = torch.cat([policy_bits.float(), op_features], dim=-1)
+    return model.permission_binder(features) * op_mask.unsqueeze(-1).float()
+
+
 def permission_ids_from(
     *,
     operation_ids: torch.Tensor,
@@ -882,6 +902,12 @@ def forward_model(
             policy_bits=policy_bits,
         )
         rail_delta = rail_delta + model.permission_emb(permission_ids)
+    elif permission_rail == "binder":
+        rail_delta = rail_delta + learned_permission_delta(
+            model,
+            operation_ids=operation_ids,
+            policy_bits=policy_bits,
+        )
     return model(
         inputs_embeds=inputs_embeds + rail_delta.to(inputs_embeds.dtype),
         attention_mask=attention_mask,
@@ -1204,10 +1230,15 @@ def main() -> None:
     parser.add_argument("--no-policy-bit-embeddings", action="store_true")
     parser.add_argument(
         "--permission-rail",
-        choices=("off", "oracle"),
+        choices=("off", "oracle", "binder"),
         default="off",
-        help="Add a derived local allowed/denied rail from policy_bits[operation].",
+        help=(
+            "oracle adds a derived local allowed/denied rail from "
+            "policy_bits[operation]; binder learns a tiny policy_bits + "
+            "operation_id -> rail-vector module."
+        ),
     )
+    parser.add_argument("--binder-hidden-size", type=int, default=32)
     parser.add_argument("--rail-init-std", type=float, default=0.02)
     parser.add_argument("--seed", type=int, default=0)
     parser.add_argument("--device", default="cuda" if torch.cuda.is_available() else "cpu")
@@ -1438,6 +1469,20 @@ def main() -> None:
                 nn.init.normal_(emb.weight, mean=0.0, std=args.rail_init_std)
         if hasattr(model, "permission_emb"):
             nn.init.normal_(model.permission_emb.weight, mean=0.0, std=args.rail_init_std)
+        if args.permission_rail == "binder":
+            model.permission_binder = nn.Sequential(
+                nn.Linear(POLICY_BITS + len(POLICY_OPS), args.binder_hidden_size),
+                nn.GELU(),
+                nn.Linear(args.binder_hidden_size, model.config.hidden_size),
+            ).to(device=device, dtype=torch.float32)
+            for module in model.permission_binder.modules():
+                if isinstance(module, nn.Linear):
+                    nn.init.normal_(
+                        module.weight,
+                        mean=0.0,
+                        std=args.rail_init_std,
+                    )
+                    nn.init.zeros_(module.bias)
         with torch.no_grad():
             if hasattr(model, "source_emb"):
                 model.source_emb.weight[SOURCE_DEFAULT].zero_()
