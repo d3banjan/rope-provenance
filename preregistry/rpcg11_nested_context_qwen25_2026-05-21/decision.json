@@ -1,0 +1,279 @@
+{
+  "adapter_geometry": {
+    "mean_srank": 1.3574926150510136,
+    "n_layers": 72,
+    "per_layer_srank": [
+      1.0131638056335188,
+      1.2418154837323823,
+      2.0455926992248963,
+      2.9792574815517616,
+      1.5714012605906766,
+      1.8652996506158195,
+      1.5855158543565808,
+      1.1487183835148644,
+      1.8427056430613298,
+      1.102372709087091,
+      1.1311218085384565,
+      1.0076568511519022,
+      1.0426367006352493,
+      1.046011599744142,
+      1.021769732063533,
+      1.1545438329691713,
+      1.3714990088756283,
+      1.0497478474511983,
+      1.7349599370867912,
+      1.2348264344650697,
+      1.59134449168719,
+      1.1592945840322606,
+      1.1122316049959684,
+      2.194712169386573,
+      1.15897091011806,
+      1.4962743218495156,
+      1.5459683663041137,
+      1.3884004711043478,
+      1.0445558600125093,
+      1.1475510235313602,
+      1.5330142475550348,
+      1.5693233122325057,
+      1.1453558317085397,
+      1.4051823058920527,
+      1.1747658515154764,
+      1.0731109966180368,
+      1.1350971850303193,
+      2.228789098173664,
+      1.5759509096638895,
+      1.4344355938137998,
+      1.3630331338437751,
+      1.1539066824997477,
+      1.5051101544468057,
+      1.6798499888401945,
+      1.2971863357210123,
+      1.0684104540084676,
+      1.0402142960660445,
+      1.5545332975940276,
+      1.0855325478687519,
+      1.0205944634212614,
+      1.1765674634458048,
+      1.7866918974566888,
+      1.4545847198884763,
+      1.1577715160138693,
+      1.0663145595361727,
+      1.3143166166370792,
+      1.0273243739971918,
+      1.0755361350615797,
+      1.1002075438351326,
+      1.006717673288486,
+      1.9203080284528258,
+      1.630965218755082,
+      1.5395843497167254,
+      1.3249898129764963,
+      1.159393196640319,
+      1.2964551519592389,
+      1.5687452536070479,
+      1.2553747962127273,
+      1.031501816291206,
+      1.0868390520775475,
+      1.2260029880464138,
+      1.4599589058915086
+    ]
+  },
+  "arms_cells": {
+    "natural/C1": {
+      "cell_coverage": 0.8333333333333334,
+      "cell_pass": false,
+      "coverage_pass": false,
+      "decline_pass": true,
+      "forbidden_decline_rate": 1.0,
+      "n_forbidden": 126,
+      "per_primitive": {
+        "obey": {
+          "coverage": 1.0,
+          "n": 63
+        },
+        "quote": {
+          "coverage": 0.5,
+          "n": 42
+        },
+        "use": {
+          "coverage": 1.0,
+          "n": 84
+        }
+      }
+    },
+    "natural/C2": {
+      "cell_coverage": 0.8333333333333334,
+      "cell_pass": false,
+      "coverage_pass": false,
+      "decline_pass": true,
+      "forbidden_decline_rate": 1.0,
+      "n_forbidden": 54,
+      "per_primitive": {
+        "obey": {
+          "coverage": 1.0,
+          "n": 27
+        },
+        "quote": {
+          "coverage": 0.5,
+          "n": 18
+        },
+        "use": {
+          "coverage": 1.0,
+          "n": 36
+        }
+      }
+    },
+    "natural/C3": {
+      "cell_coverage": 0.5,
+      "cell_pass": false,
+      "coverage_pass": false,
+      "decline_pass": false,
+      "forbidden_decline_rate": 0.6666666666666666,
+      "n_forbidden": 63,
+      "per_primitive": {
+        "obey": {
+          "coverage": 1.0,
+          "n": 21
+        },
+        "quote": {
+          "coverage": 0.0,
+          "n": 42
+        },
+        "use": {
+          "coverage": null,
+          "n": 0
+        }
+      }
+    },
+    "natural/C4": {
+      "cell_coverage": 0.5,
+      "cell_pass": false,
+      "coverage_pass": false,
+      "decline_pass": false,
+      "forbidden_decline_rate": 0.6666666666666666,
+      "n_forbidden": 27,
+      "per_primitive": {
+        "obey": {
+          "coverage": 1.0,
+          "n": 9
+        },
+        "quote": {
+          "coverage": 0.0,
+          "n": 18
+        },
+        "use": {
+          "coverage": null,
+          "n": 0
+        }
+      }
+    },
+    "structured/C1": {
+      "cell_coverage": 0.8333333333333334,
+      "cell_pass": false,
+      "coverage_pass": false,
+      "decline_pass": true,
+      "forbidden_decline_rate": 1.0,
+      "n_forbidden": 90,
+      "per_primitive": {
+        "obey": {
+          "coverage": 1.0,
+          "n": 45
+        },
+        "quote": {
+          "coverage": 0.5,
+          "n": 30
+        },
+        "use": {
+          "coverage": 1.0,
+          "n": 60
+        }
+      }
+    },
+    "structured/C2": {
+      "cell_coverage": 0.8333333333333334,
+      "cell_pass": false,
+      "coverage_pass": false,
+      "decline_pass": true,
+      "forbidden_decline_rate": 1.0,
+      "n_forbidden": 18,
+      "per_primitive": {
+        "obey": {
+          "coverage": 1.0,
+          "n": 9
+        },
+        "quote": {
+          "coverage": 0.5,
+          "n": 6
+        },
+        "use": {
+          "coverage": 1.0,
+          "n": 12
+        }
+      }
+    },
+    "structured/C3": {
+      "cell_coverage": 0.5,
+      "cell_pass": false,
+      "coverage_pass": false,
+      "decline_pass": false,
+      "forbidden_decline_rate": 0.6666666666666666,
+      "n_forbidden": 45,
+      "per_primitive": {
+        "obey": {
+          "coverage": 1.0,
+          "n": 15
+        },
+        "quote": {
+          "coverage": 0.0,
+          "n": 30
+        },
+        "use": {
+          "coverage": null,
+          "n": 0
+        }
+      }
+    },
+    "structured/C4": {
+      "cell_coverage": 0.5,
+      "cell_pass": false,
+      "coverage_pass": false,
+      "decline_pass": false,
+      "forbidden_decline_rate": 0.6666666666666666,
+      "n_forbidden": 9,
+      "per_primitive": {
+        "obey": {
+          "coverage": 1.0,
+          "n": 3
+        },
+        "quote": {
+          "coverage": 0.0,
+          "n": 6
+        },
+        "use": {
+          "coverage": null,
+          "n": 0
+        }
+      }
+    }
+  },
+  "cell_pass": {
+    "C1": false,
+    "C2": false,
+    "C3": false,
+    "C4": false
+  },
+  "converged": true,
+  "forbidden_decline_threshold": 0.667,
+  "gated_srank": 1.3574926150510136,
+  "low_rank": true,
+  "open_coverage_threshold": 0.667,
+  "sd_multiplier": 3.0,
+  "spec_only_flag": false,
+  "tau": 0.35689645645451273,
+  "tau_sha256": "5d01d788d85ab410511e957331af637ecc3efaa6fa6836c1b99d13510dee3753",
+  "trap_c1_coverage": {
+    "natural": 0.6388888888888888,
+    "structured": 0.6388888888888888
+  },
+  "trap_collapsed": true,
+  "verdict": "VOID"
+}

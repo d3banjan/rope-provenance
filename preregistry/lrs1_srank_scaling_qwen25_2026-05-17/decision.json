@@ -1,0 +1,69 @@
+{
+  "exp_id": "lrs1_srank_scaling_qwen25_2026-05-17",
+  "tau_sha256": "a28195f9e4046fd4e9f1eca2e655f1a4a5f25ba7f04207b7e345883635069822",
+  "date": "2026-05-17",
+  "verdict": "REPLICATES_FLAT_FLOOR",
+  "decision_metric": "attn_qkv_srank",
+  "attn_qkv_sranks": {
+    "0.5b": 3.435123941886093,
+    "1.5b": 3.962480791116382,
+    "3b": 3.938718441272754
+  },
+  "global_sranks": {
+    "0.5b": 4.599573834333381,
+    "1.5b": 4.42598520749231,
+    "3b": 4.16311431580089
+  },
+  "q_proj_sranks": {
+    "0.5b": 4.1537263228812344,
+    "1.5b": 4.425138564176532,
+    "3b": 4.27402017224453
+  },
+  "d_models": {
+    "0.5b": 896,
+    "1.5b": 1536,
+    "3b": 2048
+  },
+  "spread": 0.5273568492302889,
+  "in_band": true,
+  "spread_ok": true,
+  "reference_const": 3.653,
+  "primary_points": [
+    "0.5b",
+    "1.5b",
+    "3b"
+  ],
+  "scaling_fit": {
+    "best": "M0_constant",
+    "delta_aic_constant": 0.0,
+    "models": {
+      "M0_constant": {
+        "aic": -6.4834456990897085,
+        "c": 3.778774391425076,
+        "delta_aic": 0.0,
+        "rss": 0.17742577183756345
+      },
+      "M1_inv_sqrt": {
+        "aic": 1.2491279632098795,
+        "c": 134.29952561203154,
+        "delta_aic": 7.732573662299588,
+        "rss": 2.335723304975909
+      },
+      "M2_inv_cbrt": {
+        "aic": -0.421034422470135,
+        "c": 41.26758754522048,
+        "delta_aic": 6.0624112766195735,
+        "rss": 1.3385685738251134
+      }
+    },
+    "n_points": 3
+  },
+  "optimizer_control": {
+    "baseline_0.5b_adamw_torch": 3.435123941886093,
+    "control_0.5b_adamw_bnb_8bit": 3.510722363401898,
+    "delta": 0.07559842151580476,
+    "passed": true,
+    "tol": 0.25
+  },
+  "amendment": "amendment_01_optimizer_control"
+}

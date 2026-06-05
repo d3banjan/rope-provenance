@@ -14,6 +14,8 @@ put the substance in the pointed file.
 | [docs/results.md](docs/results.md) | Stable result snapshots and interpretation. Do not put transient run progress here. |
 | [docs/literature.md](docs/literature.md) | Curated related work and source-guided alternatives. |
 | [docs/policy_ir_ladder.md](docs/policy_ir_ladder.md) | Forward plan for a typed out-of-band policy rail after the text-side compositional ladder. |
+| [preregistry/](preregistry/) | Frozen pre-registration artifacts (H0 / τ / power / decision / postmortem) for the role-provenance capability-gate ladder (rpcg1–11d) + the LRS1 stable-rank baseline. Decision rules are immutable post-commit. |
+| [lean/](lean/) | Reference Lean theorems extracted from the research monorepo (role-gate monotone reachability). Not CI-built here. |
 
 ## Code Map
 

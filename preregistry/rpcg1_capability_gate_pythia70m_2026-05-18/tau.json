@@ -1,0 +1,11 @@
+{
+  "experiment": "rpcg1_capability_gate_pythia70m_2026-05-18",
+  "probe1_margin": 0.01,
+  "probe2_margin": 0.01,
+  "sd_multiplier": 3.0,
+  "sha256_self": "41a5ab196687e02c517b7978b1b68a2174fcd392d81d0461e953c2dcb5045fc2",
+  "sign_cells_required": 8,
+  "srank_low_rank_max": 8.0,
+  "srank_reference": 3.8,
+  "tau_formula": "tau = sd_multiplier * stdev(null-arm per-cell signed shifts, n=9)"
+}

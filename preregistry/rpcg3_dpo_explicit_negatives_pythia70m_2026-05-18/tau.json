@@ -1,0 +1,11 @@
+{
+  "experiment": "rpcg3_dpo_explicit_negatives_pythia70m_2026-05-18",
+  "probe1_margin": 0.01,
+  "probe2_margin": 0.01,
+  "sd_multiplier": 3.0,
+  "sha256_self": "4c588b2ad57da1c1971cf231171fdd9a498d5359a3a2907bee7c3c5b3a30397f",
+  "sign_cells_required": 8,
+  "srank_low_rank_max": 8.0,
+  "srank_reference": 3.8,
+  "tau_formula": "tau = sd_multiplier * stdev(null-arm per-cell signed shifts, n=9)"
+}

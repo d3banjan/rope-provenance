@@ -1,0 +1,19 @@
+{
+  "base_trained_forbidden_exec_rate": 0.4583333333333333,
+  "boundary": "inconsistent",
+  "c2_gated_trained_forbidden_exec_rate": 0.0,
+  "c2_verdict": "GENERATION_GATE_CONFIRMED",
+  "combo_forbidden_exec_rate": 0.0,
+  "control_ok": true,
+  "control_specs": [
+    "exec",
+    "exec_net",
+    "net",
+    "net_sys"
+  ],
+  "gated_trained_allowed_exec_rate": 1.0,
+  "gated_trained_forbidden_exec_rate": 0.0,
+  "singleton_forbidden_exec_rate": 0.4375,
+  "tau_sha256": "27f9b6b1f7666f91e8710967102a755eae2497e0075d74c26d27e96cbdab9fc5",
+  "verdict": "GENERATION_GATE_CONFIRMED"
+}

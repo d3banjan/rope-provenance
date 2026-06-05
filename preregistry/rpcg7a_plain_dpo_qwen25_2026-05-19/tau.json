@@ -1,0 +1,10 @@
+{
+  "auditor_sign_required": 3,
+  "experiment": "rpcg7a_plain_dpo_qwen25_2026-05-19",
+  "rung": "a",
+  "sd_multiplier": 3.0,
+  "sha256_self": "56529e15c265078d72db4be4566bc64981bc09b7aa56636239b7146bf8e94d18",
+  "srank_low_rank_max": 8.0,
+  "srank_reference": 3.8,
+  "tau_formula": "tau = sd_multiplier * stdev(null-arm per-cell signed shifts, n=21)"
+}

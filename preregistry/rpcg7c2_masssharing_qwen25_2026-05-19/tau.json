@@ -1,0 +1,11 @@
+{
+  "auditor_sign_required": 3,
+  "experiment": "rpcg7c2_masssharing_qwen25_2026-05-19",
+  "reg_lambda": 0.5,
+  "rung": "c2",
+  "sd_multiplier": 3.0,
+  "sha256_self": "826b9923808105298b37bc09b4ea6e43639f3adb008bcf6ad991c520cccabb15",
+  "srank_low_rank_max": 8.0,
+  "srank_reference": 3.8,
+  "tau_formula": "tau = sd_multiplier * stdev(null-arm per-cell signed shifts, n=21)"
+}

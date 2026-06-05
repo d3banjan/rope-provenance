@@ -1,0 +1,19 @@
+{
+  "bootstrap_unit": "carrier",
+  "ci_pct": 95.0,
+  "decision_rule": "INCONCLUSIVE if random_control CI_low > 0; else PASS if action-vs-provenance CI_low > 0; else FAIL if CI_high < 0 or point <= 0; else WEAK",
+  "experiment": "rpcg10a_grounding_qwen25_2026-05-20",
+  "gate_band_hidden_state_indices": [
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15,
+    16
+  ],
+  "gate_metric": "mean pairwise |cosine| of the 3 contrast vectors, averaged over the gate band",
+  "n_bootstrap": 2000,
+  "sha256_self": "1723401feae700f2db6e7b5cb698e0e8c2c488a766f8e38a8b4cc5c4fe661f42"
+}

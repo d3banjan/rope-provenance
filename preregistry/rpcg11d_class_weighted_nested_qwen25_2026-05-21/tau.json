@@ -1,0 +1,74 @@
+{
+  "auditor_sign_required": 3,
+  "baseline_abs_max": 0.3,
+  "class_weighting_arm_target_source": "arm_specific",
+  "class_weighting_gated_raw_w_decline": 2.4657534247,
+  "class_weighting_gated_raw_w_open": 1.6822429907,
+  "class_weighting_gated_scheduled_n_decline": 365,
+  "class_weighting_gated_scheduled_n_open": 535,
+  "class_weighting_gated_w_norm_decline": 1.2328767123,
+  "class_weighting_gated_w_norm_open": 0.8411214953,
+  "class_weighting_loss_formula": "per_row_w_norm_times_ce_batch1",
+  "class_weighting_method": "inverse_frequency",
+  "class_weighting_n_steps": 900,
+  "class_weighting_trap_raw_w_decline": 2.5423728814,
+  "class_weighting_trap_raw_w_open": 1.6483516484,
+  "class_weighting_trap_scheduled_n_decline": 354,
+  "class_weighting_trap_scheduled_n_open": 546,
+  "class_weighting_trap_w_norm_decline": 1.2711864407,
+  "class_weighting_trap_w_norm_open": 0.8241758242,
+  "corpus_sha256_self": "99d5ad2f66c6f418fd8a67d3aa72bdf2f841782e1eb9289c6224c274ff00baeb",
+  "experiment": "rpcg11d_class_weighted_nested_qwen25_2026-05-21",
+  "forbidden_decline_threshold": 0.667,
+  "open_coverage_threshold": 0.667,
+  "sd_multiplier": 3.0,
+  "sha256_self": "22af72d458f132e28489d0297ce9a28653f3cd7436302303e1d66175c34096da",
+  "spec_variant": "balanced",
+  "srank_low_rank_max": 8.0,
+  "srank_reference": 3.8,
+  "tau_formula": "5-tier verdict per spec \u00a76.3 with sanity gates: VOID(C1 fail OR non_converged OR high_srank OR baseline_drift OR trap_failed OR class_weighting_disabled) / NO_GENERALIZATION(C2 and C3 fail) / WEAK_GENERALIZATION(C2 pass, C3 fail) / BOUNDARY_SHIFT(C2 and C3 pass, C4 fail) / FULL_GENERALIZATION(all pass). Cell pass iff every non-N/A OPEN-coverage(P) > 0.667 AND forbidden-decline-rate > 0.667.",
+  "train_specs": [
+    [
+      "obey"
+    ],
+    [
+      "use"
+    ],
+    [
+      "obey",
+      "quote"
+    ],
+    [
+      "use",
+      "quote"
+    ],
+    [
+      "obey",
+      "use",
+      "quote"
+    ]
+  ],
+  "trap_overlap_baseline": 3,
+  "trap_permutation": [
+    [
+      "use",
+      "quote"
+    ],
+    [
+      "obey",
+      "quote"
+    ],
+    [
+      "use"
+    ],
+    [
+      "obey"
+    ],
+    [
+      "obey",
+      "use",
+      "quote"
+    ]
+  ],
+  "trap_shuffle_method": "min_overlap"
+}

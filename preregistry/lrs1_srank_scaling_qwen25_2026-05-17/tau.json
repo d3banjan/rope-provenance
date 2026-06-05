@@ -1,0 +1,89 @@
+{
+  "exp_id": "lrs1_srank_scaling_qwen25_2026-05-17",
+  "filed_date": "2026-05-17",
+  "kind": "replication-probe",
+  "model_family": "Qwen2.5 base",
+  "sizes": [
+    "0.5b",
+    "1.5b",
+    "3b"
+  ],
+  "decision_metric": "attn_qkv_srank",
+  "decision_metric_note": "lazy-rudder's task-intrinsic floor 3.653 is the stable rank of the attention QKV input projection only (Pythia's fused query_key_value); the Qwen-comparable metric is the mean srank over q_proj/k_proj/v_proj. global_srank (all 7 modules) and q_proj_srank are reported as secondaries.",
+  "tau": {
+    "srank_floor_lo": 2.5,
+    "srank_floor_hi": 5.0,
+    "srank_spread_max": 1.5,
+    "delta_aic_decisive": 2.0,
+    "lazy_rudder_reference_const": 3.653,
+    "lazy_rudder_reference_rms": 0.289,
+    "v1_pythia410m_qkv_srank": 3.9244,
+    "v1_pythia410m_global_srank": 5.1968,
+    "v1_repro_tolerance_pct": 5.0,
+    "train_loss_nan_tolerance": 0
+  },
+  "training_config": {
+    "objective": "dpo",
+    "dpo_beta": 0.1,
+    "lora_rank": 128,
+    "lora_alpha": 256,
+    "lora_dropout": 0.05,
+    "lora_bias": "none",
+    "lora_target_modules": [
+      "q_proj",
+      "k_proj",
+      "v_proj",
+      "o_proj",
+      "gate_proj",
+      "up_proj",
+      "down_proj"
+    ],
+    "learning_rate": 5e-06,
+    "lr_scheduler_type": "cosine",
+    "warmup_steps": 50,
+    "max_steps": 800,
+    "per_device_train_batch_size": 1,
+    "gradient_accumulation_steps": 8,
+    "max_grad_norm": 1.0,
+    "gradient_checkpointing": true,
+    "max_length": 512,
+    "dtype": "bfloat16",
+    "seed": 42,
+    "dataset": "Anthropic/hh-rlhf",
+    "dataset_samples": 2000,
+    "dataset_seed": 42,
+    "save_steps": 100,
+    "checkpoint_payload": "adapter_only"
+  },
+  "eval_set": {
+    "name": "heldout_hh_rlhf.jsonl",
+    "source": "Anthropic/hh-rlhf",
+    "split": "heldout",
+    "n_pairs": 200,
+    "shuffle_seed": 42,
+    "train_count": 2000,
+    "heldout_offset": 2000,
+    "disjoint_from_train": true
+  },
+  "decision_branches_priority": [
+    "ESCALATE_TRAINING_PATHOLOGY",
+    "ARCH_SENSITIVE_SCALING",
+    "REPLICATES_FLAT_FLOOR",
+    "INCONCLUSIVE_THIN_DOF"
+  ],
+  "obstacle_class_risked": [],
+  "v1_validation": {
+    "source": "d3banjan/lazy-rudder-checkpoints",
+    "adapter": "pythia-410m DPO r=128 (_leak/v2/checkpoints/checkpoint-800)",
+    "expected_qkv_srank": 3.9244,
+    "expected_global_srank": 5.1968,
+    "reference": "the lazy-rudder spectral-autopsy results (research monorepo) v2_dpo_r128",
+    "tolerance_pct": 5.0,
+    "gate": "must pass before any GPU training"
+  },
+  "escalation": {
+    "if_inconclusive": "add 4th width point Qwen2.5-7B",
+    "note": "7B needs cloud/A100 or 4-bit QLoRA; not run in lrs1"
+  },
+  "sha256_self": "a28195f9e4046fd4e9f1eca2e655f1a4a5f25ba7f04207b7e345883635069822"
+}

@@ -1,0 +1,50 @@
+{
+  "action_vs_provenance": {
+    "ci_high": 0.009554373207647446,
+    "ci_low": 0.007900186720237963,
+    "point": 0.008771751100030867
+  },
+  "gate_band_hidden_state_indices": [
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15,
+    16
+  ],
+  "gate_metric_factoredness": {
+    "action": 0.4999151788651943,
+    "provenance": 0.49114343896508217,
+    "random": 0.49991459026932716
+  },
+  "linear_probe": {
+    "action": {
+      "n_test": 33,
+      "n_train": 63,
+      "shuffled_label_accuracy": 0.45454545454545453,
+      "test_accuracy": 1.0
+    },
+    "provenance": {
+      "n_test": 33,
+      "n_train": 63,
+      "shuffled_label_accuracy": 0.42424242424242425,
+      "test_accuracy": 1.0
+    },
+    "random": {
+      "n_test": 33,
+      "n_train": 63,
+      "shuffled_label_accuracy": 0.5151515151515151,
+      "test_accuracy": 1.0
+    }
+  },
+  "random_control": {
+    "ci_high": -0.007901220367577497,
+    "ci_low": -0.00959305147717374,
+    "point": -0.00877114519380151
+  },
+  "random_more_factored_than_provenance": false,
+  "tau_sha256": "1723401feae700f2db6e7b5cb698e0e8c2c488a766f8e38a8b4cc5c4fe661f42",
+  "verdict": "PASS"
+}

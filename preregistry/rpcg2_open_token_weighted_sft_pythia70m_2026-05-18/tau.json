@@ -1,0 +1,11 @@
+{
+  "experiment": "rpcg2_open_token_weighted_sft_pythia70m_2026-05-18",
+  "probe1_margin": 0.01,
+  "probe2_margin": 0.01,
+  "sd_multiplier": 3.0,
+  "sha256_self": "c637c86ef17a1d7d7ea853edd305191fa7a66cbfa8ac8f66643767793807e448",
+  "sign_cells_required": 8,
+  "srank_low_rank_max": 8.0,
+  "srank_reference": 3.8,
+  "tau_formula": "tau = sd_multiplier * stdev(null-arm per-cell signed shifts, n=9)"
+}

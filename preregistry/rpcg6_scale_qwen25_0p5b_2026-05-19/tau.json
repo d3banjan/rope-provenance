@@ -1,0 +1,11 @@
+{
+  "experiment": "rpcg6_scale_qwen25_0p5b_2026-05-19",
+  "probe1_margin": 0.01,
+  "probe2_margin": 0.01,
+  "sd_multiplier": 3.0,
+  "sha256_self": "f50f66a924b71c4a3dd674926c91579b5c4c64b25f68974f7fd98e98d26f8fec",
+  "sign_cells_required": 8,
+  "srank_low_rank_max": 8.0,
+  "srank_reference": 3.8,
+  "tau_formula": "tau = sd_multiplier * stdev(null-arm per-cell signed shifts, n=9)"
+}

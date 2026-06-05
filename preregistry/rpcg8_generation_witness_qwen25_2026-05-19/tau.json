@@ -1,0 +1,10 @@
+{
+  "allowed_exec_min": 0.4,
+  "base_forbidden_min": 0.4,
+  "experiment": "rpcg8_generation_witness_qwen25_2026-05-19",
+  "forbidden_exec_max": 0.2,
+  "max_new_tokens": 16,
+  "n_samples": 8,
+  "sha256_self": "27f9b6b1f7666f91e8710967102a755eae2497e0075d74c26d27e96cbdab9fc5",
+  "temperature": 1.0
+}

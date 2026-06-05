@@ -1,0 +1,9 @@
+{
+  "auditor_sign_required": 3,
+  "experiment": "rpcg9_bitvector_bce_qwen25_2026-05-19",
+  "sd_multiplier": 3.0,
+  "sha256_self": "9a8132a00ba6e1eb4d391d9219e1734d0b0ef10c8f707f2f0e3666230b9298f5",
+  "srank_low_rank_max": 8.0,
+  "srank_reference": 3.8,
+  "tau_formula": "tau = sd_multiplier * stdev(null-arm per-cell signed shifts, n=21)"
+}

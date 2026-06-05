@@ -1,0 +1,13 @@
+{
+  "diffuse_k_min": 5,
+  "experiment": "rpcg5_layer_localization_pythia70m_2026-05-19",
+  "gate_removed_threshold": 0.0059,
+  "gate_removed_threshold_source": "RPCG3 data-derived gate-margin tau (3x null-arm per-cell SD)",
+  "harness_sanity_tol": 0.01,
+  "localized_k_max": 2,
+  "monotonicity_tol": 0.01,
+  "n_layers": 6,
+  "rpcg3_margin_gated_ref": 0.2229,
+  "rpcg3_tau_sha": "4c588b2ad57da1c1971cf231171fdd9a498d5359a3a2907bee7c3c5b3a30397f",
+  "sha256_self": "12825c41eb3335dcb2879678493ae74bc20c46b365391205fcfad83844c0d47d"
+}

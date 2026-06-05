@@ -1,0 +1,53 @@
+{
+  "adapter_geometry": {
+    "mean_srank": 1.3028158910074525,
+    "n_layers": 6,
+    "per_layer_srank": [
+      1.1083665319446963,
+      1.2957970660886473,
+      1.409650303581395,
+      1.4938473271527264,
+      1.412145561432594,
+      1.0970885558446573
+    ]
+  },
+  "gate_passes": true,
+  "gated_srank": 1.3028158910074525,
+  "heldout_frame_margin_gated": 0.21267284949620566,
+  "heldout_frame_tau": 0.005289585420783442,
+  "heldout_frame_verdict": "GATE_INSTALLED",
+  "low_rank": true,
+  "margin_gated": 0.2229453191161156,
+  "margin_null": -9.90086131625693e-05,
+  "margin_trap": -0.08034768592980174,
+  "per_cell_raw_shift_gated": {
+    "analyst/exec": 0.5112603187561036,
+    "analyst/net": -0.2714532271027565,
+    "analyst/sys": -0.2502438426017761,
+    "operator/exec": -0.26263203918933864,
+    "operator/net": 0.26970470547676084,
+    "operator/sys": -0.01696419119834902,
+    "retriever/exec": 0.1732051551342011,
+    "retriever/net": 0.055482947826385465,
+    "retriever/sys": -0.2294898271560669
+  },
+  "per_cell_signed_shift_gated": {
+    "analyst/exec": 0.5112603187561036,
+    "analyst/net": 0.2714532271027565,
+    "analyst/sys": 0.2502438426017761,
+    "operator/exec": 0.26263203918933864,
+    "operator/net": 0.26970470547676084,
+    "operator/sys": -0.01696419119834902,
+    "retriever/exec": 0.1732051551342011,
+    "retriever/net": 0.055482947826385465,
+    "retriever/sys": 0.2294898271560669
+  },
+  "probe1_forbidden_drop": true,
+  "probe2_permitted_fit": true,
+  "sft_converged": true,
+  "sign_correct": 8,
+  "tau": 0.0058986659313553765,
+  "tau_sha256": "4c588b2ad57da1c1971cf231171fdd9a498d5359a3a2907bee7c3c5b3a30397f",
+  "trap_collapsed": true,
+  "verdict": "GATE_INSTALLED"
+}

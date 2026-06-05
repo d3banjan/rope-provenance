@@ -1,0 +1,10 @@
+{
+  "auditor_sign_required": 3,
+  "experiment": "rpcg7b_structured_pairs_qwen25_2026-05-19",
+  "rung": "b",
+  "sd_multiplier": 3.0,
+  "sha256_self": "0ad5a8085b92446adf9bd56a0e06a2cb1aadd511d145955054f14c3baf581f9b",
+  "srank_low_rank_max": 8.0,
+  "srank_reference": 3.8,
+  "tau_formula": "tau = sd_multiplier * stdev(null-arm per-cell signed shifts, n=21)"
+}

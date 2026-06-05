@@ -1,0 +1,11 @@
+{
+  "auditor_sign_required": 3,
+  "experiment": "rpcg7c1_freqbalanced_qwen25_2026-05-19",
+  "rung": "c1",
+  "sd_multiplier": 3.0,
+  "sha256_self": "cd1e3ecb58805d395395eae3720bb087029ccc3ee21fefbc7dfc12c6edc8bda2",
+  "srank_low_rank_max": 8.0,
+  "srank_reference": 3.8,
+  "tau_formula": "tau = sd_multiplier * stdev(null-arm per-cell signed shifts, n=21)",
+  "trained_sys_open_threshold": 0.1
+}
